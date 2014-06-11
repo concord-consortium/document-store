@@ -62,6 +62,44 @@ class DocumentsController < ApplicationController
     end
   end
 
+  # CODAP API
+  def all
+    user = User.find_by_username(codap_api_params[:username])
+    raise ActiveRecord::RecordNotFound unless user
+    documents = user.documents
+    render json: documents.map {|d| d.content }
+  end
+
+  def open
+    if codap_api_params[:recordname] && codap_api_params[:owner]
+      owner = User.find_by_username(codap_api_params[:owner])
+      raise ActiveRecord::RecordNotFound unless owner
+      document = Document.find_by_owner_id_and_title(owner, codap_api_params[:recordname])
+      raise ActiveRecord::RecordNotFound unless document && document.shared
+    elsif codap_api_params[:recordid]
+      document = Document.includes(:owner).find(codap_api_params[:recordid])
+      raise ActiveRecord::RecordNotFound unless document && document.owner && document.owner.username == codap_api_params[:username]
+    else
+      raise ActiveRecord::RecordNotFound
+    end
+    render json: document.content
+  end
+
+  def save
+    user = User.find_by_username(codap_api_params[:username])
+    raise ActiveRecord::RecordNotFound unless user
+
+    content = request.raw_post
+    Rails.logger.fatal "Content is: '#{content}'"
+    @document = Document.new(owner: user, title: codap_api_params[:recordname], form_content: content)
+
+    if @document.save
+      render json: {status: "Created"}, status: :created
+    else
+      render json: {status: "Error", errors: @document.errors.full_messages }, status: 400
+    end
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_document
@@ -70,6 +108,10 @@ class DocumentsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def document_params
-      params.require(:document).permit(:title, :content, :shared)
+      params.require(:document).permit(:title, :content, :shared, :form_content)
+    end
+
+    def codap_api_params
+      params.permit(:username, :recordname, :recordid, :owner)
     end
 end
