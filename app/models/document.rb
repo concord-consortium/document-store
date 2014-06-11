@@ -3,6 +3,7 @@ class Document < ActiveRecord::Base
 
   scope :shared, -> { where(shared: true) }
 
+  validates :title, uniqueness: {scope: :owner}
   validate :validate_form_content
 
   def form_content=(new_content)
