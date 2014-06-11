@@ -19,7 +19,7 @@ ActiveRecord::Schema.define(version: 20140611210654) do
   create_table "documents", force: true do |t|
     t.text     "title"
     t.json     "content"
-    t.boolean  "shared"
+    t.boolean  "shared",     default: false
     t.integer  "owner_id"
     t.datetime "created_at"
     t.datetime "updated_at"

@@ -2,8 +2,8 @@ class CreateDocuments < ActiveRecord::Migration
   def change
     create_table :documents do |t|
       t.text :title
-      t.column :content, :json
-      t.boolean :shared
+      t.json :content
+      t.boolean :shared, default: false
       t.integer :owner_id
 
       t.timestamps

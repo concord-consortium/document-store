@@ -37,7 +37,7 @@ CREATE TABLE documents (
     id integer NOT NULL,
     title text,
     content json,
-    shared boolean,
+    shared boolean DEFAULT false,
     owner_id integer,
     created_at timestamp without time zone,
     updated_at timestamp without time zone
