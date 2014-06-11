@@ -5,4 +5,6 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
 
   has_many :documents, inverse_of: :owner, foreign_key: 'owner_id'
+
+  validates :username, :uniqueness => true
 end
