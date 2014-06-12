@@ -14,6 +14,7 @@ gem 'haml-rails'
 gem 'pg'
 gem 'unicorn'
 gem 'unicorn-rails'
+gem 'rails_12factor', group: :production
 gem 'rails-settings-cached'
 group :development do
   gem 'better_errors'
