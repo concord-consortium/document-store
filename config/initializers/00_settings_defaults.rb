@@ -7,6 +7,7 @@ end
 Settings.defaults['admin_name']     = ENV['ADMIN_NAME']     || 'Admin'
 Settings.defaults['admin_email']    = ENV['ADMIN_EMAIL']    || 'admin@concord.org'
 Settings.defaults['admin_password'] = ENV['ADMIN_PASSWORD'] || 'password'
+Settings.defaults['admin_username'] = ENV['ADMIN_USERNAME'] || 'admin'
 
 Settings.defaults['mailer_domain_name']                = ENV['DOMAIN_NAME']                       || 'example.com'
 Settings.defaults['mailer_delivery_method']            = ENV['MAILER_DELIVERY_METHOD']            || :file
