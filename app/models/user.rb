@@ -6,5 +6,5 @@ class User < ActiveRecord::Base
 
   has_many :documents, inverse_of: :owner, foreign_key: 'owner_id'
 
-  validates :username, :uniqueness => true
+  validates :username, uniqueness: true, presence: true
 end
