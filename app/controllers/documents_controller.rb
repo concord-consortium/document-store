@@ -1,5 +1,6 @@
 class DocumentsController < ApplicationController
   before_action :set_document, only: [:show, :edit, :update, :destroy]
+  skip_before_filter :verify_authenticity_token, :only => [:save]
 
   # GET /documents
   # GET /documents.json
@@ -67,7 +68,7 @@ class DocumentsController < ApplicationController
     user = User.find_by_username(codap_api_params[:username])
     raise ActiveRecord::RecordNotFound unless user
     documents = user.documents
-    render json: documents.map {|d| d.content }
+    render json: documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
