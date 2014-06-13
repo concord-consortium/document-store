@@ -65,7 +65,7 @@ class DocumentsController < ApplicationController
 
   # CODAP API
   def all
-    user = User.find_by_username(codap_api_params[:username])
+    user = find_user(codap_api_params[:username])
     raise ActiveRecord::RecordNotFound unless user
     documents = user.documents
     render json: documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
@@ -73,7 +73,7 @@ class DocumentsController < ApplicationController
 
   def open
     if codap_api_params[:recordname] && codap_api_params[:owner]
-      owner = User.find_by_username(codap_api_params[:owner])
+      owner = find_user(codap_api_params[:owner])
       raise ActiveRecord::RecordNotFound unless owner
       document = Document.find_by_owner_id_and_title(owner, codap_api_params[:recordname])
       raise ActiveRecord::RecordNotFound unless document && document.shared
@@ -87,7 +87,7 @@ class DocumentsController < ApplicationController
   end
 
   def save
-    user = User.find_by_username(codap_api_params[:username])
+    user = find_user(codap_api_params[:username])
     raise ActiveRecord::RecordNotFound unless user
 
     content = request.raw_post
@@ -102,6 +102,21 @@ class DocumentsController < ApplicationController
   end
 
   private
+    def find_user(username)
+      if Settings.create_missing_users
+        User.find_or_create_by(username: username) do |u|
+          u.email = "#{username}-autocreated@concord.org"
+          pw = SecureRandom.uuid.to_s
+          u.password = pw
+          u.password_confirmation = pw
+          u.name = "#{username}"
+          u.skip_confirmation!
+        end
+      else
+        User.find_by(username: username)
+      end
+    end
+
     # Use callbacks to share common setup or constraints between actions.
     def set_document
       @document = Document.find(params[:id])

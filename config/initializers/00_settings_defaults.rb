@@ -17,3 +17,7 @@ Settings.defaults['mailer_smtp_authentication_method'] = ENV['MAILER_SMTP_AUTHEN
 Settings.defaults['mailer_smtp_host']                  = ENV['MAILER_SMTP_HOST']                  || 'smtp.gmail.com'
 Settings.defaults['mailer_smtp_port']                  = ENV['MAILER_SMTP_PORT'].nil? ? 587 : ENV['MAILER_SMTP_PORT'].to_i
 Settings.defaults['mailer_smtp_starttls_auto']         = ENV['MAILER_SMTP_STARTTLS_AUTO'].nil? ? true : ENV['MAILER_SMTP_STARTTLS_AUTO']
+
+# Should we automatically create User objects to match the 'username' param passed in via the CODAP API?
+# This should be false except in special server configurations.
+Settings.defaults['create_missing_users'] = false
