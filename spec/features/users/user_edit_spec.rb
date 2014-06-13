@@ -22,7 +22,7 @@ feature 'User edit', :devise do
     fill_in 'Email', :with => 'newemail@example.com'
     fill_in 'Current password', :with => user.password
     click_button 'Update'
-    expect(page).to have_content 'You updated your account successfully.'
+    expect(page).to have_content 'You updated your account successfully, but we need to verify your new email address.'
   end
 
   # Scenario: User cannot edit another user's profile
@@ -31,7 +31,7 @@ feature 'User edit', :devise do
   #   Then I see my own 'edit profile' page
   scenario "user cannot cannot edit another user's profile", :me do
     me = FactoryGirl.create(:user)
-    other = FactoryGirl.create(:user, email: 'other@example.com')
+    other = FactoryGirl.create(:user, email: 'other@example.com', username: 'other')
     login_as(me, :scope => :user)
     visit edit_user_registration_path(other)
     expect(page).to have_content 'Edit User'

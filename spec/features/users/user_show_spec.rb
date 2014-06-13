@@ -29,7 +29,7 @@ feature 'User profile page', :devise do
   #   Then I see an 'access denied' message
   scenario "user cannot see another user's profile" do
     me = FactoryGirl.create(:user)
-    other = FactoryGirl.create(:user, email: 'other@example.com')
+    other = FactoryGirl.create(:user, email: 'other@example.com', username: 'other')
     login_as(me, :scope => :user)
     Capybara.current_session.driver.header 'Referer', root_path
     visit user_path(other)
