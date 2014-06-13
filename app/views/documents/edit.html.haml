@@ -2,6 +2,8 @@
 
 = render 'form'
 
-= link_to 'Show', @document
-\|
-= link_to 'Back', documents_path
+- if can? :read, @document
+  = link_to 'Show', @document
+  \|
+- if can? :list, Document
+  = link_to 'Back', documents_path

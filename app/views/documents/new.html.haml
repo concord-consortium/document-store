@@ -2,4 +2,5 @@
 
 = render 'form'
 
-= link_to 'Back', documents_path
+- if can? :list, Document
+  = link_to 'Back', documents_path

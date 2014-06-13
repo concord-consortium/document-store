@@ -5,7 +5,8 @@ feature 'Document', :codap do
       scenario 'user can list documents' do
         user = FactoryGirl.create(:user, username: 'test')
         doc1 = FactoryGirl.create(:document, owner_id: user.id)
-        visit 'document/all?username=test'
+        signin(user.email, user.password)
+        visit 'document/all'
         expect(page).to have_content %![{"name":"MyText","id":#{doc1.id},"_permissions":0}]!
       end
 
@@ -14,7 +15,8 @@ feature 'Document', :codap do
         user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
         doc1 = FactoryGirl.create(:document, owner_id: user.id)
         doc2 = FactoryGirl.create(:document, owner_id: user2.id)
-        visit 'document/all?username=test2'
+        signin(user2.email, user2.password)
+        visit 'document/all'
         expect(page).to have_content %![{"name":"MyText","id":#{doc2.id},"_permissions":0}]!
       end
     end
@@ -23,7 +25,8 @@ feature 'Document', :codap do
       scenario 'user can open their own document' do
         user = FactoryGirl.create(:user, username: 'test')
         doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
-        visit "document/open?username=test&recordid=#{doc1.id}"
+        signin(user.email, user.password)
+        visit "document/open?recordid=#{doc1.id}"
         expect(page).to have_content %![1,2,3]!
       end
 
@@ -32,6 +35,7 @@ feature 'Document', :codap do
         user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
         doc1 = FactoryGirl.create(:document, owner_id: user.id)
         doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
         visit 'document/open?owner=test2&recordname=test2%20doc'
         expect(page).to have_content %!{"foo":"bar"}!
       end
@@ -41,9 +45,10 @@ feature 'Document', :codap do
         user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
         doc1 = FactoryGirl.create(:document, owner_id: user.id)
         doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
         expect {
           visit 'document/open?owner=test2&recordname=test2%20doc'
-        }.to raise_error(ActiveRecord::RecordNotFound)
+        }.to raise_error(CanCan::AccessDenied)
       end
 
       describe 'errors' do
@@ -52,13 +57,15 @@ feature 'Document', :codap do
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
           doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
           doc2 = FactoryGirl.create(:document, title: "test2 doc", owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
           expect {
-            visit "document/open?username=test&recordid=#{doc2.id}"
-          }.to raise_error(ActiveRecord::RecordNotFound)
+            visit "document/open?recordid=#{doc2.id}"
+          }.to raise_error(CanCan::AccessDenied)
         end
 
         scenario 'user gets 404 when they open a document by id and it does not exist' do
           user = FactoryGirl.create(:user, username: 'test')
+          signin(user.email, user.password)
           expect {
             visit "document/open?username=test&recordid=99999"
           }.to raise_error(ActiveRecord::RecordNotFound)
@@ -69,9 +76,10 @@ feature 'Document', :codap do
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
           doc1 = FactoryGirl.create(:document, owner_id: user.id)
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
           expect {
             visit 'document/open?owner=test2&recordname=something'
-          }.to raise_error(ActiveRecord::RecordNotFound)
+          }.to raise_error(CanCan::AccessDenied)
         end
       end
     end
@@ -80,7 +88,8 @@ feature 'Document', :codap do
       scenario 'user can save their own document' do
         user = FactoryGirl.create(:user, username: 'test')
         expect(Document.find_by(title: "newdoc")).to be_nil
-        page.driver.post 'document/save?username=test&recordname=newdoc', '{ "def": [1,2,3,4] }'
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, 'document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
         doc = Document.find_by(title: "newdoc")
         expect(doc).not_to be_nil
         expect(doc.title).to eq("newdoc")
@@ -94,7 +103,8 @@ feature 'Document', :codap do
         doc2 = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
         expect(Document.find_by(title: "newdoc", owner_id: user.id)).to be_nil
         expect(Document.find_by(title: "newdoc", owner_id: user2.id)).not_to be_nil
-        page.driver.post 'document/save?username=test&recordname=newdoc', '{ "def": [1,2,3,4] }'
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, 'document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
         doc = Document.find_by(title: "newdoc", owner_id: user.id)
         doc2 = Document.find_by(title: "newdoc", owner_id: user2.id)
         expect(doc).not_to be_nil
@@ -106,7 +116,8 @@ feature 'Document', :codap do
       scenario 'user overwrites their own document when a document by the same name exists' do
         user = FactoryGirl.create(:user, username: 'test')
         doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
-        page.driver.post 'document/save?username=test&recordname=newdoc', '{ "def": [1,2,3,4] }'
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, 'document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
         doc.reload
         expect(doc).not_to be_nil
         expect(doc.content).to match({"def" => [1,2,3,4] })

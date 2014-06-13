@@ -1,11 +1,13 @@
 class DocumentsController < ApplicationController
-  before_action :set_document, only: [:show, :edit, :update, :destroy]
+  before_filter :authenticate_user!, :except => [:all, :open, :save]
+  before_filter :load_index_documents, :only => [:index]
+  load_and_authorize_resource
+  skip_load_and_authorize_resource :only => [:all, :save, :open]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
   # GET /documents
   # GET /documents.json
   def index
-    @documents = Document.all
   end
 
   # GET /documents/1
@@ -65,21 +67,20 @@ class DocumentsController < ApplicationController
 
   # CODAP API
   def all
-    user = find_user(codap_api_params[:username])
-    raise ActiveRecord::RecordNotFound unless user
-    documents = user.documents
+    authorize! :all, Document
+    documents = current_user.documents
     render json: documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
     if codap_api_params[:recordname] && codap_api_params[:owner]
-      owner = find_user(codap_api_params[:owner])
+      owner = User.find_by(username: codap_api_params[:owner])
       raise ActiveRecord::RecordNotFound unless owner
-      document = Document.find_by_owner_id_and_title(owner, codap_api_params[:recordname])
-      raise ActiveRecord::RecordNotFound unless document && document.shared
+      document = Document.find_by(owner: owner, title: codap_api_params[:recordname])
+      authorize! :open, document
     elsif codap_api_params[:recordid]
       document = Document.includes(:owner).find(codap_api_params[:recordid])
-      raise ActiveRecord::RecordNotFound unless document && document.owner && document.owner.username == codap_api_params[:username]
+      authorize! :open, document
     else
       raise ActiveRecord::RecordNotFound
     end
@@ -87,40 +88,21 @@ class DocumentsController < ApplicationController
   end
 
   def save
-    user = find_user(codap_api_params[:username])
-    raise ActiveRecord::RecordNotFound unless user
-
     content = request.raw_post
-    Rails.logger.fatal "Content is: '#{content}'"
-    @document = Document.find_or_initialize_by(owner: user, title: codap_api_params[:recordname])
-    @document.form_content = content
+    document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname])
+    authorize! :save, document
+    document.form_content = content
 
-    if @document.save
+    if document.save
       render json: {status: "Created"}, status: :created
     else
-      render json: {status: "Error", errors: @document.errors.full_messages }, status: 400
+      render json: {status: "Error", errors: document.errors.full_messages }, status: 400
     end
   end
 
   private
-    def find_user(username)
-      if Settings.create_missing_users
-        User.find_or_create_by(username: username) do |u|
-          u.email = "#{username}-autocreated@concord.org"
-          pw = SecureRandom.uuid.to_s
-          u.password = pw
-          u.password_confirmation = pw
-          u.name = "#{username}"
-          u.skip_confirmation!
-        end
-      else
-        User.find_by(username: username)
-      end
-    end
-
-    # Use callbacks to share common setup or constraints between actions.
-    def set_document
-      @document = Document.find(params[:id])
+    def load_index_documents
+      @documents = current_user ? current_user.documents : []
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.

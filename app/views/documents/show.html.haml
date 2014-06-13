@@ -13,6 +13,8 @@
   %b Owner:
   = @document.owner_id
 
-= link_to 'Edit', edit_document_path(@document)
-\|
-= link_to 'Back', documents_path
+- if can? :edit, @document
+  = link_to 'Edit', edit_document_path(@document)
+  \|
+- if can? :list, Document
+  = link_to 'Back', documents_path

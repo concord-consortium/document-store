@@ -16,10 +16,20 @@
       %td= document.content
       %td= document.shared
       %td= document.owner_id
-      %td= link_to 'Show', document
-      %td= link_to 'Edit', edit_document_path(document)
-      %td= link_to 'Destroy', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
+      - if can? :read, document
+        %td= link_to 'Show', document
+      - else
+        %td= " "
+      - if can? :update, document
+        %td= link_to 'Edit', edit_document_path(document)
+      - else
+        %td= " "
+      - if can? :destroy, document
+        %td= link_to 'Destroy', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
+      - else
+        %td= " "
 
 %br
 
-= link_to 'New Document', new_document_path
+- if can? :create, Document
+  = link_to 'New Document', new_document_path
