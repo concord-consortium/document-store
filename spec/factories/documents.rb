@@ -3,7 +3,7 @@
 FactoryGirl.define do
   factory :document do
     title "MyText"
-    content "MyText"
+    form_content "{}"
     shared false
     owner_id 1
   end
