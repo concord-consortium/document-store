@@ -34,7 +34,7 @@ feature 'User profile page', :devise do
     Capybara.current_session.driver.header 'Referer', root_path
     expect {
       visit user_path(other)
-    }.to raise_error(CanCan::AccessDenied)
+    }.to raise_error(ActiveRecord::RecordNotFound)
   end
 
 end

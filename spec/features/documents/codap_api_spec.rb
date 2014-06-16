@@ -48,7 +48,7 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         expect {
           visit 'document/open?owner=test2&recordname=test2%20doc'
-        }.to raise_error(CanCan::AccessDenied)
+        }.to raise_error(ActiveRecord::RecordNotFound)
       end
 
       describe 'errors' do
@@ -60,7 +60,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           expect {
             visit "document/open?recordid=#{doc2.id}"
-          }.to raise_error(CanCan::AccessDenied)
+          }.to raise_error(ActiveRecord::RecordNotFound)
         end
 
         scenario 'user gets 404 when they open a document by id and it does not exist' do
@@ -79,7 +79,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           expect {
             visit 'document/open?owner=test2&recordname=something'
-          }.to raise_error(CanCan::AccessDenied)
+          }.to raise_error(ActiveRecord::RecordNotFound)
         end
       end
     end

@@ -20,7 +20,7 @@ feature 'User index page', :devise do
     login_as(user, scope: :user)
     expect {
       visit users_path
-    }.to raise_error(CanCan::AccessDenied)
+    }.to raise_error(ActiveRecord::RecordNotFound)
   end
 
 end
