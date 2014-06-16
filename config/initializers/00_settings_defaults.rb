@@ -21,3 +21,13 @@ Settings.defaults['mailer_smtp_starttls_auto']         = ENV['MAILER_SMTP_STARTT
 # Should we automatically create User objects to match the 'username' param passed in via the CODAP API?
 # This should be false except in special server configurations.
 Settings.defaults['create_missing_users'] = false
+
+
+# Omniauth portal configurations
+# Adding a new portal for authentication is as simple as defining it:
+# Settings['auth.foo'] = {
+#   display_name: 'Foo',
+#   url: 'http://foo.portal.concord.org/',
+#   client_id: 'documentstore',
+#   client_secret: '1234'
+# }

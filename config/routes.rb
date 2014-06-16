@@ -7,6 +7,6 @@ Rails.application.routes.draw do
   post 'document/save' => 'documents#save'
 
   root :to => "home#index"
-  devise_for :users, :controllers => {:registrations => "registrations"}
+  devise_for :users, :controllers => {:registrations => "registrations", :omniauth_callbacks => "omniauth_callbacks"}
   resources :users
 end
