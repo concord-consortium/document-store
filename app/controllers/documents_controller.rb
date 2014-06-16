@@ -92,7 +92,8 @@ class DocumentsController < ApplicationController
 
     content = request.raw_post
     Rails.logger.fatal "Content is: '#{content}'"
-    @document = Document.new(owner: user, title: codap_api_params[:recordname], form_content: content)
+    @document = Document.find_or_initialize_by(owner: user, title: codap_api_params[:recordname])
+    @document.form_content = content
 
     if @document.save
       render json: {status: "Created"}, status: :created

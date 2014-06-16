@@ -104,7 +104,12 @@ feature 'Document', :codap do
       end
 
       scenario 'user overwrites their own document when a document by the same name exists' do
-        skip 'needs test'
+        user = FactoryGirl.create(:user, username: 'test')
+        doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+        page.driver.post 'document/save?username=test&recordname=newdoc', '{ "def": [1,2,3,4] }'
+        doc.reload
+        expect(doc).not_to be_nil
+        expect(doc.content).to match({"def" => [1,2,3,4] })
       end
     end
   end
