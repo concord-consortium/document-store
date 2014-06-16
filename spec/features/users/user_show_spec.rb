@@ -32,8 +32,9 @@ feature 'User profile page', :devise do
     other = FactoryGirl.create(:user, email: 'other@example.com', username: 'other')
     login_as(me, :scope => :user)
     Capybara.current_session.driver.header 'Referer', root_path
-    visit user_path(other)
-    expect(page).to have_content 'Access denied.'
+    expect {
+      visit user_path(other)
+    }.to raise_error(CanCan::AccessDenied)
   end
 
 end
