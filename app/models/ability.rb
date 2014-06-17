@@ -2,9 +2,11 @@ class Ability
   include CanCan::Ability
 
   def initialize(user)
+    # Stuff everyone can do
+    can [:read, :open], Document.shared
+
     if user
         # Document
-        can [:read, :open], Document.shared
         can [:index, :list, :create, :new, :all], Document
         can [:show, :edit, :update, :destroy, :save, :open], Document do |doc|
             doc.owner == user
