@@ -6,18 +6,20 @@ class Ability
     can [:read, :open], Document.shared
 
     if user
-        # Document
-        can [:index, :list, :create, :new, :all], Document
-        can [:show, :edit, :update, :destroy, :save, :open], Document do |doc|
-            doc.owner == user
-        end
+      # Stuff logged in people can do
 
-        # User
-        can [:read, :update], User do |u|
-          u == user
-        end
+      # Document
+      can [:index, :list, :create, :new, :all], Document
+      can [:show, :edit, :update, :destroy, :save, :open], Document do |doc|
+          doc.owner == user
+      end
+
+      # User
+      can [:read, :update], User do |u|
+        u == user
+      end
     else
-      # anonymous can't do anything
+      # anonymous can't do anything else
     end
   end
 end
