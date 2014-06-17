@@ -24,6 +24,8 @@ Settings.defaults['create_missing_users'] = false
 
 
 # Omniauth portal configurations
+Settings.defaults['enable_user_registration'] = false
+
 # Adding a new portal for authentication is as simple as defining it:
 # Settings['auth.foo'] = {
 #   display_name: 'Foo',

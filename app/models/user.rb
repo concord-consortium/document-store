@@ -1,9 +1,14 @@
 class User < ActiveRecord::Base
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
-  devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :trackable, :validatable,
-         :omniauthable, :omniauth_providers => Concord::AuthPortal.all_strategy_names
+  if Settings.enable_user_registration
+    devise :database_authenticatable, :registerable, :confirmable,
+           :recoverable, :rememberable, :trackable, :validatable,
+           :omniauthable, :omniauth_providers => Concord::AuthPortal.all_strategy_names
+  else
+    devise :database_authenticatable, :rememberable, :trackable,
+           :omniauthable, :omniauth_providers => Concord::AuthPortal.all_strategy_names
+  end
 
   has_many :documents, inverse_of: :owner, foreign_key: 'owner_id'
   has_many :authentications, dependent: :delete_all
