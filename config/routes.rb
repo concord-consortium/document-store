@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   # CODAP API
   get 'document/all' => 'documents#all'
   get 'document/open' => 'documents#open'
+  get 'document/launch' => 'documents#launch'
   post 'document/save' => 'documents#save'
 
   root :to => "home#index"

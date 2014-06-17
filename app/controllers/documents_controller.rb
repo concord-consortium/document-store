@@ -2,7 +2,7 @@ class DocumentsController < ApplicationController
   before_filter :authenticate_user!, :except => [:all, :open, :save]
   before_filter :load_index_documents, :only => [:index]
   load_and_authorize_resource
-  skip_load_and_authorize_resource :only => [:all, :save, :open]
+  skip_load_and_authorize_resource :only => [:all, :save, :open, :launch]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
   # GET /documents
@@ -100,6 +100,14 @@ class DocumentsController < ApplicationController
     end
   end
 
+  def launch
+    owner = User.find_by(username: launch_params[:owner])
+    raise ActiveRecord::RecordNotFound unless owner
+    document = Document.find_by(owner: owner, title: launch_params[:recordname])
+    authorize! :open, document
+    redirect_to URI.parse(launch_params[:server]).merge("?doc=#{URI.encode_www_form_component(document.title).gsub("+", "%20")}&owner=#{URI.encode_www_form_component(owner.username).gsub("+", "%20")}").to_s
+  end
+
   private
     def load_index_documents
       @documents = current_user ? current_user.documents : []
@@ -112,5 +120,9 @@ class DocumentsController < ApplicationController
 
     def codap_api_params
       params.permit(:username, :recordname, :recordid, :owner)
+    end
+
+    def launch_params
+      params.permit(:owner, :recordname, :server)
     end
 end
