@@ -47,7 +47,7 @@ class User < ActiveRecord::Base
         name:     auth.extra.name,
         password: Devise.friendly_token[0,20]
       )
-      user.skip_confirmation!
+      user.skip_confirmation! if Settings.enable_user_registration # This isn't defined if local registrations aren't enabled
       user.save
     end
     # create new authentication for this user that we found or created
