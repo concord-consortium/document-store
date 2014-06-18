@@ -15,7 +15,7 @@ class Ability
       end
 
       # User
-      can [:read, :update], User do |u|
+      can [:read, :update, :info], User do |u|
         u == user
       end
     else
