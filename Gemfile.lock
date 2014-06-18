@@ -159,6 +159,7 @@ GEM
     quiet_assets (1.0.2)
       railties (>= 3.1, < 5.0)
     rack (1.5.2)
+    rack-cors (0.2.9)
     rack-test (0.6.2)
       rack (>= 1.0)
     rails (4.1.1)
@@ -294,6 +295,7 @@ DEPENDENCIES
   omniauth-oauth2
   pg
   quiet_assets
+  rack-cors
   rails (= 4.1.1)
   rails-settings-cached
   rails_12factor
