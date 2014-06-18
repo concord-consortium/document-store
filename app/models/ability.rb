@@ -10,7 +10,7 @@ class Ability
 
       # Document
       can [:index, :list, :create, :new, :all], Document
-      can [:show, :edit, :update, :destroy, :save, :open], Document do |doc|
+      can [:read, :show, :edit, :update, :destroy, :save, :open], Document do |doc|
           doc.owner == user
       end
 
