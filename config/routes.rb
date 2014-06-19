@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   get 'document/launch' => 'documents#launch'
   post 'document/save' => 'documents#save'
   get 'user/info' => 'users#info'
+  get 'user/authenticate' => 'users#authenticate'
 
   root :to => "home#index"
   devise_for :users, :controllers => {:registrations => "registrations", :omniauth_callbacks => "omniauth_callbacks"}

@@ -1,5 +1,6 @@
 class UsersController < ApplicationController
-  before_filter :authenticate_user!
+  before_filter :store_return_url, :only => [:authenticate]
+  before_filter :authenticate_user!, :except => [:info]
   skip_before_filter :verify_authenticity_token, :only => [:info]
 
   def index
@@ -10,6 +11,11 @@ class UsersController < ApplicationController
   def show
     @user = User.find(params[:id])
     authorize! :read, @user
+  end
+
+  def authenticate
+    authorize! :authenticate, current_user
+    redirect_to session[:auth_return_url] || root_path
   end
 
   # Generates CODAP-style user info, suitable for passing into its authentication routines
@@ -33,4 +39,11 @@ class UsersController < ApplicationController
     end
   end
 
+  protected
+
+  def store_return_url
+    unless current_user
+      session[:auth_return_url] = request.env["HTTP_REFERER"] || nil
+    end
+  end
 end
