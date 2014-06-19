@@ -1,4 +1,5 @@
 class DocumentsController < ApplicationController
+  before_filter :auto_authenticate, :only => [:launch]
   before_filter :authenticate_user!, :except => [:all, :open, :save]
   before_filter :load_index_documents, :only => [:index]
   load_and_authorize_resource
@@ -115,6 +116,21 @@ class DocumentsController < ApplicationController
   private
     def load_index_documents
       @documents = current_user ? current_user.documents : []
+    end
+
+    def auto_authenticate
+      unless current_user
+        if referer = request.env['HTTP_REFERER']
+          Concord::AuthPortal.all.each_pair do |key,portal|
+            if referer.include?(portal.url)  # may fail if the protocol differs
+              # we came from a configured authentication provider
+              # so let's authenticate ourselves
+              session[:user_return_to] = request.original_url
+              redirect_to omniauth_authorize_path("user", portal.strategy_name)
+            end
+          end
+        end
+      end
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.
