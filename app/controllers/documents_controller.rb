@@ -105,7 +105,11 @@ class DocumentsController < ApplicationController
     raise ActiveRecord::RecordNotFound unless owner
     document = Document.find_by(owner: owner, title: launch_params[:recordname])
     authorize! :open, document
-    redirect_to URI.parse(launch_params[:server]).merge("?doc=#{URI.encode_www_form_component(document.title).gsub("+", "%20")}&owner=#{URI.encode_www_form_component(owner.username).gsub("+", "%20")}").to_s
+    codap_query = '?'
+    codap_query += "doc=" + URI.encode_www_form_component(document.title).gsub("+", "%20")
+    codap_query += "&owner=" + URI.encode_www_form_component(owner.username).gsub("+", "%20")
+    codap_query += "&documentServer=" + URI.encode_www_form_component(root_url).gsub("+", "%20")
+    redirect_to URI.parse(launch_params[:server]).merge(codap_query).to_s
   end
 
   private

@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   # CODAP API
   get 'document/all' => 'documents#all'
   get 'document/open' => 'documents#open'
-  get 'document/launch' => 'documents#launch'
+  get 'document/launch' => 'documents#launch', :as => :launch
   post 'document/save' => 'documents#save'
   get 'user/info' => 'users#info'
   get 'user/authenticate' => 'users#authenticate'
