@@ -15,7 +15,9 @@ class UsersController < ApplicationController
 
   def authenticate
     authorize! :authenticate, current_user
-    redirect_to session[:auth_return_url] || root_path
+    return_url = session[:auth_return_url]
+    session[:auth_return_url] = nil
+    redirect_to return_url || root_path
   end
 
   # Generates CODAP-style user info, suitable for passing into its authentication routines
