@@ -4,6 +4,7 @@ class Ability
   def initialize(user)
     # Stuff everyone can do
     can [:read, :open], Document.shared
+    can [:info], :nil_user
 
     if user
       # Stuff logged in people can do
