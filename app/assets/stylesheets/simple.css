@@ -16,7 +16,18 @@ header {
   margin-bottom: 20px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-ul.nav li {
+.clear {
+  clear: both;
+}
+ul.info {
+  float: right;
+  margin-right: 20px;
+}
+ul.nav {
+  float: left;
+  margin-left: 20px;
+}
+ul.nav li, ul.info li {
   display: inline;
 }
 ul.nav li a {

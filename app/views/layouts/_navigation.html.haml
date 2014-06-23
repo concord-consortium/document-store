@@ -1,3 +1,8 @@
 %ul.nav
   %li= link_to 'Home', root_path
   = render 'layouts/navigation_links'
+
+%ul.info
+  %li= current_user ? current_user.name : "Not logged in"
+
+.clear
