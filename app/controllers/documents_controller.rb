@@ -102,14 +102,25 @@ class DocumentsController < ApplicationController
   end
 
   def launch
-    owner = User.find_by(username: launch_params[:owner])
-    raise ActiveRecord::RecordNotFound unless owner
-    document = Document.find_by(owner: owner, title: launch_params[:recordname])
-    authorize! :open, document
     codap_query = '?'
-    codap_query += "doc=" + URI.encode_www_form_component(document.title).gsub("+", "%20")
-    codap_query += "&owner=" + URI.encode_www_form_component(owner.username).gsub("+", "%20")
-    codap_query += "&documentServer=" + URI.encode_www_form_component(root_url).gsub("+", "%20")
+    codap_query += "documentServer=" + URI.encode_www_form_component(root_url).gsub("+", "%20")
+    if launch_params[:owner] && (title = (launch_params[:recordname] || launch_params[:doc]))
+      owner = User.find_by(username: launch_params[:owner])
+      raise ActiveRecord::RecordNotFound unless owner
+      document = Document.find_by(owner: owner, title: title)
+      codap_query += "&doc=" + URI.encode_www_form_component(document.title).gsub("+", "%20")
+      codap_query += "&owner=" + URI.encode_www_form_component(owner.username).gsub("+", "%20")
+    elsif launch_params[:moreGames]
+      document = :url_document
+      moreGames = launch_params[:moreGames]
+      if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
+        moreGames = moreGames.to_json
+      end
+      codap_query += "&moreGames=" + URI.encode_www_form_component(moreGames).gsub("+", "%20")
+    else
+      raise ActiveRecord::RecordNotFound
+    end
+    authorize! :open, document
     redirect_to URI.parse(launch_params[:server]).merge(codap_query).to_s
   end
 
@@ -143,6 +154,6 @@ class DocumentsController < ApplicationController
     end
 
     def launch_params
-      params.permit(:owner, :recordname, :server)
+      params.permit(:owner, :recordname, :server, :moreGames, :doc)
     end
 end
