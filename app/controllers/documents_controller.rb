@@ -93,6 +93,7 @@ class DocumentsController < ApplicationController
     document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname])
     authorize! :save, document
     document.form_content = content
+    document.shared = document.content['_permissions'] == 1
 
     if document.save
       render json: {status: "Created"}, status: :created
