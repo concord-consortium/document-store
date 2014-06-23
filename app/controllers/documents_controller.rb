@@ -1,6 +1,6 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch]
-  before_filter :authenticate_user!, :except => [:all, :open, :save]
+  before_filter :authenticate_user!, :except => [:all, :open, :save, :launch]
   before_filter :load_index_documents, :only => [:index]
   load_and_authorize_resource
   skip_load_and_authorize_resource :only => [:all, :save, :open, :launch]
@@ -121,8 +121,13 @@ class DocumentsController < ApplicationController
     else
       raise ActiveRecord::RecordNotFound
     end
-    authorize! :open, document
-    redirect_to URI.parse(launch_params[:server]).merge(codap_query).to_s
+    begin
+      authorize! :open, document
+      redirect_to URI.parse(launch_params[:server]).merge(codap_query).to_s
+    rescue CanCan::AccessDenied => e
+      raise e if current_user
+      authenticate_user!
+    end
   end
 
   private
