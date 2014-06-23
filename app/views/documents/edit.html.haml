@@ -1,9 +1,10 @@
+%ul.breadcrumbs
+  %li= link_to 'Home', root_path
+  %li= link_to 'Documents', documents_path
+  %li= link_to @document.title, document_path(@document)
+  %li.current
+    %a{href: '#'} Edit
+
 %h1 Editing document
 
 = render 'form'
-
-- if can? :read, @document
-  = link_to 'Show', @document
-  \|
-- if can? :list, Document
-  = link_to 'Back', documents_path

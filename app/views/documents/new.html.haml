@@ -1,6 +1,9 @@
-%h1 New document
+%ul.breadcrumbs
+  %li= link_to 'Home', root_path
+  %li= link_to 'Documents', documents_path
+  %li.current
+    %a{href: '#'} Create
+
+%h1 Create document
 
 = render 'form'
-
-- if can? :list, Document
-  = link_to 'Back', documents_path

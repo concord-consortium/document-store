@@ -1,4 +1,8 @@
-%p#notice= notice
+%ul.breadcrumbs
+  %li= link_to 'Home', root_path
+  %li= link_to 'Documents', documents_path
+  %li.current
+    %a{href: '#'}= @document.title
 
 %p
   %b Title:
@@ -9,12 +13,10 @@
 %p
   %b Shared:
   = @document.shared
-%p
-  %b Owner:
-  = @document.owner_id
+- if @document.owner != current_user
+  %p
+    %b Owner:
+    = @document.owner_id
 
 - if can? :edit, @document
-  = link_to 'Edit', edit_document_path(@document)
-  \|
-- if can? :list, Document
-  = link_to 'Back', documents_path
+  = link_to 'Edit', edit_document_path(@document), class: :button

@@ -1,35 +1,36 @@
-%h1 Listing documents
+%h1 Your documents
 
 %table
-  %tr
-    %th Title
-    %th Content
-    %th Shared
-    %th Owner
-    %th
-    %th
-    %th
-
-  - @documents.each do |document|
+  %thead
     %tr
-      %td= document.title
-      %td= document.content
-      %td= document.shared
-      %td= document.owner_id
-      - if can? :read, document
-        %td= link_to 'Show', document
-      - else
-        %td= " "
-      - if can? :update, document
-        %td= link_to 'Edit', edit_document_path(document)
-      - else
-        %td= " "
-      - if can? :destroy, document
-        %td= link_to 'Destroy', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
-      - else
-        %td= " "
+      %th{width: 500} Title
+      %th Shared
+      %th
+      %th
+      %th
+
+  %tbody
+    - @documents.each do |document|
+      %tr
+        %td= document.title
+        %td.centered
+          - if document.shared
+            %span.green-check &#x2714;
+
+        - if can? :read, document
+          %td= link_to 'Details', document
+        - else
+          %td= " "
+        - if can? :update, document
+          %td= link_to 'Edit', edit_document_path(document)
+        - else
+          %td= " "
+        - if can? :destroy, document
+          %td= link_to 'Delete', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
+        - else
+          %td= " "
 
 %br
 
 - if can? :create, Document
-  = link_to 'New Document', new_document_path
+  = link_to 'Create Document', new_document_path, class: :button

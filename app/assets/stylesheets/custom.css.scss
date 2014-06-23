@@ -1,0 +1,26 @@
+.simple_form {
+  .hint {
+    position: relative;
+    top: -0.9rem;
+    margin-left: 10px;
+    color: #777;
+    font-style: italic;
+  }
+}
+
+.centered {
+  text-align: center;
+}
+
+.green-check {
+  color: green;
+  font-size: 1.5em;
+}
+
+@import "foundation/components/buttons";
+.button {
+  @include button($radius: rem-calc(15))
+}
+.sso-button {
+  @include button($padding: rem-calc(10), $bg: orange, $radius: rem-calc(7));
+}
