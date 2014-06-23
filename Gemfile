@@ -19,6 +19,7 @@ gem 'cancancan', '~> 1.8'
 gem 'omniauth'
 gem 'omniauth-oauth2'
 gem 'rack-cors', :require => 'rack/cors'
+gem 'foundation-rails'
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]
