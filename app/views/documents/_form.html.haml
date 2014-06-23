@@ -1,19 +1,7 @@
-= form_for @document do |f|
-  - if @document.errors.any?
-    #error_explanation
-      %h2= "#{pluralize(@document.errors.count, "error")} prohibited this document from being saved:"
-      %ul
-        - @document.errors.full_messages.each do |msg|
-          %li= msg
+= simple_form_for @document do |f|
+  = f.error_notification
 
-  .field
-    = f.label :title
-    = f.text_field :title
-  .field
-    = f.label :form_content, "Content"
-    = f.text_area :form_content
-  .field
-    = f.label :shared
-    = f.check_box :shared
-  .actions
-    = f.submit 'Save'
+  = f.input :title, as: :string
+  = f.input :form_content, as: :text, label: "Content", input_html: { rows: 10 }
+  = f.input :shared
+  = f.button :submit
