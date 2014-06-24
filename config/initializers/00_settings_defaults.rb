@@ -24,7 +24,7 @@ Settings.defaults['create_missing_users'] = false
 
 
 # Omniauth portal configurations
-Settings.defaults['enable_user_registration'] = false
+Settings.defaults['enable_user_registration'] = Rails.env != "production"
 
 # Adding a new portal for authentication is as simple as defining it:
 # Settings['auth.foo'] = {

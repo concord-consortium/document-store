@@ -4,6 +4,6 @@ FactoryGirl.define do
     email "test@example.com"
     password "please123"
     username "test"
-    after(:create) {|u| u.confirm! }
+    after(:create) {|u| u.confirm! rescue nil }
   end
 end
