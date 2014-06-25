@@ -68,7 +68,7 @@ class DocumentsController < ApplicationController
 
   # CODAP API
   def all
-    authorize! :all, Document
+    authorize! :all, Document rescue (render_not_authorized && return)
     documents = current_user.documents
     render json: documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
@@ -76,29 +76,28 @@ class DocumentsController < ApplicationController
   def open
     if codap_api_params[:recordname] && codap_api_params[:owner]
       owner = User.find_by(username: codap_api_params[:owner])
-      raise ActiveRecord::RecordNotFound unless owner
-      document = Document.find_by(owner: owner, title: codap_api_params[:recordname])
-      authorize! :open, document
+      document = owner && Document.find_by(owner: owner, title: codap_api_params[:recordname])
     elsif codap_api_params[:recordid]
-      document = Document.includes(:owner).find(codap_api_params[:recordid])
-      authorize! :open, document
+      document = Document.includes(:owner).find(codap_api_params[:recordid]) rescue nil
     else
-      raise ActiveRecord::RecordNotFound
+      render_not_found && return
     end
+    render_not_found && return unless document
+    authorize! :open, document rescue (render_not_authorized && return)
     render json: document.content
   end
 
   def save
     content = request.raw_post
     document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname])
-    authorize! :save, document
+    authorize! :save, document rescue (render_not_authorized && return)
     document.form_content = content
     document.shared = document.content['_permissions'] == 1
 
     if document.save
-      render json: {status: "Created"}, status: :created
+      render json: {status: "Created", valid: true }, status: :created
     else
-      render json: {status: "Error", errors: document.errors.full_messages }, status: 400
+      render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
     end
   end
 
@@ -168,5 +167,15 @@ class DocumentsController < ApplicationController
 
     def auth_params
       params.permit(:auth_provider)
+    end
+
+    def render_not_found
+      authorize! :not_found, :nil_document
+      render json: {valid: false, message: "error.notFound"}, status: 404
+    end
+
+    def render_not_authorized
+      authorize! :not_authorized, :nil_document
+      render json: {valid: false, message: "error.permissions"}, status: 403
     end
 end

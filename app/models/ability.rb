@@ -6,6 +6,7 @@ class Ability
     can [:read, :open], Document.shared
     can [:read, :open], :url_document
     can [:info], :nil_user
+    can [:not_found, :not_authorized], :nil_document
 
     if user
       # Stuff logged in people can do
