@@ -1,147 +1,59 @@
-Documentstore
+Document Store
 =========
-
-This application was generated with the [rails_apps_composer](https://github.com/RailsApps/rails_apps_composer) gem
-provided by the [RailsApps Project](http://railsapps.github.io/).
-
-Diagnostics
------------
-
-This application was built with recipes that are NOT known to work together.
-
-This application was built with preferences that are NOT known to work
-together.
-
-If the application doesn’t work as expected, please [report an issue](https://github.com/RailsApps/rails_apps_composer/issues)
-and include these diagnostics:
-
-We’d also like to know if you’ve found combinations of recipes or
-preferences that do work together.
-
-Recipes:
-
-* controllers
-* core
-* deployment
-* email
-* extras
-* frontend
-* gems
-* git
-* init
-* learn_rails
-* models
-* prelaunch
-* rails_bootstrap
-* rails_devise
-* rails_devise_pundit
-* rails_foundation
-* rails_omniauth
-* rails_signup_download
-* railsapps
-* readme
-* routes
-* saas
-* setup
-* testing
-* tests4
-* views
-
-Preferences:
-
-* git: true
-* apps4: none
-* dev_webserver: unicorn
-* prod_webserver: unicorn
-* database: postgresql
-* templates: haml
-* tests: rspec
-* continuous_testing: guard
-* frontend: simple
-* email: smtp
-* authentication: devise
-* devise_modules: confirmable
-* authorization: none
-* form_builder: none
-* starter_app: users_app
-* rvmrc: true
-* quiet_assets: true
-* better_errors: true
-* ban_spiders: true
-* jsruntime: false
-
-Ruby on Rails
--------------
-
-This application requires:
-
--   Ruby
--   Rails
-
-Learn more about [Installing Rails](http://railsapps.github.io/installing-rails.html).
-
-Database
---------
-
-This application uses PostgreSQL with ActiveRecord.
-
-Development
------------
-
--   Template Engine: Haml
--   Testing Framework: Test::Unit
--   Front-end Framework: None
--   Form Builder: None
--   Authentication: Devise
--   Authorization: None
--   Admin: None
-
-Email
------
-
-The application is configured to send email using a SMTP account.
-
-Email delivery is disabled in development.
 
 Getting Started
 ---------------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Document Store is a basic rails app for storing documents. It handles authentication through OAuth2 with a Concord Consortium
+portal, and/or it's own internal user table.
 
-Documentation and Support
--------------------------
+It relies on PostgreSQL and its JSON column type.
 
-This is the only documentation.
+0. Install dependencies: `bundle install`
+0. Create your database.yml
 
-#### Issues
+        production:
+          adapter:  postgresql
+          host:     localhost
+          encoding: unicode
+          database: documentstore_production
+          pool:     5
+          username: user
+          password: pw
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+0. Create the db: `rake db:create`
+0. Run migrations: `rake db:migrate`
+0. Set up a default user: `rake db:seed`
+0. Start the server: `rails s`
 
-Similar Projects
+Setting up a Portal authentication provider
+-------------------------------------------
+
+0. Set up a new Client in the providing portal:
+
+        Client.create!(name: '<some unique name>', app_id: '<some unique id>', app_secret: '<some unique secret>')
+
+0. In the document store:
+
+        Settings['auth.<some_unqigue_name>'] = {
+          display_name: '<some nicely formatted name>',
+          url: <url to the portal>,
+          client_id: <app_id from above>,
+          client_secret: <app_secret from above>
+        }
+
+0. Restart the document server
+
+Acknowledgements
 ----------------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+This application was generated with the [rails_apps_composer](https://github.com/RailsApps/rails_apps_composer) gem
+provided by the [RailsApps Project](http://railsapps.github.io/).
 
-Contributing
-------------
-
-If you make improvements to this application, please share with others.
-
--   Fork the project on GitHub.
--   Make your feature addition or bug fix.
--   Commit with Git.
--   Send the author a pull request.
-
-If you add functionality to this application, create an alternative
-implementation, or build an application that is similar, please contact
-me and I’ll add a note to the README so that others can find your work.
-
-Credits
--------
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 
 License
 -------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+The Document Store app code is licensed under the MIT License.
+
+All other dependencies are under their own respective licenses.
