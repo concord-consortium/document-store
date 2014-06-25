@@ -29,7 +29,16 @@ Settings.defaults['enable_user_registration'] = Rails.env != "production"
 # Adding a new portal for authentication is as simple as defining it:
 # Settings['auth.foo'] = {
 #   display_name: 'Foo',
-#   url: 'http://foo.portal.concord.org/',
+#   url: 'http://foo.portal.concord.org',
 #   client_id: 'documentstore',
 #   client_secret: '1234'
 # }
+
+if Rails.env == 'test'
+  Settings['auth.bar'] = {
+    display_name: 'Bar',
+    url: 'http://bar.com',
+    client_id: 'documentstore',
+    client_secret: '1234'
+  }
+end

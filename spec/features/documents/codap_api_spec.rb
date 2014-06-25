@@ -40,6 +40,13 @@ feature 'Document', :codap do
         expect(page).to have_content %!{"foo":"bar"}!
       end
 
+      scenario 'anonymous user can open a document shared by another person' do
+        user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+        doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+        visit 'document/open?owner=test2&recordname=test2%20doc'
+        expect(page).to have_content %!{"foo":"bar"}!
+      end
+
       scenario 'user cannot open a document that is not shared by another person' do
         user = FactoryGirl.create(:user, username: 'test')
         user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
@@ -121,6 +128,47 @@ feature 'Document', :codap do
         doc.reload
         expect(doc).not_to be_nil
         expect(doc.content).to match({"def" => [1,2,3,4] })
+      end
+    end
+
+    describe 'launch' do
+      scenario 'user can launch a document via owner and recordname' do
+        visit 'document/launch?owner=test2&recordname=something&server=http://foo.com/'
+        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2'
+      end
+      scenario 'user can launch a document via owner and doc' do
+        visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/'
+        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
+      end
+      scenario 'user can launch a document via moreGames' do
+        visit 'document/launch?server=http://foo.com/&moreGames=%5B%7B%7D%5D'
+        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D'
+      end
+      scenario 'user can be logged in to launch' do
+        # really, the requirement is that we don't need to be logged in, but that's already tested above,
+        # so might as well test the inverse.
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/'
+        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
+      end
+      scenario 'the document does not need to exist to launch' do
+        # this is already tested with the previous tests, but here we go
+        r = SecureRandom.hex
+        visit "document/launch?owner=test2&recordname=#{r}&server=http://foo.com/"
+        expect(page.current_url).to eq "http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=#{r}&owner=test2"
+      end
+      scenario 'the user will be authenticated if auth_provider is set and the user is not logged in' do
+        expect {
+          visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com'
+        }.to raise_error(ActionController::RoutingError) # capybara doesn't handle the redirects well
+        expect(page.current_url).to match 'http://bar.com/auth/concord_id/authorize'
+      end
+      scenario 'the user will not be authenticated if auth_provider is set and the user is logged in' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com/'
+        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
       end
     end
   end
