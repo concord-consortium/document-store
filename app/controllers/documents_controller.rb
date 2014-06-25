@@ -137,13 +137,16 @@ class DocumentsController < ApplicationController
 
     def auto_authenticate
       unless current_user
-        if referer = request.env['HTTP_REFERER']
+        provider = auth_params[:auth_provider]
+        if referer = request.env['HTTP_REFERER'] || provider
           Concord::AuthPortal.all.each_pair do |key,portal|
-            if referer.include?(portal.url)  # may fail if the protocol differs
+            if (referer && referer.include?(portal.url)) ||  # may fail if the protocol differs
+               (provider && provider.include?(portal.url))
               # we came from a configured authentication provider
               # so let's authenticate ourselves
               session[:user_return_to] = request.original_url
               redirect_to omniauth_authorize_path("user", portal.strategy_name)
+              return
             end
           end
         end
@@ -161,5 +164,9 @@ class DocumentsController < ApplicationController
 
     def launch_params
       params.permit(:owner, :recordname, :server, :moreGames, :doc)
+    end
+
+    def auth_params
+      params.permit(:auth_provider)
     end
 end
