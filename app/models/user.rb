@@ -4,10 +4,12 @@ class User < ActiveRecord::Base
   if Settings.enable_user_registration
     devise :database_authenticatable, :registerable, :confirmable,
            :recoverable, :rememberable, :trackable, :validatable,
-           :omniauthable, :omniauth_providers => Concord::AuthPortal.all_strategy_names
+           :omniauthable, :timeoutable, :timeout_in => 1.hour,
+           :omniauth_providers => Concord::AuthPortal.all_strategy_names
   else
     devise :database_authenticatable, :rememberable, :trackable,
-           :omniauthable, :omniauth_providers => Concord::AuthPortal.all_strategy_names
+           :omniauthable, :timeoutable, :timeout_in => 1.hour,
+           :omniauth_providers => Concord::AuthPortal.all_strategy_names
   end
 
   has_many :documents, inverse_of: :owner, foreign_key: 'owner_id'
