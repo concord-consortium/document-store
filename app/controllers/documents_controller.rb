@@ -135,7 +135,7 @@ class DocumentsController < ApplicationController
               # so let's authenticate ourselves
               session[:user_return_to] = request.original_url
               redirect_to omniauth_authorize_path("user", portal.strategy_name)
-              return
+              return true
             end
           end
         end
