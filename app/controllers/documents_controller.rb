@@ -1,7 +1,8 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch]
-  before_filter :authenticate_user!, :except => [:all, :open, :save, :launch]
-  before_filter :load_index_documents, :only => [:index]
+  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :launch]
+  before_filter :run_key_or_authenticate, :only => [:index, :show]
+  before_filter :load_index_documents, :only => [:index, :all]
   load_and_authorize_resource
   skip_load_and_authorize_resource :only => [:all, :save, :open, :launch]
   skip_before_filter :verify_authenticity_token, :only => [:save]
@@ -69,14 +70,14 @@ class DocumentsController < ApplicationController
   # CODAP API
   def all
     authorize! :all, Document rescue (render_not_authorized && return)
-    documents = current_user.documents
-    render json: documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
+    render json: @documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
-    if codap_api_params[:recordname] && codap_api_params[:owner]
+    if codap_api_params[:recordname]
       owner = User.find_by(username: codap_api_params[:owner])
-      document = owner && Document.find_by(owner: owner, title: codap_api_params[:recordname])
+      document = Document.find_by(owner: owner, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
+      document = Document.find_by(owner: owner, title: codap_api_params[:recordname], run_key: nil) if document.nil?
     elsif codap_api_params[:recordid]
       document = Document.includes(:owner).find(codap_api_params[:recordid]) rescue nil
     else
@@ -89,7 +90,7 @@ class DocumentsController < ApplicationController
 
   def save
     content = request.raw_post
-    document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname])
+    document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
     authorize! :save, document rescue (render_not_authorized && return)
     document.form_content = content
     document.shared = document.content['_permissions'] == 1
@@ -121,7 +122,19 @@ class DocumentsController < ApplicationController
 
   private
     def load_index_documents
-      @documents = current_user ? current_user.documents : []
+      if current_user
+        if codap_api_params[:runKey]
+          @documents = Document.where(owner_id: current_user.id, run_key: codap_api_params[:runKey])
+        else
+          @documents = current_user.documents
+        end
+      else
+        if codap_api_params[:runKey]
+          @documents = Document.where(owner_id: nil, run_key: codap_api_params[:runKey])
+        else
+          @documents = []
+        end
+      end
     end
 
     def auto_authenticate
@@ -142,17 +155,23 @@ class DocumentsController < ApplicationController
       end
     end
 
+
+    def run_key_or_authenticate
+      return true if codap_api_params[:runKey]
+      return authenticate_user!
+    end
+
     # Never trust parameters from the scary internet, only allow the white list through.
     def document_params
       params.require(:document).permit(:title, :content, :shared, :form_content)
     end
 
     def codap_api_params
-      params.permit(:username, :recordname, :recordid, :owner)
+      params.permit(:recordname, :recordid, :owner, :runKey)
     end
 
     def launch_params
-      params.permit(:owner, :recordname, :server, :moreGames, :doc)
+      params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey)
     end
 
     def auth_params

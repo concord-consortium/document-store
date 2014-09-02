@@ -14,4 +14,12 @@ class ApplicationController < ActionController::Base
   def after_sign_in_path_for(resource)
     session['user_return_to'] || root_path
   end
+
+  def current_ability
+    @current_ability ||= Ability.new(current_user, access_params)
+  end
+
+  def access_params
+    params.permit(:runKey)
+  end
 end

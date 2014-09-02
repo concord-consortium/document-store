@@ -37,7 +37,11 @@ class UsersController < ApplicationController
       }
     else
       authorize! :info, :nil_user
-      render json: {valid: false}, status: 401
+      info = {
+        valid: false,
+        enableSave: !!codapParams[:runKey]
+      }
+      render json: info, status: 401
     end
   end
 
@@ -47,5 +51,9 @@ class UsersController < ApplicationController
     unless current_user
       session[:auth_return_url] = request.env["HTTP_REFERER"] || nil
     end
+  end
+
+  def codapParams
+    params.permit(:runKey)
   end
 end

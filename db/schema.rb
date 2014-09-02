@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140616212832) do
+ActiveRecord::Schema.define(version: 20140902175846) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -35,8 +35,10 @@ ActiveRecord::Schema.define(version: 20140616212832) do
     t.integer  "owner_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "run_key"
   end
 
+  add_index "documents", ["owner_id", "title", "run_key"], name: "index_documents_on_owner_id_and_title_and_run_key", using: :btree
   add_index "documents", ["owner_id", "title"], name: "index_documents_on_owner_id_and_title", using: :btree
   add_index "documents", ["shared"], name: "index_documents_on_shared", using: :btree
 

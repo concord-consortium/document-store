@@ -19,6 +19,22 @@ feature 'Document', :codap do
         visit 'document/all'
         expect(page).to have_content %![{"name":"MyText","id":#{doc2.id},"_permissions":0}]!
       end
+
+      scenario 'anonymous always lists no documents' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc1 = FactoryGirl.create(:document, owner_id: user.id)
+        doc2 = FactoryGirl.create(:document, owner_id: nil)
+        visit 'document/all'
+        expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+      end
+
+      scenario 'anonymous lists only documents with the specified run key' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc1 = FactoryGirl.create(:document, owner_id: user.id, run_key: 'foo')
+        doc2 = FactoryGirl.create(:document, owner_id: nil, run_key: 'foo')
+        visit 'document/all?runKey=foo'
+        expect(page).to have_content %![{"name":"#{doc2.title}","id":#{doc2.id},"_permissions":0}]!
+      end
     end
 
     describe 'open' do
@@ -40,13 +56,6 @@ feature 'Document', :codap do
         expect(page).to have_content %!{"foo":"bar"}!
       end
 
-      scenario 'anonymous user can open a document shared by another person' do
-        user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
-        doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
-        visit 'document/open?owner=test2&recordname=test2%20doc'
-        expect(page).to have_content %!{"foo":"bar"}!
-      end
-
       scenario 'user cannot open a document that is not shared by another person' do
         user = FactoryGirl.create(:user, username: 'test')
         user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
@@ -56,6 +65,54 @@ feature 'Document', :codap do
         visit 'document/open?owner=test2&recordname=test2%20doc'
         expect(page.status_code).to eq(403)
         expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+      end
+
+      describe 'anonymous' do
+        scenario 'anonymous user can open a document shared by another person' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          visit 'document/open?owner=test2&recordname=test2%20doc'
+          expect(page).to have_content %!{"foo":"bar"}!
+        end
+
+        scenario 'anonymous user can not open a document not shared by another person' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          visit 'document/open?owner=test2&recordname=test2%20doc'
+          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+        end
+
+        scenario 'anonymous user can open a document shared by another person while providing a run key' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          visit 'document/open?owner=test2&recordname=test2%20doc&runKey=foo'
+          expect(page).to have_content %!{"foo":"bar"}!
+        end
+
+        scenario 'anonymous user can open an owner-less document with a matching run_key' do
+          doc = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: nil, run_key: 'run1', form_content: '{ "foo": "bar2" }')
+          visit 'document/open?runKey=run1&recordname=test2%20doc'
+          expect(page).to have_content %!{"foo":"bar2"}!
+        end
+
+        scenario 'anonymous user can open an owner-less document with a matching run_key' do
+          doc = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: nil, run_key: 'run1', form_content: '{ "foo": "bar2" }')
+          visit 'document/open?runKey=run1&owner=&recordname=test2%20doc'
+          expect(page).to have_content %!{"foo":"bar2"}!
+        end
+
+        scenario 'anonymous user can not open an owner-less document with a non-matching run_key' do
+          doc = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: nil, run_key: 'run2', form_content: '{ "foo": "bar2" }')
+          visit 'document/open?runKey=run1&recordname=test2%20doc'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+        end
+
+        scenario 'anonymous user can not open a document owned by another person even with the correct run_key' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, run_key: 'run2', form_content: '{ "foo": "bar" }')
+          visit 'document/open?runKey=run2&owner=test2&recordname=test2%20doc'
+          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+        end
       end
 
       describe 'errors' do
@@ -129,11 +186,52 @@ feature 'Document', :codap do
         expect(doc).not_to be_nil
         expect(doc.content).to match({"def" => [1,2,3,4] })
       end
+
+      describe 'anonymous' do
+        scenario 'user cannot save documents when no run_key is present' do
+          expect(Document.find_by(title: "newdoc")).to be_nil
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc")
+          expect(doc).to be_nil
+        end
+
+        scenario 'user can save documents when a run_key is present' do
+          expect(Document.find_by(title: "newdoc")).to be_nil
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc&runKey=foo', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc")
+          expect(doc).not_to be_nil
+          expect(doc.title).to eq("newdoc")
+          expect(doc.content).to match({"def" => [1,2,3,4] })
+          expect(doc.owner_id).to be_nil
+        end
+
+        scenario 'user overwrites their own document when a document by the same name exists with the same run_key' do
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: nil, run_key: 'foo', form_content: '{ "foo": "bar" }')
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc&runKey=foo', '{ "def": [1,2,3,4] }'
+          doc.reload
+          expect(doc).not_to be_nil
+          expect(doc.content).to match({"def" => [1,2,3,4] })
+        end
+
+        scenario 'user creates a new document when a document by the same name exists with a different run_key' do
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: nil, run_key: 'foo', form_content: '{ "foo": "bar" }')
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc&runKey=bar', '{ "def": [1,2,3,4] }'
+          doc.reload
+          docs = Document.where(title: 'newdoc', owner_id: nil)
+          expect(docs.size).to be 2
+          doc2 = docs.detect {|d| d != doc }
+          expect(doc.content).to match({"foo" => "bar"})
+          expect(doc.run_key).to eq('foo')
+          expect(doc2.content).to match({"def" => [1,2,3,4] })
+          expect(doc2.run_key).to eq('bar')
+        end
+
+      end
     end
 
     describe 'launch' do
       scenario 'user can launch a document via owner and recordname' do
-        visit 'document/launch?owner=test2&recordname=something&server=http://foo.com/'
+        visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/'
         expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2'
       end
       scenario 'user can launch a document via owner and doc' do
@@ -169,6 +267,26 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com/'
         expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
+      end
+    end
+
+    describe 'info' do
+      scenario 'anonymous save is disabled' do
+        visit "/user/info"
+        expect(page.status_code).to eq(401)
+        expect(page).to have_content %!{"valid":false,"enableSave":false}!
+      end
+      scenario 'anonymous save is enabled if a runKey is available' do
+        visit "/user/info?runKey=foo"
+        expect(page.status_code).to eq(401)
+        expect(page).to have_content %!{"valid":false,"enableSave":true}!
+      end
+      scenario 'anonymous save is disabled' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        visit "/user/info"
+        expect(page.status_code).to eq(200)
+        expect(page).to have_content %!{"valid":true,"sessionToken":"abc123","enableLogging":false,"privileges":0,"useCookie":false,"enableSave":true,"username":"test","name":"Test User"}!
       end
     end
   end

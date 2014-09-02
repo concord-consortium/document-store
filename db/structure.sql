@@ -74,7 +74,8 @@ CREATE TABLE documents (
     shared boolean DEFAULT false,
     owner_id integer,
     created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updated_at timestamp without time zone,
+    run_key character varying(255)
 );
 
 
@@ -268,6 +269,13 @@ CREATE INDEX index_documents_on_owner_id_and_title ON documents USING btree (own
 
 
 --
+-- Name: index_documents_on_owner_id_and_title_and_run_key; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_documents_on_owner_id_and_title_and_run_key ON documents USING btree (owner_id, title, run_key);
+
+
+--
 -- Name: index_documents_on_shared; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -328,4 +336,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140611181651');
 INSERT INTO schema_migrations (version) VALUES ('20140611210654');
 
 INSERT INTO schema_migrations (version) VALUES ('20140616212832');
+
+INSERT INTO schema_migrations (version) VALUES ('20140902175846');
 
