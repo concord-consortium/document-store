@@ -1,3 +1,6 @@
+:javascript
+  hljs.initHighlightingOnLoad();
+
 %ul.breadcrumbs
   %li= link_to 'Home', root_path
   %li= link_to 'Documents', documents_path
@@ -8,15 +11,16 @@
   %b Title:
   = @document.title
 %p
-  %b Content:
-  = @document.content
-%p
   %b Shared:
   = @document.shared
 - if @document.owner != current_user
   %p
     %b Owner:
     = @document.owner_id
+%p
+  %b Content:
+  %pre
+    %code.json= JSON.pretty_generate(@document.content)
 
 - if can? :edit, @document
   = link_to 'Edit', edit_document_path(@document), class: :button

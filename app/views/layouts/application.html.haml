@@ -5,8 +5,10 @@
     %meta{:name => "viewport", :content => "width=device-width, initial-scale=1.0"}
     %title= content_for?(:title) ? yield(:title) : 'DocumentStore'
     %meta{:name => "description", :content => "#{content_for?(:description) ? yield(:description) : 'Documentstore'}"}
+    = stylesheet_link_tag '//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.2/styles/tomorrow.min.css', media: 'all'
     = stylesheet_link_tag 'application', media: 'all'
     = javascript_include_tag 'vendor/modernizr'
+    = javascript_include_tag '//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.2/highlight.min.js'
     = csrf_meta_tags
   %body
     = render 'layouts/navigation'
