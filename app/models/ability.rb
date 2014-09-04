@@ -16,7 +16,7 @@ class Ability
       # Document
       can [:index, :list, :create, :new, :all], Document
       can [:read, :show, :edit, :update, :destroy, :save, :open], Document do |doc|
-          doc.owner == user
+          doc.owner == user || (doc.owner.nil? && doc.run_key == extra[:runKey])
       end
 
       # User

@@ -95,7 +95,7 @@ feature 'Document', :codap do
           expect(page).to have_content %!{"foo":"bar2"}!
         end
 
-        scenario 'anonymous user can open an owner-less document with a matching run_key' do
+        scenario 'anonymous user can open an owner-less document with a matching run_key (second url)' do
           doc = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: nil, run_key: 'run1', form_content: '{ "foo": "bar2" }')
           visit 'document/open?runKey=run1&owner=&recordname=test2%20doc'
           expect(page).to have_content %!{"foo":"bar2"}!
@@ -112,6 +112,38 @@ feature 'Document', :codap do
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, run_key: 'run2', form_content: '{ "foo": "bar" }')
           visit 'document/open?runKey=run2&owner=test2&recordname=test2%20doc'
           expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+        end
+
+        scenario 'logged in user can open a non-shared document owned by anonymous with the correct run key' do
+          user = FactoryGirl.create(:user, username: 'test3', email: 'test3@email.com')
+          doc = FactoryGirl.create(:document, title: "test3 doc", shared: false, owner_id: nil, run_key: 'biz', form_content: '{ "foo": "baz" }')
+          signin(user.email, user.password)
+          visit 'document/open?recordname=test3%20doc&runKey=biz'
+          expect(page).to have_content %!{"foo":"baz"}!
+        end
+
+        scenario 'logged in user can open a non-shared document owned by anonymous with the correct run key (second url)' do
+          user = FactoryGirl.create(:user, username: 'test3', email: 'test3@email.com')
+          doc = FactoryGirl.create(:document, title: "test3 doc", shared: false, owner_id: nil, run_key: 'biz', form_content: '{ "foo": "baz" }')
+          signin(user.email, user.password)
+          visit 'document/open?owner=&recordname=test3%20doc&runKey=biz'
+          expect(page).to have_content %!{"foo":"baz"}!
+        end
+
+        scenario 'logged in user cannot open a non-shared document owned by anonymous with the incorrect run key' do
+          user = FactoryGirl.create(:user, username: 'test3', email: 'test3@email.com')
+          doc = FactoryGirl.create(:document, title: "test3 doc", shared: false, owner_id: nil, run_key: 'biz', form_content: '{ "foo": "baz" }')
+          signin(user.email, user.password)
+          visit 'document/open?recordname=test3%20doc&runKey=baz'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+        end
+
+        scenario 'logged in user cannot open a non-shared document owned by anonymous with the incorrect run key (second url)' do
+          user = FactoryGirl.create(:user, username: 'test3', email: 'test3@email.com')
+          doc = FactoryGirl.create(:document, title: "test3 doc", shared: false, owner_id: nil, run_key: 'biz', form_content: '{ "foo": "baz" }')
+          signin(user.email, user.password)
+          visit 'document/open?owner=&recordname=test3%20doc&runKey=baz'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
         end
       end
 

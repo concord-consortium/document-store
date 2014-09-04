@@ -75,9 +75,16 @@ class DocumentsController < ApplicationController
 
   def open
     if codap_api_params[:recordname]
-      owner = User.find_by(username: codap_api_params[:owner])
-      document = Document.find_by(owner: owner, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
-      document = Document.find_by(owner: owner, title: codap_api_params[:recordname], run_key: nil) if document.nil?
+      if codap_api_params[:owner] && !codap_api_params[:owner].empty?
+        owner = User.find_by(username: codap_api_params[:owner])
+        owner_id = owner ? owner.id : -1
+      else
+        owner_id = nil
+      end
+      if owner_id != -1
+        document = Document.find_by(owner_id: owner_id, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
+        document = Document.find_by(owner_id: owner_id, title: codap_api_params[:recordname], run_key: nil) if document.nil?
+      end
     elsif codap_api_params[:recordid]
       document = Document.includes(:owner).find(codap_api_params[:recordid]) rescue nil
     else
