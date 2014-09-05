@@ -7,6 +7,11 @@ class DocumentsController < ApplicationController
   skip_load_and_authorize_resource :only => [:all, :save, :open, :launch]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
+  include DocumentsHelper
+
+  cattr_accessor :run_key_generator
+  self.run_key_generator = lambda { return SecureRandom.uuid }
+
   # GET /documents
   # GET /documents.json
   def index
@@ -74,22 +79,7 @@ class DocumentsController < ApplicationController
   end
 
   def open
-    if codap_api_params[:recordname]
-      if codap_api_params[:owner] && !codap_api_params[:owner].empty?
-        owner = User.find_by(username: codap_api_params[:owner])
-        owner_id = owner ? owner.id : -1
-      else
-        owner_id = nil
-      end
-      if owner_id != -1
-        document = Document.find_by(owner_id: owner_id, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
-        document = Document.find_by(owner_id: owner_id, title: codap_api_params[:recordname], run_key: nil) if document.nil?
-      end
-    elsif codap_api_params[:recordid]
-      document = Document.includes(:owner).find(codap_api_params[:recordid]) rescue nil
-    else
-      render_not_found && return
-    end
+    document = find_doc_via_params
     render_not_found && return unless document
     authorize! :open, document rescue (render_not_authorized && return)
     render json: document.content
@@ -110,21 +100,25 @@ class DocumentsController < ApplicationController
   end
 
   def launch
-    codap_query = '?'
-    codap_query += "documentServer=" + URI.encode_www_form_component(root_url).gsub("+", "%20")
-    if launch_params[:owner] && (title = (launch_params[:recordname] || launch_params[:doc]))
-      codap_query += "&doc=" + URI.encode_www_form_component(title).gsub("+", "%20")
-      codap_query += "&owner=" + URI.encode_www_form_component(launch_params[:owner]).gsub("+", "%20")
+    @codap_server = launch_params[:server]
+    if launch_params[:runKey]
+      @runKey = launch_params[:runKey]
+      @sendRunKey = false
+    else
+      @runKey = self.run_key_generator.call
+      @sendRunKey = true
+    end
+    if launch_params[:owner] && (launch_params[:recordname] || launch_params[:doc])
+      @master_document = find_doc_via_params(launch_params)
+      @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey) - [@master_document]
     elsif launch_params[:moreGames]
       moreGames = launch_params[:moreGames]
       moreGames = moreGames.to_json if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
-      codap_query += "&moreGames=" + URI.encode_www_form_component(moreGames).gsub("+", "%20")
-    else
-      codap_query += "&doc=notfound&owner=nobody"
+      @moreGamesLink = codap_link(@codap_server, moreGames)
     end
 
     authorize! :open, :url_document
-    redirect_to URI.parse(launch_params[:server]).merge(codap_query).to_s
+    render layout: 'launch'
   end
 
   private
@@ -166,6 +160,25 @@ class DocumentsController < ApplicationController
     def run_key_or_authenticate
       return true if codap_api_params[:runKey]
       return authenticate_user!
+    end
+
+    def find_doc_via_params(p = codap_api_params)
+      document = nil
+      if title = (p[:recordname] || p[:doc])
+        if p[:owner] && !p[:owner].empty?
+          owner = User.find_by(username: p[:owner])
+          owner_id = owner ? owner.id : -1
+        else
+          owner_id = nil
+        end
+        if owner_id != -1
+          document = Document.find_by(owner_id: owner_id, title: title, run_key: p[:runKey])
+          document = Document.find_by(owner_id: owner_id, title: title, run_key: nil) if document.nil?
+        end
+      elsif p[:recordid]
+        document = Document.includes(:owner).find(p[:recordid]) rescue nil
+      end
+      return document
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.

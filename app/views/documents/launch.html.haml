@@ -1,0 +1,23 @@
+.row
+  -if @master_document || @moreGamesLink
+    .small-1.columns{style: "margin-top: 5px;"}
+      Launch:
+    - if @master_document
+      .small-2.columns
+        = link_to 'Original', codap_link(@codap_server, @master_document), class: :"launch-button", target: "_blank"
+    - if @moreGamesLink
+      .small-2.columns
+        = link_to 'Original', @moreGamesLink, class: :"launch-button", target: "_blank"
+    - if @supplemental_documents && @supplemental_documents.size > 0
+      .small-1.columns{style: "margin-top: 5px;"}
+        or
+      .small-8.columns
+        .ul.launch-block-grid
+          - @supplemental_documents.each do |d|
+            %li= link_to "Saved: #{d.title}", codap_link(@codap_server, d), class: :"launch-button", target: "_blank"
+    - else
+      .small-9.columns
+        &nbsp;
+  - else
+    .small-12.columns{style: "color: #990000" }
+      Error: The requested document could not be found.

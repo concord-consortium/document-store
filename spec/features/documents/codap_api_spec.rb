@@ -262,43 +262,155 @@ feature 'Document', :codap do
     end
 
     describe 'launch' do
+      before(:each) do
+        DocumentsController.run_key_generator = lambda { return 'foo' }
+      end
       scenario 'user can launch a document via owner and recordname' do
+        user = FactoryGirl.create(:user, username: 'test2')
+        doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
         visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/'
-        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2'
+        expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=foo']"
       end
       scenario 'user can launch a document via owner and doc' do
-        visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/'
-        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
+        user = FactoryGirl.create(:user, username: 'test2')
+        doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+        visit 'document/launch?owner=test2&doc=something2&server=http://foo.com/'
+        expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2&runKey=foo']"
       end
       scenario 'user can launch a document via moreGames' do
         visit 'document/launch?server=http://foo.com/&moreGames=%5B%7B%7D%5D'
-        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D'
+        expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=foo']"
       end
       scenario 'user can be logged in to launch' do
         # really, the requirement is that we don't need to be logged in, but that's already tested above,
         # so might as well test the inverse.
-        user = FactoryGirl.create(:user, username: 'test')
-        signin(user.email, user.password)
+        user = FactoryGirl.create(:user, username: 'test2')
+        doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+        user2 = FactoryGirl.create(:user, username: 'test3')
+        signin(user2.email, user2.password)
         visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/'
-        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
+        expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2&runKey=foo']"
       end
-      scenario 'the document does not need to exist to launch' do
-        # this is already tested with the previous tests, but here we go
+      scenario 'the document needs to exist to launch' do
         r = SecureRandom.hex
         visit "document/launch?owner=test2&recordname=#{r}&server=http://foo.com/"
-        expect(page.current_url).to eq "http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=#{r}&owner=test2"
+        expect(page).to have_content "Error: The requested document could not be found."
       end
-      scenario 'the user will be authenticated if auth_provider is set and the user is not logged in' do
-        expect {
-          visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com'
-        }.to raise_error(ActionController::RoutingError) # capybara doesn't handle the redirects well
-        expect(page.current_url).to match 'http://bar.com/auth/concord_id/authorize'
+      describe 'run key provided' do
+        describe 'anonymous' do
+          scenario 'can launch a document via owner and recordname' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+          end
+          scenario 'also has a single document that matches the run key, a link to it is displayed too' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath '//a[@href="http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar"]'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=&runKey=bar']"
+          end
+          scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something3&owner=&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something4&owner=&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something5&owner=&runKey=bar']"
+          end
+          scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something3&owner=&runKey=bar']"
+            expect(page).not_to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something4&']"
+            expect(page).not_to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something5&']"
+          end
+        end
+        describe 'logged in user' do
+          scenario 'can launch a document via owner and recordname' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            signin(user4.email, user4.password)
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+          end
+          scenario 'also has a single document that matches the run key, a link to it is displayed too' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            signin(user4.email, user4.password)
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test4&runKey=bar']"
+          end
+          scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            signin(user4.email, user4.password)
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test4&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something3&owner=test4&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something4&owner=test4&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something5&owner=test4&runKey=bar']"
+          end
+          scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
+            user = FactoryGirl.create(:user, username: 'test2')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            signin(user4.email, user4.password)
+            visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test2&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something&owner=test4&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something3&owner=test4&runKey=bar']"
+            expect(page).not_to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something4&']"
+            expect(page).not_to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something5&']"
+          end
+        end
       end
-      scenario 'the user will not be authenticated if auth_provider is set and the user is logged in' do
-        user = FactoryGirl.create(:user, username: 'test')
-        signin(user.email, user.password)
-        visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com/'
-        expect(page.current_url).to eq 'http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2'
+      describe 'auto authentication' do
+        scenario 'the user will be authenticated if auth_provider is set and the user is not logged in' do
+          user = FactoryGirl.create(:user, username: 'test2')
+          doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          expect {
+            visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com'
+          }.to raise_error(ActionController::RoutingError) # capybara doesn't handle the redirects well
+          expect(page.current_url).to match 'http://bar.com/auth/concord_id/authorize'
+        end
+        scenario 'the user will not be authenticated if auth_provider is set and the user is logged in' do
+          user = FactoryGirl.create(:user, username: 'test2')
+          doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          user2 = FactoryGirl.create(:user, username: 'test4')
+          signin(user2.email, user2.password)
+          visit 'document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com/'
+          expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&doc=something2&owner=test2&runKey=foo']"
+        end
       end
     end
 
@@ -313,7 +425,7 @@ feature 'Document', :codap do
         expect(page.status_code).to eq(401)
         expect(page).to have_content %!{"valid":false,"enableSave":true}!
       end
-      scenario 'anonymous save is disabled' do
+      scenario 'logged in users have accurate info' do
         user = FactoryGirl.create(:user, username: 'test')
         signin(user.email, user.password)
         visit "/user/info"
