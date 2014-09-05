@@ -21,6 +21,7 @@ gem 'omniauth-oauth2'
 gem 'rack-cors', :require => 'rack/cors'
 gem 'foundation-rails'
 gem 'simple_form'
+gem 'newrelic_rpm'
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]
