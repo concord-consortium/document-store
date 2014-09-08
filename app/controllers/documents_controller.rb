@@ -117,6 +117,12 @@ class DocumentsController < ApplicationController
       @moreGamesLink = codap_link(@codap_server, moreGames)
     end
 
+    @learner_url = Addressable::URI.parse(request.original_url)
+    new_query = @learner_url.query_values || {}
+    new_query["runKey"] = @runKey
+    @learner_url.query_values = new_query
+    @learner_url = @learner_url.to_s
+
     authorize! :open, :url_document
     render layout: 'launch'
   end

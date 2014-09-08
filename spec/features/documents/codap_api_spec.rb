@@ -412,6 +412,46 @@ feature 'Document', :codap do
           expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something2&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=foo']"
         end
       end
+      describe 'LARA integration' do
+        scenario 'page has correct iframe phone code' do
+          user = FactoryGirl.create(:user, username: 'test2')
+          doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          visit '/document/launch?owner=test2&doc=something&server=http://foo.com/'
+          expect(page.html).to have_text(
+            <<-JS
+              phone.addListener('getLearnerUrl', function () {
+                phone.post('setLearnerUrl', 'http://www.example.com/document/launch?doc=something&owner=test2&runKey=foo&server=http%3A%2F%2Ffoo.com%2F');
+              });
+            JS
+          )
+          expect(page.html).to have_text(
+            <<-JS
+              phone.addListener('getInteractiveState', function () {
+                phone.post('interactiveState', {runKey: 'foo'});
+              });
+            JS
+          )
+        end
+        scenario 'page has correct iframe phone code when the runKey is supplied' do
+          user = FactoryGirl.create(:user, username: 'test2')
+          doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          visit '/document/launch?owner=test2&doc=something&server=http://foo.com/&runKey=bar'
+          expect(page.html).to have_text(
+            <<-JS
+              phone.addListener('getLearnerUrl', function () {
+                phone.post('setLearnerUrl', 'http://www.example.com/document/launch?doc=something&owner=test2&runKey=bar&server=http%3A%2F%2Ffoo.com%2F');
+              });
+            JS
+          )
+          expect(page.html).to have_text(
+            <<-JS
+              phone.addListener('getInteractiveState', function () {
+                phone.post('interactiveState', {runKey: 'bar'});
+              });
+            JS
+          )
+        end
+      end
     end
 
     describe 'info' do

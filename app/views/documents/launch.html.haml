@@ -21,3 +21,13 @@
   - else
     .small-12.columns{style: "color: #990000" }
       Error: The requested document could not be found.
+:javascript
+  var phone = iframePhone.getIFrameEndpoint();
+  phone.addListener('getLearnerUrl', function () {
+    phone.post('setLearnerUrl', '#{@learner_url}');
+  });
+  phone.addListener('getInteractiveState', function () {
+    phone.post('interactiveState', {runKey: '#{@runKey}'});
+  });
+  // Initialize connection after all message listeners are added!
+  phone.initialize();
