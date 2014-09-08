@@ -8,7 +8,7 @@ module Concord
     AccessTokenUrl    = "/auth/concord_id/access_token"
 
     def self.configured_portal_names
-      Settings.get_all('auth.').keys.map {|k| k.sub(/^auth\./, '') }
+      Settings.get_all('auth.').keys.map {|k| k.sub(/^auth\./, '') } rescue []
     end
 
     def self.secret_for_portal(name)
