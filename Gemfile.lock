@@ -282,6 +282,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  addressable
   better_errors
   binding_of_caller
   cancancan (~> 1.9)
