@@ -10,9 +10,9 @@
       %th
 
   %tbody
-    - @documents.each do |document|
+    - @documents.sort_by{|d| [d.title, (d.run_key || "")] }.each do |document|
       %tr
-        %td= document.title
+        %td= document.title + (document.run_key ? " [#{document.run_key}]" : "")
         %td.centered
           - if document.shared
             %span.green-check &#x2714;
