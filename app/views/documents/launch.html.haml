@@ -1,13 +1,9 @@
 .row
-  -if @master_document || @moreGamesLink
+  -if @master_document_url
     .small-1.columns{style: "margin-top: 5px;"}
       Launch:
-    - if @master_document
-      .small-2.columns
-        = link_to 'Original', codap_link(@codap_server, @master_document), class: :"launch-button", target: "_blank"
-    - if @moreGamesLink
-      .small-2.columns
-        = link_to 'Original', @moreGamesLink, class: :"launch-button", target: "_blank"
+    .small-2.columns
+      = link_to 'Original', @master_document_url, class: :"launch-button", target: "_blank"
     - if @supplemental_documents && @supplemental_documents.size > 0
       .small-1.columns{style: "margin-top: 5px;"}
         or

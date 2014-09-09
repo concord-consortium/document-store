@@ -101,20 +101,16 @@ class DocumentsController < ApplicationController
 
   def launch
     @codap_server = launch_params[:server]
-    if launch_params[:runKey]
-      @runKey = launch_params[:runKey]
-      @sendRunKey = false
-    else
-      @runKey = self.run_key_generator.call
-      @sendRunKey = true
-    end
+    @runKey = launch_params[:runKey] || self.run_key_generator.call
+
     if launch_params[:owner] && (launch_params[:recordname] || launch_params[:doc])
-      @master_document = find_doc_via_params(launch_params)
+      original_doc = find_doc_via_params(launch_params)
+      @master_document_url = codap_link(@codap_server, original_doc) if original_doc
       @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey) - [@master_document]
     elsif launch_params[:moreGames]
       moreGames = launch_params[:moreGames]
       moreGames = moreGames.to_json if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
-      @moreGamesLink = codap_link(@codap_server, moreGames)
+      @master_document_url = codap_link(@codap_server, moreGames)
     end
 
     @learner_url = Addressable::URI.parse(request.original_url)

@@ -302,6 +302,7 @@ feature 'Document', :codap do
             user = FactoryGirl.create(:user, username: 'test2')
             doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
+            expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
           end
           scenario 'also has a single document that matches the run key, a link to it is displayed too' do
@@ -309,6 +310,7 @@ feature 'Document', :codap do
             doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
+            expect(page).to have_selector('.launch-button', count: 2)
             expect(page).to have_xpath '//a[@href="http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar"]'
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
@@ -320,6 +322,7 @@ feature 'Document', :codap do
             doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 5)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
@@ -334,11 +337,10 @@ feature 'Document', :codap do
             doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 3)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
-            expect(page).not_to have_xpath "//a[@href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&']"
-            expect(page).not_to have_xpath "//a[@href='http://foo.com/?doc=something5&documentServer=http%3A%2F%2Fwww.example.com%2F&']"
           end
         end
         describe 'logged in user' do
@@ -348,6 +350,7 @@ feature 'Document', :codap do
             user4 = FactoryGirl.create(:user, username: 'test4')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
           end
           scenario 'also has a single document that matches the run key, a link to it is displayed too' do
@@ -357,6 +360,7 @@ feature 'Document', :codap do
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 2)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
@@ -370,6 +374,7 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 5)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
@@ -386,11 +391,10 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 3)
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
-            expect(page).not_to have_xpath "//a[@href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&']"
-            expect(page).not_to have_xpath "//a[@href='http://foo.com/?doc=something5&documentServer=http%3A%2F%2Fwww.example.com%2F&']"
           end
         end
       end
