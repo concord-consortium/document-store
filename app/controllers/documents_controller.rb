@@ -124,6 +124,7 @@ class DocumentsController < ApplicationController
     @learner_url = @learner_url.to_s
 
     authorize! :open, :url_document
+    response.headers.delete 'X-Frame-Options'
     render layout: 'launch'
   end
 
