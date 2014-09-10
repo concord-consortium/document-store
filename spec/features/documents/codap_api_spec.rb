@@ -342,6 +342,32 @@ feature 'Document', :codap do
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
+          scenario 'moreGames in url and no documents with run key, only a link to the moregames url is present' do
+            visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+          end
+          scenario 'moreGames in url and one document with run key, 2 links are present' do
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 2)
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+          end
+          scenario 'moreGames in url and multiple documents with run key, all links are present' do
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 4)
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+          end
         end
         describe 'logged in user' do
           scenario 'can launch a document via owner and recordname' do
@@ -395,6 +421,36 @@ feature 'Document', :codap do
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
             expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+          end
+          scenario 'moreGames in url and no documents with run key, only a link to the moregames url is present' do
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            signin(user4.email, user4.password)
+            visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+          end
+          scenario 'moreGames in url and one document with run key, 2 links are present' do
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            signin(user4.email, user4.password)
+            visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 2)
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+          end
+          scenario 'moreGames in url and multiple documents with run key, all links are present' do
+            user4 = FactoryGirl.create(:user, username: 'test4')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            signin(user4.email, user4.password)
+            visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
+            expect(page).to have_selector('.launch-button', count: 4)
+            expect(page).to have_xpath "//a[@href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+            expect(page).to have_xpath "//a[@href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
         end
       end

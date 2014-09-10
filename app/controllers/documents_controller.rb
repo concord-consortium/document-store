@@ -106,12 +106,13 @@ class DocumentsController < ApplicationController
     if launch_params[:owner] && (launch_params[:recordname] || launch_params[:doc])
       original_doc = find_doc_via_params(launch_params)
       @master_document_url = codap_link(@codap_server, original_doc) if original_doc
-      @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey) - [@master_document]
     elsif launch_params[:moreGames]
       moreGames = launch_params[:moreGames]
       moreGames = moreGames.to_json if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
       @master_document_url = codap_link(@codap_server, moreGames)
     end
+
+    @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey)
 
     @learner_url = Addressable::URI.parse(request.original_url)
     new_query = @learner_url.query_values || {}
