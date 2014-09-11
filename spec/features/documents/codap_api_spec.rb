@@ -315,8 +315,8 @@ feature 'Document', :codap do
             doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
-            expect(page).to have_selector('.launch-button', count: 2)
-            expect(page).to have_selector 'a.launch-button[href="http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar"]'
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector 'a.original-reset[href="http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar"]'
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
           scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
@@ -327,11 +327,8 @@ feature 'Document', :codap do
             doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 5)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something5&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
           scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
@@ -342,9 +339,8 @@ feature 'Document', :codap do
             doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 3)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
           scenario 'moreGames in url and no documents with run key, only a link to the moregames url is present' do
@@ -356,8 +352,8 @@ feature 'Document', :codap do
             user4 = FactoryGirl.create(:user, username: 'test4')
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 2)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
           scenario 'moreGames in url and multiple documents with run key, all links are present' do
@@ -367,10 +363,8 @@ feature 'Document', :codap do
             doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 4)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&runKey=bar']"
           end
         end
@@ -391,8 +385,8 @@ feature 'Document', :codap do
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 2)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
           scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
@@ -405,11 +399,8 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 5)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something5&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
           scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
@@ -422,9 +413,8 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 3)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test2&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
           scenario 'moreGames in url and no documents with run key, only a link to the moregames url is present' do
@@ -439,8 +429,8 @@ feature 'Document', :codap do
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 2)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
           scenario 'moreGames in url and multiple documents with run key, all links are present' do
@@ -451,10 +441,8 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
-            expect(page).to have_selector('.launch-button', count: 4)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something3&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
+            expect(page).to have_selector('.launch-button', count: 1)
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?doc=something4&documentServer=http%3A%2F%2Fwww.example.com%2F&owner=test4&runKey=bar']"
           end
         end

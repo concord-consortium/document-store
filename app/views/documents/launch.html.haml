@@ -1,20 +1,18 @@
-.row
-  -if @master_document_url
-    .small-1.columns{style: "margin-top: 5px;"}
-      Launch:
-    .small-2.columns
-      = link_to 'Original', @master_document_url, class: :"launch-button", target: "_blank"
-    - if @supplemental_documents && @supplemental_documents.size > 0
-      .small-1.columns{style: "margin-top: 5px;"}
-        or
-      .small-8.columns
-        .ul.launch-block-grid
-          - @supplemental_documents.each do |d|
-            %li= link_to "Saved: #{d.title}", codap_link(@codap_server, d), class: :"launch-button", target: "_blank"
-    - else
-      .small-9.columns
-        &nbsp;
+-if @master_document_url
+  - if @supplemental_documents && @supplemental_documents.size > 0
+    .row
+      .small-3.columns.end
+        - most_recent = @supplemental_documents.sort_by{|d| d.updated_at }.last
+        = link_to 'Launch!', codap_link(@codap_server, most_recent), class: :"launch-button", target: "_blank"
+    .row
+      .small-3.columns.end{style: "text-align: right;"}
+        = link_to 'Reset to original', @master_document_url, class: :"original-reset", target: "_blank"
   - else
+    .row
+      .small-3.columns.end
+        = link_to 'Launch!', @master_document_url, class: :"launch-button", target: "_blank"
+- else
+  .row
     .small-12.columns{style: "color: #990000" }
       Error: The requested document could not be found.
 :javascript
