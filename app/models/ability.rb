@@ -3,7 +3,9 @@ class Ability
 
   def initialize(user)
     # Stuff everyone can do
-    can [:read, :open], Document.shared
+    can [:read, :open], Document do |doc|
+      doc.shared
+    end
     can [:read, :open], :url_document
     can [:info], :nil_user
     can [:not_found, :not_authorized], :nil_document

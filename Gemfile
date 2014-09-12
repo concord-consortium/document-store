@@ -15,7 +15,7 @@ gem 'unicorn'
 gem 'unicorn-rails'
 gem 'rails_12factor', group: :production
 gem 'rails-settings-cached'
-gem 'cancancan', '~> 1.8'
+gem 'cancancan', '~> 1.9'
 gem 'omniauth'
 gem 'omniauth-oauth2'
 gem 'rack-cors', :require => 'rack/cors'
