@@ -187,7 +187,7 @@ class DocumentsController < ApplicationController
         end
         if owner_id != -1
           document = Document.find_by(owner_id: owner_id, title: title, run_key: p[:runKey])
-          document = Document.find_by(owner_id: owner_id, title: title, run_key: nil) if document.nil?
+          document = Document.find_by(owner_id: owner_id, title: title, run_key: nil) if document.nil? && !p[:runKey].nil?
         end
       elsif p[:recordid]
         document = Document.includes(:owner).find(p[:recordid]) rescue nil
