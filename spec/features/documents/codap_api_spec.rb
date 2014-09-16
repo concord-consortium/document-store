@@ -507,6 +507,101 @@ feature 'Document', :codap do
       end
     end
 
+    describe 'delete' do
+      scenario 'user can delete their own document' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something-unique", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit '/document/delete?doc=something-unique'
+        expect(page).to have_content('{"success":true}')
+        doc2 = Document.find_by(title: "something-unique", owner: user)
+        expect(doc2).to be_nil
+      end
+
+      scenario 'user can not delete a document owned by someone else' do
+        user = FactoryGirl.create(:user, username: 'test')
+        user2 = FactoryGirl.create(:user, username: 'test2')
+        doc2 = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit '/document/delete?doc=newdoc&owner=test2'
+        expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+        doc = Document.find_by(title: "newdoc", owner: user2)
+        expect(doc).not_to be_nil
+      end
+
+      scenario 'user deletes the document with a matching run key' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        doc2 = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }', run_key: 'foo')
+        doc3 = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }', run_key: 'bar')
+        signin(user.email, user.password)
+        visit '/document/delete?doc=something&runKey=foo'
+        expect(page).to have_content('{"success":true}')
+        docs = Document.where(owner: user, title: 'something').order(:run_key)
+        expect(docs.size).to eq 2
+        expect(docs[0].run_key).to eq 'bar'
+        expect(docs[1].run_key).to be_nil
+        visit '/document/delete?doc=something'
+        expect(page).to have_content('{"success":true}')
+        docs = Document.where(owner: user, title: 'something')
+        expect(docs.size).to eq 1
+        expect(docs[0].run_key).to eq 'bar'
+      end
+
+      scenario 'user gets an error when a matching document does not exist' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit '/document/delete?doc=something2'
+        expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+      end
+
+      describe 'anonymous' do
+        scenario 'user cannot delete documents when no run_key is present' do
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }')
+          visit '/document/delete?doc=something'
+          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+          doc2 = Document.find_by(title: "something", owner_id: nil)
+          expect(doc2).not_to be_nil
+        end
+
+        scenario 'user can delete documents when a run_key is present' do
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'foo')
+          visit '/document/delete?doc=something&runKey=foo'
+          expect(page).to have_content('{"success":true}')
+          doc2 = Document.find_by(title: "something", owner_id: nil)
+          expect(doc2).to be_nil
+        end
+
+        scenario 'user deletes the document with a matching run key' do
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'baz')
+          doc2 = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'foo')
+          doc3 = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'bar')
+          visit '/document/delete?doc=something&runKey=foo'
+          expect(page).to have_content('{"success":true}')
+          docs = Document.where(owner_id: nil, title: 'something').order(:run_key)
+          expect(docs.size).to eq 2
+          expect(docs[0].run_key).to eq 'bar'
+          expect(docs[1].run_key).to eq 'baz'
+          visit '/document/delete?doc=something&runKey=baz'
+          expect(page).to have_content('{"success":true}')
+          docs = Document.where(owner_id: nil, title: 'something')
+          expect(docs.size).to eq 1
+          expect(docs[0].run_key).to eq 'bar'
+        end
+
+        scenario 'user gets an error when a matching document does not exist' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }', run_key: 'bar')
+          signin(user.email, user.password)
+          visit '/document/delete?doc=something2'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+          visit '/document/delete?doc=something&runKey=foo'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+        end
+      end
+    end
+
     describe 'info' do
       scenario 'anonymous save is disabled' do
         visit "/user/info"

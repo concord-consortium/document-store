@@ -1,10 +1,10 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch]
-  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :launch]
+  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :delete, :launch]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
   load_and_authorize_resource
-  skip_load_and_authorize_resource :only => [:all, :save, :open, :launch]
+  skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
   include DocumentsHelper
@@ -97,6 +97,16 @@ class DocumentsController < ApplicationController
     else
       render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
     end
+  end
+
+  def delete
+    opts = delete_params
+    opts[:owner] = current_user.username if current_user
+    document = find_doc_via_params(opts)
+    (render_not_found && return) unless document
+    authorize! :destroy, document rescue (render_not_authorized && return)
+    document.destroy
+    render json: {success: true}
   end
 
   def launch
@@ -196,6 +206,10 @@ class DocumentsController < ApplicationController
 
     def launch_params
       params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey)
+    end
+
+    def delete_params
+      params.permit(:recordname, :doc, :runKey)
     end
 
     def auth_params
