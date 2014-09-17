@@ -20,9 +20,21 @@
     var phone = iframePhone.getIFrameEndpoint();
     phone.addListener('getLearnerUrl', function () {
       phone.post('setLearnerUrl', '#{@learner_url}');
+      phone.post('getAuthInfo');
     });
     phone.addListener('getInteractiveState', function () {
       phone.post('interactiveState', {runKey: '#{@runKey}'});
+    });
+    phone.addListener('authInfo', function(info) {
+      if (!info["loggedIn"]) {
+        // Tell CODAP that we're running anonymously
+        $('.launch-button,.original-reset').each(function() {
+          var origHref = $(this).attr('href');
+          $(this).attr('href', $.param.querystring(origHref, 'runAsGuest=true'));
+        });
+      } else if (info["loggedIn"] && #{current_user.nil?} && window.location.href.indexOf('&auth_provider=') == -1) {
+        window.location = $.param.querystring(window.location.href, "auth_provider="+info["provider"]);
+      }
     });
     // Initialize connection after all message listeners are added!
     phone.initialize();
