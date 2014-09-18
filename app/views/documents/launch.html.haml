@@ -36,6 +36,9 @@
         window.location = $.param.querystring(window.location.href, "auth_provider="+info["provider"]);
       }
     });
+    phone.addListener('getExtendedSupport', function() {
+      phone.post('extendedSupport', { reset: false });
+    });
     // Initialize connection after all message listeners are added!
     phone.initialize();
   });
