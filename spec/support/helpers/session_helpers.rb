@@ -15,5 +15,9 @@ module Features
       fill_in 'Password', with: password
       click_button 'Sign in'
     end
+
+    def signout
+      page.driver.browser.submit :delete, destroy_user_session_path, nil
+    end
   end
 end

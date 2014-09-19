@@ -42,7 +42,7 @@ feature 'Document', :codap do
         user = FactoryGirl.create(:user, username: 'test')
         doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
         signin(user.email, user.password)
-        visit "document/open?recordid=#{doc1.id}"
+        visit "/document/open?recordid=#{doc1.id}"
         expect(page).to have_content %![1,2,3]!
       end
 
@@ -65,6 +65,38 @@ feature 'Document', :codap do
         visit '/document/open?owner=test2&recordname=test2%20doc'
         expect(page.status_code).to eq(403)
         expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+      end
+
+      scenario 'user can request the original content for their own document' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4] }'
+        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6] }'
+        visit "/document/open?owner=test&recordname=testDoc&original=true"
+        expect(page).to have_content %!{"def":[1,2,3,4]}!
+      end
+
+      scenario 'user can not request the original content for document owned by someone else' do
+        user = FactoryGirl.create(:user, username: 'test')
+        user2 = FactoryGirl.create(:user, username: 'test2')
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4], "_permissions": 1 }'
+        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
+        signout
+        signin(user2.email, user2.password)
+        visit "/document/open?owner=test&recordname=testDoc&original=true"
+        expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":1}!
+      end
+
+      scenario 'if original content has not been defined, return the current content' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        doc2 = FactoryGirl.create(:document, title: "testDoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6] }'
+        visit "/document/open?owner=test&recordname=testDoc&original=true"
+        doc2.reload
+        expect(doc2.original_content).to be_nil
+        expect(page).to have_content %!{"def":[1,2,3,4,5,6]}!
       end
 
       describe 'anonymous' do
@@ -145,6 +177,33 @@ feature 'Document', :codap do
           visit '/document/open?owner=&recordname=test3%20doc&runKey=baz'
           expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
         end
+
+        scenario 'anonymous user can request the original content for their own document' do
+          page.driver.browser.submit :post, '/document/save?recordname=testDoc&runKey=foo', '{ "def": [1,2,3,4] }'
+          page.driver.browser.submit :post, '/document/save?recordname=testDoc&runKey=foo', '{ "def": [1,2,3,4,5,6] }'
+          visit "/document/open?recordname=testDoc&runKey=foo&original=true"
+          expect(page).to have_content %!{"def":[1,2,3,4]}!
+        end
+
+        scenario 'anoymous user can not request the original content for document owned by someone else' do
+          user = FactoryGirl.create(:user, username: 'test')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4], "_permissions": 1 }'
+          page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
+          signout
+          visit "/document/open?owner=test&recordname=testDoc&runKey=foo&original=true"
+          expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":1}!
+        end
+
+        scenario 'if original content has not been defined, return the current content' do
+          doc2 = FactoryGirl.create(:document, title: "testDoc", shared: false, owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'bar')
+          page.driver.browser.submit :post, '/document/save?recordname=testDoc&runKey=bar', '{ "def": [1,2,3,4,5,6] }'
+          visit "/document/open?recordname=testDoc&original=true&runKey=bar"
+          doc2.reload
+          expect(doc2.original_content).to be_nil
+          expect(page).to have_content %!{"def":[1,2,3,4,5,6]}!
+        end
+
       end
 
       describe 'errors' do
@@ -154,7 +213,7 @@ feature 'Document', :codap do
           doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
           doc2 = FactoryGirl.create(:document, title: "test2 doc", owner_id: user2.id, form_content: '{ "foo": "bar" }')
           signin(user.email, user.password)
-          visit "document/open?recordid=#{doc2.id}"
+          visit "/document/open?recordid=#{doc2.id}"
           expect(page.status_code).to eq(403)
           expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
         end
@@ -162,7 +221,7 @@ feature 'Document', :codap do
         scenario 'user gets 404 when they open a document by id and it does not exist' do
           user = FactoryGirl.create(:user, username: 'test')
           signin(user.email, user.password)
-          visit "document/open?username=test&recordid=99999"
+          visit "/document/open?username=test&recordid=99999"
           expect(page.status_code).to eq(404)
           expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
         end
@@ -316,7 +375,7 @@ feature 'Document', :codap do
       end
       scenario 'the document needs to exist to launch' do
         r = SecureRandom.hex
-        visit "document/launch?owner=test2&recordname=#{r}&server=http://foo.com/"
+        visit "/document/launch?owner=test2&recordname=#{r}&server=http://foo.com/"
         expect(page).to have_selector('.launch-button', count: 0)
         expect(page).to have_content "Error: The requested document could not be found."
       end

@@ -81,8 +81,17 @@ class DocumentsController < ApplicationController
   def open
     document = find_doc_via_params
     render_not_found && return unless document
-    authorize! :open, document rescue (render_not_authorized && return)
-    render json: document.content
+    content = document.content
+    if codap_api_params[:original]
+      begin
+        authorize! :open_original, document
+        content = document.original_content || document.content
+      rescue
+      end
+    else
+      authorize! :open, document rescue (render_not_authorized && return)
+    end
+    render json: content
   end
 
   def save
@@ -202,7 +211,7 @@ class DocumentsController < ApplicationController
     end
 
     def codap_api_params
-      params.permit(:recordname, :recordid, :owner, :runKey)
+      params.permit(:recordname, :recordid, :owner, :runKey, :original)
     end
 
     def launch_params

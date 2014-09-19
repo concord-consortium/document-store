@@ -15,7 +15,7 @@ class Ability
 
       # Document
       can [:index, :list, :create, :new, :all], Document
-      can [:read, :show, :edit, :update, :destroy, :save, :open], Document do |doc|
+      can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original], Document do |doc|
           doc.owner == user || (doc.owner.nil? && doc.run_key == extra[:runKey])
       end
 
@@ -27,7 +27,7 @@ class Ability
       # anonymous gets read/write access to documents if they know the documents run_key
       if extra[:runKey]
         can [:index, :list, :all], Document
-        can [:read, :show, :edit, :update, :destroy, :save, :open], Document do |doc|
+        can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original], Document do |doc|
             doc.owner.nil? && doc.run_key == extra[:runKey]
         end
       end
