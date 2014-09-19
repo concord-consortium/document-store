@@ -90,6 +90,7 @@ class DocumentsController < ApplicationController
     document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
     authorize! :save, document rescue (render_not_authorized && return)
     document.form_content = content
+    document.original_content = document.content if document.new_record?
     document.shared = document.content['_permissions'] == 1
 
     if document.save

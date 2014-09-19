@@ -75,7 +75,8 @@ CREATE TABLE documents (
     owner_id integer,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    run_key character varying(255)
+    run_key character varying(255),
+    original_content json
 );
 
 
@@ -338,4 +339,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140611210654');
 INSERT INTO schema_migrations (version) VALUES ('20140616212832');
 
 INSERT INTO schema_migrations (version) VALUES ('20140902175846');
+
+INSERT INTO schema_migrations (version) VALUES ('20140919181410');
 

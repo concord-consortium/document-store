@@ -219,6 +219,25 @@ feature 'Document', :codap do
         expect(doc.content).to match({"def" => [1,2,3,4] })
       end
 
+      scenario 'when a document is saved for the first time, original_content is set' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+        doc = Document.find_by(title: "newdoc")
+        expect(doc).not_to be_nil
+        expect(doc.original_content).to match({"def" => [1,2,3,4] })
+      end
+
+      scenario 'when a document is saved for the second or later time, original_content is not updated' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4,5,6] }'
+        doc = Document.find_by(title: "newdoc")
+        expect(doc).not_to be_nil
+        expect(doc.original_content).to match({"def" => [1,2,3,4] })
+      end
+
       describe 'anonymous' do
         scenario 'user cannot save documents when no run_key is present' do
           expect(Document.find_by(title: "newdoc")).to be_nil
