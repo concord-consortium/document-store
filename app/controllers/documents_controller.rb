@@ -1,10 +1,10 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch]
-  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :delete, :launch]
+  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :delete, :launch, :rename]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
   load_and_authorize_resource
-  skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch]
+  skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch, :rename]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
   include DocumentsHelper
@@ -106,6 +106,24 @@ class DocumentsController < ApplicationController
       render json: {status: "Created", valid: true }, status: :created
     else
       render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+    end
+  end
+
+  def rename
+    document = find_doc_via_params
+    (render_not_found && return) unless document
+    authorize! :save, document rescue (render_not_authorized && return)
+    owner_id = current_user.nil? ? nil : current_user.id
+    newDoc = Document.find_by(owner_id: owner_id, title: codap_api_params[:newRecordname], run_key: codap_api_params[:runKey])
+
+    if newDoc
+      # render error!
+      render_duplicate_error
+    else
+      c = document.content
+      c["name"] = codap_api_params[:newRecordname] if c.has_key?("name")
+      document.update_columns(title: codap_api_params[:newRecordname], content: c, updated_at: Time.now)
+      render json: {success: true }
     end
   end
 
@@ -211,7 +229,7 @@ class DocumentsController < ApplicationController
     end
 
     def codap_api_params
-      params.permit(:recordname, :recordid, :owner, :runKey, :original)
+      params.permit(:recordname, :recordid, :doc, :owner, :runKey, :original, :newRecordname)
     end
 
     def launch_params
@@ -234,5 +252,10 @@ class DocumentsController < ApplicationController
     def render_not_authorized
       authorize! :not_authorized, :nil_document
       render json: {valid: false, message: "error.permissions"}, status: 403
+    end
+
+    def render_duplicate_error
+      authorize! :duplicate_error, :nil_document
+      render json: {valid: false, message: "error.duplicate"}, status: 403
     end
 end

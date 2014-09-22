@@ -620,6 +620,137 @@ feature 'Document', :codap do
       end
     end
 
+    describe 'rename' do
+      scenario 'user can rename their own document' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something-unique", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit '/document/rename?owner=test&doc=something-unique&newRecordname=somethingelse'
+        expect(page).to have_content('{"success":true}')
+        doc2 = Document.find_by(title: "something-unique", owner: user)
+        expect(doc2).to be_nil
+        doc3 = Document.find_by(title: "somethingelse", owner: user)
+        expect(doc3).not_to be_nil
+      end
+
+      scenario 'user can not rename a document owned by someone else' do
+        user = FactoryGirl.create(:user, username: 'test')
+        user2 = FactoryGirl.create(:user, username: 'test2')
+        doc2 = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit '/document/rename?owner=test2&doc=newdoc&owner=test2&newRecordname=somethingelse'
+        expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+        doc = Document.find_by(title: "newdoc", owner: user2)
+        expect(doc).not_to be_nil
+      end
+
+      scenario 'user renames the document with a matching run key' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        doc2 = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }', run_key: 'foo')
+        doc3 = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }', run_key: 'bar')
+        signin(user.email, user.password)
+        visit '/document/rename?owner=test&doc=something&runKey=foo&newRecordname=somethingelse'
+        expect(page).to have_content('{"success":true}')
+        docs = Document.where(owner: user, title: 'something').order(:run_key)
+        expect(docs.size).to eq 2
+        expect(docs[0].run_key).to eq 'bar'
+        expect(docs[1].run_key).to be_nil
+        visit '/document/rename?owner=test&doc=something&newRecordname=somethingelse'
+        expect(page).to have_content('{"success":true}')
+        docs = Document.where(owner: user, title: 'something')
+        expect(docs.size).to eq 1
+        expect(docs[0].run_key).to eq 'bar'
+      end
+
+      scenario 'user gets an error when a matching document does not exist' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit '/document/rename?owner=test&doc=something2&newRecordname=somethingelse'
+        expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+      end
+
+      scenario 'user gets an error when the new document name already exists' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc  = FactoryGirl.create(:document, title: "something-unique", owner_id: user.id, form_content: '{ "foo": "bar" }')
+        doc2 = FactoryGirl.create(:document, title: "somethingelse", owner_id: user.id, form_content: '{ "foo": "baz" }')
+        signin(user.email, user.password)
+        visit '/document/rename?owner=test&doc=something-unique&newRecordname=somethingelse'
+        expect(page).to have_content('{"valid":false,"message":"error.duplicate"}')
+        doc2 = Document.find_by(title: "something-unique", owner: user)
+        expect(doc2).not_to be_nil
+        doc3 = Document.find_by(title: "somethingelse", owner: user)
+        expect(doc3).not_to be_nil
+        expect(doc3.content).to match({"foo" => "baz" })
+      end
+
+      scenario 'renamed document has same attributes as the original document' do
+        user = FactoryGirl.create(:user, username: 'test')
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, '/document/save?recordname=something-unique', '{ "def": [1,2,3,4] }'
+        page.driver.browser.submit :post, '/document/save?recordname=something-unique', '{ "def": [1,2,3,4,5,6] }'
+        doc  = Document.find_by(title: "something-unique", owner: user)
+        doc_data = {id: doc.id, content: doc.content, original_content: doc.original_content }
+        visit '/document/rename?owner=test&doc=something-unique&newRecordname=somethingelse'
+        expect(page).to have_content('{"success":true}')
+        doc2 = Document.find_by(title: "something-unique", owner: user)
+        expect(doc2).to be_nil
+        doc3 = Document.find_by(title: "somethingelse", owner: user)
+        expect(doc3).not_to be_nil
+        expect(doc3.id).to eq(doc_data[:id])
+        expect(doc3.content).to match(doc_data[:content])
+        expect(doc3.original_content).to match(doc_data[:original_content])
+      end
+
+      describe 'anonymous' do
+        scenario 'user cannot rename documents when no run_key is present' do
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }')
+          visit '/document/rename?doc=something'
+          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+          doc2 = Document.find_by(title: "something", owner_id: nil)
+          expect(doc2).not_to be_nil
+        end
+
+        scenario 'user can rename documents when a run_key is present' do
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'foo')
+          visit '/document/rename?doc=something&runKey=foo&newRecordname=somethingelse'
+          expect(page).to have_content('{"success":true}')
+          doc2 = Document.find_by(title: "something", owner_id: nil)
+          expect(doc2).to be_nil
+          doc2 = Document.find_by(title: "somethingelse", owner_id: nil)
+          expect(doc2).not_to be_nil
+        end
+
+        scenario 'user renames the document with a matching run key' do
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'baz')
+          doc2 = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'foo')
+          doc3 = FactoryGirl.create(:document, title: "something", owner_id: nil, form_content: '{ "foo": "bar" }', run_key: 'bar')
+          visit '/document/rename?doc=something&runKey=foo&newRecordname=somethingelse'
+          expect(page).to have_content('{"success":true}')
+          docs = Document.where(owner_id: nil, title: 'something').order(:run_key)
+          expect(docs.size).to eq 2
+          expect(docs[0].run_key).to eq 'bar'
+          expect(docs[1].run_key).to eq 'baz'
+          visit '/document/rename?doc=something&runKey=baz&newRecordname=somethingelse'
+          expect(page).to have_content('{"success":true}')
+          docs = Document.where(owner_id: nil, title: 'something')
+          expect(docs.size).to eq 1
+          expect(docs[0].run_key).to eq 'bar'
+        end
+
+        scenario 'user gets an error when a matching document does not exist' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc  = FactoryGirl.create(:document, title: "something", owner_id: user.id, form_content: '{ "foo": "bar" }', run_key: 'bar')
+          signin(user.email, user.password)
+          visit '/document/rename?doc=something2&newRecordname=somethingelse'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+          visit '/document/rename?doc=something&runKey=foo&newRecordname=somethingelse'
+          expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
+        end
+      end
+    end
+
     describe 'delete' do
       scenario 'user can delete their own document' do
         user = FactoryGirl.create(:user, username: 'test')

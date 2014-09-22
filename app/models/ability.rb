@@ -8,7 +8,7 @@ class Ability
     end
     can [:read, :open], :url_document
     can [:info], :nil_user
-    can [:not_found, :not_authorized], :nil_document
+    can [:not_found, :not_authorized, :duplicate_error], :nil_document
 
     if user
       # Stuff logged in people can do
