@@ -38,11 +38,40 @@ feature 'Document', :codap do
     end
 
     describe 'open' do
+      describe 'by record id' do
+        scenario 'user can open their own document' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
+          signin(user.email, user.password)
+          visit "/document/open?recordid=#{doc1.id}"
+          expect(page).to have_content %![1,2,3]!
+        end
+        scenario 'user can open a document shared by someone else' do
+          user = FactoryGirl.create(:user, username: 'test')
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc1 = FactoryGirl.create(:document, owner_id: user.id)
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          visit "/document/open?recordid=#{doc2.id}"
+          expect(page).to have_content %!{"foo":"bar"}!
+        end
+        scenario 'user can not open a document not shared by someone else' do
+          user = FactoryGirl.create(:user, username: 'test')
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc1 = FactoryGirl.create(:document, owner_id: user.id)
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          visit "/document/open?recordid=#{doc2.id}"
+          expect(page.status_code).to eq(403)
+          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+        end
+      end
+
       scenario 'user can open their own document' do
         user = FactoryGirl.create(:user, username: 'test')
         doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
         signin(user.email, user.password)
-        visit "/document/open?recordid=#{doc1.id}"
+        visit "/document/open?owner=#{user.username}&recordname=#{doc1.title}"
         expect(page).to have_content %![1,2,3]!
       end
 
