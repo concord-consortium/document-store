@@ -3,7 +3,7 @@ class Ability
 
   def initialize(user, extra={})
     # Stuff everyone can do
-    can [:read, :open], Document do |doc|
+    can [:read, :open, :show], Document do |doc|
       doc.shared
     end
     can [:read, :open], :url_document
@@ -15,7 +15,14 @@ class Ability
 
       # Document
       can [:index, :list, :create, :new, :all], Document
-      can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original], Document do |doc|
+
+      # read a doc
+      can [:read, :show, :open], Document do |doc|
+          doc.owner == user || (!doc.run_key.nil? && doc.run_key == extra[:runKey])
+      end
+
+      # write a doc
+      can [:edit, :update, :destroy, :save, :open_original], Document do |doc|
           doc.owner == user || (doc.owner.nil? && doc.run_key == extra[:runKey])
       end
 

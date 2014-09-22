@@ -191,6 +191,15 @@ feature 'Document', :codap do
           expect(page).to have_content %!{"foo":"baz"}!
         end
 
+        scenario 'logged in user can open a non-shared document owned by someone else with the correct run key' do
+          user  = FactoryGirl.create(:user, username: 'test3', email: 'test3@email.com')
+          user2 = FactoryGirl.create(:user, username: 'test4')
+          doc = FactoryGirl.create(:document, title: "test3 doc", shared: false, owner_id: user2.id, run_key: 'biz', form_content: '{ "foo": "baz" }')
+          signin(user.email, user.password)
+          visit '/document/open?owner=test4&recordname=test3%20doc&runKey=biz'
+          expect(page).to have_content %!{"foo":"baz"}!
+        end
+
         scenario 'logged in user cannot open a non-shared document owned by anonymous with the incorrect run key' do
           user = FactoryGirl.create(:user, username: 'test3', email: 'test3@email.com')
           doc = FactoryGirl.create(:document, title: "test3 doc", shared: false, owner_id: nil, run_key: 'biz', form_content: '{ "foo": "baz" }')
