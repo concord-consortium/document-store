@@ -27,7 +27,7 @@ class Ability
       end
 
       # User
-      can [:read, :update, :info, :authenticate], User do |u|
+      can [:read, :update, :info, :authenticate, :report], User do |u|
         u == user
       end
     else

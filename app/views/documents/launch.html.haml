@@ -21,12 +21,12 @@
     phone.addListener('getLearnerUrl', function () {
       phone.post('setLearnerUrl', '#{@learner_url}');
       // this will trigger a save of the learner url, and not require waiting 42 seconds...
-      phone.post('interactiveState', {runKey: '#{@runKey}'});
+      phone.post('interactiveState', {runKey: '#{@runKey}', lara_options: { reporting_url: '#{@report_url}' }});
       // then make sure we're logged in when we need to be
       phone.post('getAuthInfo');
     });
     phone.addListener('getInteractiveState', function () {
-      phone.post('interactiveState', {runKey: '#{@runKey}'});
+      phone.post('interactiveState', {runKey: '#{@runKey}', lara_options: { reporting_url: '#{@report_url}' }});
     });
     phone.addListener('authInfo', function(info) {
       if (!info["loggedIn"]) {

@@ -1,4 +1,3 @@
-
 feature 'Document', :codap do
   describe 'CODAP API' do
     describe 'all' do
@@ -585,13 +584,15 @@ feature 'Document', :codap do
         scenario 'page has correct iframe phone code' do
           user = FactoryGirl.create(:user, username: 'test2')
           doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
-          visit '/document/launch?owner=test2&doc=something&server=http://foo.com/'
+          l_url = launch_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
+          r_url = report_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
+          visit launch_path(doc: doc.title, owner: user.username, server: 'http://foo.com/')
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
-                phone.post('setLearnerUrl', 'http://www.example.com/document/launch?doc=something&owner=test2&runKey=foo&server=http%3A%2F%2Ffoo.com%2F');
+                phone.post('setLearnerUrl', '#{l_url}');
                 // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                phone.post('interactiveState', {runKey: 'foo'});
+                phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
                 // then make sure we're logged in when we need to be
                 phone.post('getAuthInfo');
               });
@@ -600,7 +601,7 @@ feature 'Document', :codap do
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getInteractiveState', function () {
-                phone.post('interactiveState', {runKey: 'foo'});
+                phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
               });
             JS
           )
@@ -610,13 +611,16 @@ feature 'Document', :codap do
         scenario 'page has correct iframe phone code when the runKey is supplied' do
           user = FactoryGirl.create(:user, username: 'test2')
           doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
-          visit '/document/launch?owner=test2&doc=something&server=http://foo.com/&runKey=bar'
+          l_url = launch_url(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
+          r_url = report_url(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
+
+          visit launch_path(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
-                phone.post('setLearnerUrl', 'http://www.example.com/document/launch?doc=something&owner=test2&runKey=bar&server=http%3A%2F%2Ffoo.com%2F');
+                phone.post('setLearnerUrl', '#{l_url}');
                 // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                phone.post('interactiveState', {runKey: 'bar'});
+                phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
                 // then make sure we're logged in when we need to be
                 phone.post('getAuthInfo');
               });
@@ -625,12 +629,137 @@ feature 'Document', :codap do
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getInteractiveState', function () {
-                phone.post('interactiveState', {runKey: 'bar'});
+                phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
               });
             JS
           )
           expect(page.html).to have_text("phone.addListener('authInfo', function(info) {")
           expect(page.html).to have_text("phone.addListener('getExtendedSupport', function() {")
+        end
+      end
+    end
+
+    describe 'report' do
+      let(:author)   { FactoryGirl.create(:user, username: 'author') }
+      let(:student)  { FactoryGirl.create(:user, username: 'student') }
+      let(:teacher)  { FactoryGirl.create(:user, username: 'teacher') }
+      let(:template) { FactoryGirl.create(:document, title: "template", shared: true, owner_id: author.id, form_content: '{ "foo": "bar" }') }
+      let(:student_doc1a) { FactoryGirl.create(:document, title: "student1a", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1a" }', run_key: 'foo') }
+      let(:student_doc1b) { FactoryGirl.create(:document, title: "student1b", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1b" }', run_key: 'foo') }
+      let(:student_doc1c) { FactoryGirl.create(:document, title: "student1c", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1c" }', run_key: 'foo') }
+      let(:student_doc2a) { FactoryGirl.create(:document, title: "student2a", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2a" }', run_key: 'bar') }
+      let(:student_doc2b) { FactoryGirl.create(:document, title: "student2b", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2b" }', run_key: 'bar') }
+      let(:student_doc2c) { FactoryGirl.create(:document, title: "student2c", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2c" }', run_key: 'bar') }
+      let(:server)   { 'http://foo.com/' }
+
+      scenario 'user needs to be logged in' do
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page.current_url).to match 'http://www.example.com/users/sign_in'
+        signin(teacher.email, teacher.password)
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_content 'No documents have been saved!'
+      end
+      scenario 'the template document needs to exist' do
+        signin(teacher.email, teacher.password)
+        visit report_path(owner: author.username, recordname: template.title + "2", server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_content "Error: The requested document could not be found."
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_content 'No documents have been saved!'
+      end
+      scenario 'reportUser needs to be provided' do
+        signin(teacher.email, teacher.password)
+        expect {
+          visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
+        }.to raise_error(ActiveRecord::RecordNotFound)
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_content 'No documents have been saved!'
+      end
+      scenario 'runKey needs to be provided' do
+        signin(teacher.email, teacher.password)
+        expect {
+          visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username)
+        }.to raise_error(ActiveRecord::RecordNotFound)
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_content 'No documents have been saved!'
+      end
+      scenario 'server needs to be provided' do
+        signin(teacher.email, teacher.password)
+        expect {
+          visit report_path(owner: author.username, recordname: template.title, reportUser: student.username, runKey: 'foo')
+        }.to raise_error(ActiveRecord::RecordNotFound)
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_content 'No documents have been saved!'
+      end
+      scenario 'user can report a document via owner and recordname' do
+        signin(teacher.email, teacher.password)
+        url = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 1)
+        expect(page).to have_selector "a.launch-button[href='#{url}']"
+      end
+      scenario 'user can report a document via owner and doc' do
+        signin(teacher.email, teacher.password)
+        url = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        visit report_path(owner: author.username, doc: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 1)
+        expect(page).to have_selector "a.launch-button[href='#{url}']"
+      end
+      scenario 'user can report a document via moreGames' do
+        signin(teacher.email, teacher.password)
+        visit report_path(server: server, moreGames: '[{}]', runKey: 'foo', reportUser: student.username)
+        expect(page).to have_content 'No documents have been saved!'
+      end
+      scenario 'reportUser also has multiple documents that match the run key, a link to each of them is displayed too' do
+        signin(teacher.email, teacher.password)
+        url1 = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        url2 = doc_url(server, {doc: student_doc1b.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 2)
+        expect(page).to have_selector "a.launch-button[href='#{url1}']"
+        expect(page).to have_selector "a.launch-button[href='#{url2}']"
+      end
+      scenario 'reportUser also has documents that do not match the run key, a link to each of them is not also displayed' do
+        signin(teacher.email, teacher.password)
+        url1 = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        url2 = doc_url(server, {doc: student_doc1b.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        url3 = doc_url(server, {doc: student_doc1c.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        url4 = doc_url(server, {doc: student_doc2a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        url5 = doc_url(server, {doc: student_doc2b.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 3)
+        expect(page).to have_selector "a.launch-button[href='#{url1}']"
+        expect(page).to have_selector "a.launch-button[href='#{url2}']"
+        expect(page).to have_selector "a.launch-button[href='#{url3}']"
+      end
+      scenario 'moreGames in url and one document with run key, 1 link is present' do
+        signin(teacher.email, teacher.password)
+        url = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        visit report_path(server: server, moreGames: '[{}]', runKey: 'foo', reportUser: student.username)
+        expect(page).to have_selector('.launch-button', count: 1)
+        expect(page).to have_selector "a.launch-button[href='#{url}']"
+      end
+      scenario 'moreGames in url and multiple documents with run key, all links are present' do
+        signin(teacher.email, teacher.password)
+        url1 = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        url2 = doc_url(server, {doc: student_doc1c.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+        visit report_path(server: server, moreGames: '[{}]', runKey: 'foo', reportUser: student.username)
+        expect(page).to have_selector('.launch-button', count: 2)
+        expect(page).to have_selector "a.launch-button[href='#{url1}']"
+        expect(page).to have_selector "a.launch-button[href='#{url2}']"
+      end
+      describe 'auto authentication' do
+        scenario 'the user will be authenticated if auth_provider is set and the user is not logged in' do
+          expect {
+            visit report_path(auth_provider: 'http://bar.com', owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+          }.to raise_error(ActionController::RoutingError) # capybara doesn't handle the redirects well
+          expect(page.current_url).to match 'http://bar.com/auth/concord_id/authorize'
+        end
+        scenario 'the user will not be authenticated if auth_provider is set and the user is logged in' do
+          signin(teacher.email, teacher.password)
+          url = doc_url(server, {doc: student_doc1a.title, documentServer: 'http://www.example.com/', owner: student.username, runKey: 'foo'})
+          visit report_path(auth_provider: 'http://bar.com', owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+          expect(page).to have_selector('.launch-button', count: 1)
+          expect(page).to have_selector "a.launch-button[href='#{url}']"
         end
       end
     end

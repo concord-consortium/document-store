@@ -1,10 +1,10 @@
 class DocumentsController < ApplicationController
-  before_filter :auto_authenticate, :only => [:launch]
+  before_filter :auto_authenticate, :only => [:launch, :report]
   before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :delete, :launch, :rename]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
   load_and_authorize_resource
-  skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch, :rename]
+  skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch, :rename, :report]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
   include DocumentsHelper
@@ -156,9 +156,36 @@ class DocumentsController < ApplicationController
     new_query = @learner_url.query_values || {}
     new_query["runKey"] = @runKey
     @learner_url.query_values = new_query
+
+    @report_url = @learner_url.dup
+    @report_url.path = report_path
+    @report_url = @report_url.to_s
+
     @learner_url = @learner_url.to_s
 
     authorize! :open, :url_document
+    response.headers.delete 'X-Frame-Options'
+    render layout: 'launch'
+  end
+
+  def report
+    raise ActiveRecord::RecordNotFound.new if report_params[:runKey].blank? || report_params[:reportUser].blank? || report_params[:server].blank?
+    authorize! :report, current_user
+    @codap_server = report_params[:server]
+    @runKey = report_params[:runKey]
+    @reportUser = User.find_by(username: report_params[:reportUser])
+
+    if report_params[:owner] && (report_params[:recordname] || report_params[:doc])
+      original_doc = find_doc_via_params(report_params)
+      @master_document_url = codap_link(@codap_server, original_doc) if original_doc
+    elsif report_params[:moreGames]
+      moreGames = report_params[:moreGames]
+      moreGames = moreGames.to_json if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
+      @master_document_url = codap_link(@codap_server, moreGames)
+    end
+
+    @supplemental_documents = Document.where(owner_id: @reportUser.id, run_key: @runKey)
+
     response.headers.delete 'X-Frame-Options'
     render layout: 'launch'
   end
@@ -234,6 +261,10 @@ class DocumentsController < ApplicationController
 
     def launch_params
       params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey)
+    end
+
+    def report_params
+      params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey, :reportUser)
     end
 
     def delete_params
