@@ -590,6 +590,9 @@ feature 'Document', :codap do
             <<-JS
               phone.addListener('getLearnerUrl', function () {
                 phone.post('setLearnerUrl', 'http://www.example.com/document/launch?doc=something&owner=test2&runKey=foo&server=http%3A%2F%2Ffoo.com%2F');
+                // this will trigger a save of the learner url, and not require waiting 42 seconds...
+                phone.post('interactiveState', {runKey: 'foo'});
+                // then make sure we're logged in when we need to be
                 phone.post('getAuthInfo');
               });
             JS
@@ -612,6 +615,9 @@ feature 'Document', :codap do
             <<-JS
               phone.addListener('getLearnerUrl', function () {
                 phone.post('setLearnerUrl', 'http://www.example.com/document/launch?doc=something&owner=test2&runKey=bar&server=http%3A%2F%2Ffoo.com%2F');
+                // this will trigger a save of the learner url, and not require waiting 42 seconds...
+                phone.post('interactiveState', {runKey: 'bar'});
+                // then make sure we're logged in when we need to be
                 phone.post('getAuthInfo');
               });
             JS

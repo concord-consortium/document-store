@@ -20,6 +20,9 @@
     var phone = iframePhone.getIFrameEndpoint();
     phone.addListener('getLearnerUrl', function () {
       phone.post('setLearnerUrl', '#{@learner_url}');
+      // this will trigger a save of the learner url, and not require waiting 42 seconds...
+      phone.post('interactiveState', {runKey: '#{@runKey}'});
+      // then make sure we're logged in when we need to be
       phone.post('getAuthInfo');
     });
     phone.addListener('getInteractiveState', function () {
