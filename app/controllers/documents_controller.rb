@@ -121,7 +121,9 @@ class DocumentsController < ApplicationController
       render_duplicate_error
     else
       c = document.content
+      oc = document.original_content
       c["name"] = codap_api_params[:newRecordname] if c.has_key?("name")
+      oc["name"] = codap_api_params[:newRecordname] if oc && oc.has_key?("name")
       document.update_columns(title: codap_api_params[:newRecordname], content: c, updated_at: Time.now)
       render json: {success: true }
     end
