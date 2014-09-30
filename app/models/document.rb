@@ -6,7 +6,7 @@ class Document < ActiveRecord::Base
   validates :title, uniqueness: {scope: [:owner, :run_key]}
   validate :validate_form_content
 
-  before_save :sync_attributes
+  after_save :sync_attributes
 
   def form_content=(new_content)
     if new_content.is_json?
@@ -30,15 +30,36 @@ class Document < ActiveRecord::Base
   end
 
   def sync_attributes
-    content["name"] = title if _has_attribute?(content, "name")
-    original_content["name"] = title if _has_attribute?(original_content, "name")
+    content_dirty = false
+    c = self.content
+    content_dirty = _set_attribute(c, "name", title)
+    content_dirty = _set_attribute(c, "_permissions", (shared ? 1 : 0))
 
-    content["_permissions"] = (shared ? 1 : 0) if _has_attribute?(content, "_permissions")
-    original_content["_permissions"] = (shared ? 1 : 0) if _has_attribute?(original_content, "_permissions")
+    original_content_dirty = false
+    oc = self.original_content
+    original_content_dirty = _set_attribute(oc, "name", title)
+    original_content_dirty = _set_attribute(oc, "_permissions", (shared ? 1 : 0))
+
+    atts_to_update = {}
+    atts_to_update[:content] = c if content_dirty
+    atts_to_update[:original_content] = oc if original_content_dirty
+    update_columns(atts_to_update) if atts_to_update.size > 0
+
+    return true
   end
 
   def _has_attribute?(c, key)
-    return c && c.is_a?(Hash) && c.has_key?(key)
+    has_a = !c.nil? && c.is_a?(Hash) && c.has_key?(key)
+    return has_a
+  end
+
+  def _set_attribute(c, key, value)
+    if _has_attribute?(c, key) && c[key] != value
+      c[key] = value
+      return true
+    else
+      return false
+    end
   end
 
 end
