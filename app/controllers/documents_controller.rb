@@ -152,6 +152,8 @@ class DocumentsController < ApplicationController
       @master_document_url = codap_link(@codap_server, moreGames)
     end
 
+    @buttonText = launch_params[:buttonText] || 'Launch!'
+
     @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey)
 
     @learner_url = Addressable::URI.parse(request.original_url)
@@ -262,7 +264,7 @@ class DocumentsController < ApplicationController
     end
 
     def launch_params
-      params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey)
+      params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey, :buttonText)
     end
 
     def report_params
