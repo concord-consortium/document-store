@@ -143,7 +143,7 @@ class DocumentsController < ApplicationController
     @codap_server = launch_params[:server]
     @runKey = launch_params[:runKey] || self.run_key_generator.call
 
-    if launch_params[:owner] && (launch_params[:recordname] || launch_params[:doc])
+    if launch_params[:recordid] || (launch_params[:owner] && (launch_params[:recordname] || launch_params[:doc]))
       original_doc = find_doc_via_params(launch_params)
       @master_document_url = codap_link(@codap_server, original_doc) if original_doc
     elsif launch_params[:moreGames]
@@ -179,7 +179,7 @@ class DocumentsController < ApplicationController
     @runKey = report_params[:runKey]
     @reportUser = User.find_by(username: report_params[:reportUser])
 
-    if report_params[:owner] && (report_params[:recordname] || report_params[:doc])
+    if report_params[:recordid] || (report_params[:owner] && (report_params[:recordname] || report_params[:doc]))
       original_doc = find_doc_via_params(report_params)
       @master_document_url = codap_link(@codap_server, original_doc) if original_doc
     elsif report_params[:moreGames]
@@ -264,11 +264,11 @@ class DocumentsController < ApplicationController
     end
 
     def launch_params
-      params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey, :buttonText)
+      params.permit(:owner, :recordname, :recordid, :server, :moreGames, :doc, :runKey, :buttonText)
     end
 
     def report_params
-      params.permit(:owner, :recordname, :server, :moreGames, :doc, :runKey, :reportUser)
+      params.permit(:owner, :recordname, :recordid, :server, :moreGames, :doc, :runKey, :reportUser)
     end
 
     def delete_params

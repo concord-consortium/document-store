@@ -6,8 +6,7 @@ module DocumentsHelper
     rkey = (@runKey || document.run_key)
     data["runKey"] = rkey if rkey
     if document.is_a?(Document)
-      data["doc"] = document.title
-      data["owner"] = document.owner.username if document.owner
+      data["recordid"] = document.id
     else
       data["moreGames"] = document
     end
