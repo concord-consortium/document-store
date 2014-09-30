@@ -1,0 +1,31 @@
+- current_codap_server = (session[:codap_server_url] || ENV['CODAP_DEFAULT_URL'] || 'http://codap.concord.org/releases/latest/')
+- link = launch_url(server: current_codap_server, doc: document.title, owner: document.owner.username)
+.reveal-modal{id: "linkModal#{document.id}", "data-reveal" => true}
+  %h3= "Launch Link"
+  %label
+    Use this link when creating an activity in LARA:
+    %textarea{id: "launchLink#{document.id}", readonly: true}= link
+  %h4= "Advanced Options"
+  %label
+    CODAP Server URL:
+    %input{id: "codapServer#{document.id}", type: 'text', placeholder: 'Enter CODAP server url here...', value: current_codap_server}
+  %label
+    Launch Button Text:
+    %input{id: "buttonText#{document.id}", type: 'text', placeholder: 'Enter launch button text here...', value: 'Launch'}
+  %a.close-reveal-modal= "&#215;".html_safe
+
+:javascript
+  $('#codapServer#{document.id}').on('input propertychange paste', function() {
+    var currUrl = $("#launchLink#{document.id}").val();
+    $("#launchLink#{document.id}").val($.param.querystring(currUrl, {server: $(this).val()} ));
+  });
+
+  $('#buttonText#{document.id}').on('input propertychange paste', function() {
+    var currUrl = $("#launchLink#{document.id}").val();
+    $("#launchLink#{document.id}").val($.param.querystring(currUrl, {buttonText: $(this).val()} ));
+  });
+
+  $('#launchLink#{document.id}').mouseup(function(e) {
+    e.preventDefault();
+    $("#launchLink#{document.id}").select();
+  });
