@@ -8,6 +8,7 @@
       %th
       %th
       %th
+      %th
 
   %tbody
     - @documents.sort_by{|d| [d.title, (d.run_key || "")] }.each do |document|
@@ -27,6 +28,10 @@
           %td= " "
         - if can? :destroy, document
           %td= link_to 'Delete', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
+        - else
+          %td= " "
+        - if can? :open, document
+          %td= link_to 'Launch', codap_link(nil, document), target: "_blank"
         - else
           %td= " "
 
