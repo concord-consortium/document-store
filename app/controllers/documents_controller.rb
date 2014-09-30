@@ -152,7 +152,7 @@ class DocumentsController < ApplicationController
       @master_document_url = codap_link(@codap_server, moreGames)
     end
 
-    @buttonText = launch_params[:buttonText] || 'Launch!'
+    @buttonText = launch_params[:buttonText] || 'Launch'
 
     @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey)
 
