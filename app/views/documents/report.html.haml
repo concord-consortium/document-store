@@ -2,7 +2,7 @@
   - if @supplemental_documents && @supplemental_documents.size > 0
     - sorted_docs = @supplemental_documents.sort_by{|d| d.updated_at }.reverse
     .row
-      .small-3.columns
+      .small-3.text-center.columns
         - most_recent = sorted_docs.shift  # remove the first (most recent) doc from the array and use it
         = link_to 'Launch most recent!', codap_link(@codap_server, most_recent), class: :"launch-button", target: "_blank"
       .small-9.columns
@@ -11,9 +11,9 @@
             %li= link_to doc.title, codap_link(@codap_server, doc), class: :"launch-button", target: "_blank"
   - else
     .row
-      .small-3.columns.end
+      .small-12.text-center.columns
         No documents have been saved!
 - else
   .row
-    .small-12.columns{style: "color: #990000" }
+    .small-12.text-center.columns{style: "color: #990000" }
       Error: The requested document could not be found.

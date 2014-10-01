@@ -1,19 +1,19 @@
 -if @master_document_url
   - if @supplemental_documents && @supplemental_documents.size > 0
     .row
-      .small-3.columns.end
+      .small-12.text-center.columns
         - most_recent = @supplemental_documents.sort_by{|d| d.updated_at }.last
         = link_to h(@buttonText), codap_link(@codap_server, most_recent), class: :"launch-button", target: "_blank"
-    .row
-      .small-3.columns.end{style: "text-align: right;"}
-        = link_to 'Reset to original', @master_document_url, class: :"original-reset", target: "_blank"
+    .row.more-space-above
+      .small-12.text-center.columns
+        = link_to 'Reset to Original', @master_document_url, class: :"original-reset", target: "_blank"
   - else
     .row
-      .small-3.columns.end
+      .small-12.text-center.columns.end
         = link_to h(@buttonText), @master_document_url, class: :"launch-button", target: "_blank"
 - else
   .row
-    .small-12.columns{style: "color: #990000" }
+    .small-12.text-center.columns{style: "color: #990000" }
       Error: The requested document could not be found.
 :javascript
   $(document).ready(function() {
