@@ -10,10 +10,10 @@
     = javascript_include_tag 'application'
     = csrf_meta_tags
   %body{style: 'background-color: #b6e2eb;'}
-    .row
+    .row.more-space-above
       .large-12.columns
         = render 'layouts/messages'
 
-    .row
+    .row.more-space-above
       .large-12.columns
         = yield
