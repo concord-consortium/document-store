@@ -93,6 +93,13 @@ class DocumentsController < ApplicationController
     end
     if document.owner != current_user
       content["_permissions"] = 0 if content && content.has_key?("_permissions")
+      if can? :save, :document
+        # create a copy of this document under the current user or current run key if it doesn't already exist, with the original_content set
+        new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
+        new_doc.content = content if new_doc.new_record?
+        new_doc.original_content = content
+        new_doc.save
+      end
     end
     render json: content
   end
@@ -231,7 +238,6 @@ class DocumentsController < ApplicationController
         end
       end
     end
-
 
     def run_key_or_authenticate
       return true if codap_api_params[:runKey]

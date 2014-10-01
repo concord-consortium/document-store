@@ -9,6 +9,9 @@ class Ability
     can [:read, :open], :url_document
     can [:info], :nil_user
     can [:not_found, :not_authorized, :duplicate_error], :nil_document
+    can [:save], :document do
+      !user.nil? || !extra[:runKey].blank?
+    end
 
     if user
       # Stuff logged in people can do
@@ -18,12 +21,12 @@ class Ability
 
       # read a doc
       can [:read, :show, :open], Document do |doc|
-          doc.owner == user || (!doc.run_key.nil? && doc.run_key == extra[:runKey])
+          doc.owner == user || (!doc.run_key.blank? && doc.run_key == extra[:runKey])
       end
 
       # write a doc
       can [:edit, :update, :destroy, :save, :open_original], Document do |doc|
-          doc.owner == user || (doc.owner.nil? && doc.run_key == extra[:runKey])
+          doc.owner == user || (doc.owner.nil? && !doc.run_key.blank? && doc.run_key == extra[:runKey])
       end
 
       # User
@@ -35,7 +38,7 @@ class Ability
       if extra[:runKey]
         can [:index, :list, :all], Document
         can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original], Document do |doc|
-            doc.owner.nil? && doc.run_key == extra[:runKey]
+            doc.owner.nil? && !doc.run_key.blank? && doc.run_key == extra[:runKey]
         end
       end
       # anonymous can't do anything else
