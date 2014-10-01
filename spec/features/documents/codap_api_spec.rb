@@ -54,6 +54,15 @@ feature 'Document', :codap do
           visit "/document/open?recordid=#{doc2.id}"
           expect(page).to have_content %!{"foo":"bar"}!
         end
+        scenario 'another user\'s shared doc will not be shared when opened' do
+          user = FactoryGirl.create(:user, username: 'test')
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc1 = FactoryGirl.create(:document, owner_id: user.id)
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar", "_permissions": 1 }')
+          signin(user.email, user.password)
+          visit "/document/open?recordid=#{doc2.id}"
+          expect(page).to have_content %!{"foo":"bar","_permissions":0}!
+        end
         scenario 'user can not open a document not shared by someone else' do
           user = FactoryGirl.create(:user, username: 'test')
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
@@ -82,6 +91,16 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         visit '/document/open?owner=test2&recordname=test2%20doc'
         expect(page).to have_content %!{"foo":"bar"}!
+      end
+
+      scenario 'another user\'s shared doc will not be shared when opened' do
+        user = FactoryGirl.create(:user, username: 'test')
+        user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+        doc1 = FactoryGirl.create(:document, owner_id: user.id)
+        doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar", "_permissions": 1 }')
+        signin(user.email, user.password)
+        visit '/document/open?owner=test2&recordname=test2%20doc'
+        expect(page).to have_content %!{"foo":"bar","_permissions":0}!
       end
 
       scenario 'user cannot open a document that is not shared by another person' do
@@ -113,7 +132,7 @@ feature 'Document', :codap do
         signout
         signin(user2.email, user2.password)
         visit "/document/open?owner=test&recordname=testDoc&original=true"
-        expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":1}!
+        expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":0}!
       end
 
       scenario 'if original content has not been defined, return the current content' do
@@ -133,6 +152,13 @@ feature 'Document', :codap do
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
           visit '/document/open?owner=test2&recordname=test2%20doc'
           expect(page).to have_content %!{"foo":"bar"}!
+        end
+
+        scenario 'another user\'s shared doc will not be shared when opened' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar", "_permissions": 1 }')
+          visit '/document/open?owner=test2&recordname=test2%20doc'
+          expect(page).to have_content %!{"foo":"bar","_permissions":0}!
         end
 
         scenario 'anonymous user can not open a document not shared by another person' do
@@ -229,7 +255,7 @@ feature 'Document', :codap do
           page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
           signout
           visit "/document/open?owner=test&recordname=testDoc&runKey=foo&original=true"
-          expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":1}!
+          expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":0}!
         end
 
         scenario 'if original content has not been defined, return the current content' do

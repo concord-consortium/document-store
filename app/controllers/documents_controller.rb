@@ -91,6 +91,9 @@ class DocumentsController < ApplicationController
     else
       authorize! :open, document rescue (render_not_authorized && return)
     end
+    if document.owner != current_user
+      content["_permissions"] = 0 if content && content.has_key?("_permissions")
+    end
     render json: content
   end
 
