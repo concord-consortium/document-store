@@ -616,18 +616,25 @@ feature 'Document', :codap do
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
-                phone.post('setLearnerUrl', '#{l_url}');
-                // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
-                // then make sure we're logged in when we need to be
-                phone.post('getAuthInfo');
+                if (!learnerUrlSet) {
+                  phone.post('setLearnerUrl', '#{l_url}');
+                  learnerUrlSet = true;
+
+                  // this will trigger a save of the learner url, and not require waiting 42 seconds...
+                  phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
+
+                  // then make sure we're logged in when we need to be
+                  phone.post('getAuthInfo');
+                }
               });
             JS
           )
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getInteractiveState', function () {
-                phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
+                if (!learnerUrlSet) {
+                  phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
+                }
               });
             JS
           )
@@ -644,18 +651,25 @@ feature 'Document', :codap do
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
-                phone.post('setLearnerUrl', '#{l_url}');
-                // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
-                // then make sure we're logged in when we need to be
-                phone.post('getAuthInfo');
+                if (!learnerUrlSet) {
+                  phone.post('setLearnerUrl', '#{l_url}');
+                  learnerUrlSet = true;
+
+                  // this will trigger a save of the learner url, and not require waiting 42 seconds...
+                  phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
+
+                  // then make sure we're logged in when we need to be
+                  phone.post('getAuthInfo');
+                }
               });
             JS
           )
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getInteractiveState', function () {
-                phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
+                if (!learnerUrlSet) {
+                  phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
+                }
               });
             JS
           )
