@@ -11,7 +11,7 @@ module DocumentsHelper
       data["moreGames"] = document
     end
 
-    url = Addressable::URI.parse(codap_server || ENV['DEFAULT_CODAP_URL'] || 'http://codap.concord.org/releases/latest/')
+    url = Addressable::URI.parse(codap_server || ENV['CODAP_DEFAULT_URL'] || 'http://codap.concord.org/releases/latest/')
     new_query = url.query_values || {}
     new_query.merge!(data)
     url.query_values = new_query
