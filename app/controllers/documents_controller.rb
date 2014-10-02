@@ -80,6 +80,7 @@ class DocumentsController < ApplicationController
 
   def open
     document = find_doc_via_params
+    new_doc = nil
     render_not_found && return unless document
     content = document.content
     if codap_api_params[:original]
@@ -101,6 +102,7 @@ class DocumentsController < ApplicationController
         new_doc.save
       end
     end
+    response.headers['Document-Id'] = "#{new_doc.nil? ? document.id : new_doc.id}"
     render json: content
   end
 
@@ -113,7 +115,7 @@ class DocumentsController < ApplicationController
     document.shared = document.content['_permissions'] == 1
 
     if document.save
-      render json: {status: "Created", valid: true }, status: :created
+      render json: {status: "Created", valid: true, id: document.id }, status: :created
     else
       render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
     end

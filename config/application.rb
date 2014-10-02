@@ -27,7 +27,7 @@ module Documentstore
     config.middleware.use Rack::Cors do
       allow do
         origins '*'
-        resource '*', headers: :any, methods: [:get, :post, :options], credentials: true
+        resource '*', headers: :any, expose: ['Document-Id'], methods: [:get, :post, :options], credentials: true
       end
     end
     # Settings in config/environments/* take precedence over those specified here.

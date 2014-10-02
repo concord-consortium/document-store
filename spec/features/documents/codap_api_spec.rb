@@ -45,6 +45,14 @@ feature 'Document', :codap do
           visit "/document/open?recordid=#{doc1.id}"
           expect(page).to have_content %![1,2,3]!
         end
+        scenario 'expect Document-Id header to be set correctly' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc1 = FactoryGirl.create(:document, title: 'testDoc', owner_id: user.id, content: '[1, 2, 3]')
+          signin(user.email, user.password)
+          visit "/document/open?recordid=#{doc1.id}"
+          expect(page).to have_content %![1,2,3]!
+          expect(page.response_headers['Document-Id']).to eq("#{doc1.id}")
+        end
         scenario 'user can open a document shared by someone else' do
           user = FactoryGirl.create(:user, username: 'test')
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
@@ -314,7 +322,14 @@ feature 'Document', :codap do
         expect(doc.content).to match({"def" => [1,2,3,4] })
         expect(doc.owner_id).to eq(user.id)
       end
-
+      scenario 'save should return the document id' do
+        user = FactoryGirl.create(:user, username: 'test')
+        expect(Document.find_by(title: "newdoc")).to be_nil
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+        doc = Document.find_by(title: "newdoc")
+        expect(page).to have_content %!{"status":"Created","valid":true,"id":#{doc.id}}!
+      end
       scenario 'user can not save over a document owned by someone else' do
         user = FactoryGirl.create(:user, username: 'test')
         user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
