@@ -17,15 +17,17 @@
       Error: The requested document could not be found.
 :javascript
   $(document).ready(function() {
-    var phone = iframePhone.getIFrameEndpoint();
-    var learnerUrlSet = false;
+    var phone = iframePhone.getIFrameEndpoint(),
+        learnerUrlSet = false,
+        state = {runKey: '#{@runKey}', lara_options: { reporting_url: '#{@report_url}' }};
+
     phone.addListener('getLearnerUrl', function () {
       if (!learnerUrlSet) {
         phone.post('setLearnerUrl', '#{@learner_url}');
         learnerUrlSet = true;
 
         // this will trigger a save of the learner url, and not require waiting 42 seconds...
-        phone.post('interactiveState', {runKey: '#{@runKey}', lara_options: { reporting_url: '#{@report_url}' }});
+        phone.post('interactiveState', state);
 
         // then make sure we're logged in when we need to be
         phone.post('getAuthInfo');
@@ -33,7 +35,7 @@
     });
     phone.addListener('getInteractiveState', function () {
       if (!learnerUrlSet) {
-        phone.post('interactiveState', {runKey: '#{@runKey}', lara_options: { reporting_url: '#{@report_url}' }});
+        phone.post('interactiveState', state);
       }
     });
     phone.addListener('authInfo', function(info) {
@@ -52,4 +54,9 @@
     });
     // Initialize connection after all message listeners are added!
     phone.initialize();
+
+    // Some initial messages we're going to *always* send
+    phone.post('setLearnerUrl', '#{@learner_url}');
+    phone.post('interactiveState', state);
+    phone.post('getAuthInfo');
   });

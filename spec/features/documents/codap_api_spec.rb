@@ -628,6 +628,7 @@ feature 'Document', :codap do
           l_url = launch_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
           r_url = report_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
           visit launch_path(doc: doc.title, owner: user.username, server: 'http://foo.com/')
+          expect(page.html).to have_text("state = {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }};")
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
@@ -636,7 +637,7 @@ feature 'Document', :codap do
                   learnerUrlSet = true;
 
                   // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                  phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
+                  phone.post('interactiveState', state);
 
                   // then make sure we're logged in when we need to be
                   phone.post('getAuthInfo');
@@ -648,7 +649,7 @@ feature 'Document', :codap do
             <<-JS
               phone.addListener('getInteractiveState', function () {
                 if (!learnerUrlSet) {
-                  phone.post('interactiveState', {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }});
+                  phone.post('interactiveState', state);
                 }
               });
             JS
@@ -663,6 +664,7 @@ feature 'Document', :codap do
           r_url = report_url(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
 
           visit launch_path(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
+          expect(page.html).to have_text("state = {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }};")
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
@@ -671,7 +673,7 @@ feature 'Document', :codap do
                   learnerUrlSet = true;
 
                   // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                  phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
+                  phone.post('interactiveState', state);
 
                   // then make sure we're logged in when we need to be
                   phone.post('getAuthInfo');
@@ -683,7 +685,7 @@ feature 'Document', :codap do
             <<-JS
               phone.addListener('getInteractiveState', function () {
                 if (!learnerUrlSet) {
-                  phone.post('interactiveState', {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }});
+                  phone.post('interactiveState', state);
                 }
               });
             JS
