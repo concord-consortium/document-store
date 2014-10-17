@@ -43,7 +43,7 @@
           var origHref = $(this).attr('href');
           $(this).attr('href', $.param.querystring(origHref, 'runAsGuest=true'));
         });
-      } else if (info["loggedIn"] && #{current_user.nil?} && window.location.href.indexOf('&auth_provider=') == -1) {
+      } else if (info["loggedIn"] && #{current_user.nil?} && window.location.href.indexOf('auth_provider=') == -1) {
         window.location = $.param.querystring(window.location.href, "auth_provider="+info["provider"]);
       }
     });
