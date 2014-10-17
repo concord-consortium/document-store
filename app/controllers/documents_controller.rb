@@ -185,11 +185,12 @@ class DocumentsController < ApplicationController
   end
 
   def report
-    raise ActiveRecord::RecordNotFound.new if report_params[:runKey].blank? || report_params[:reportUser].blank? || report_params[:server].blank?
+    raise ActiveRecord::RecordNotFound.new if report_params[:runKey].blank? || report_params[:server].blank?
     authorize! :report, current_user
     @codap_server = report_params[:server]
     @runKey = report_params[:runKey]
-    @reportUser = User.find_by(username: report_params[:reportUser])
+    u = User.find_by(username: report_params[:reportUser])
+    @reportUserId = u ? u.id : nil
 
     if report_params[:recordid] || (report_params[:owner] && (report_params[:recordname] || report_params[:doc]))
       original_doc = find_doc_via_params(report_params)
@@ -200,7 +201,7 @@ class DocumentsController < ApplicationController
       @master_document_url = codap_link(@codap_server, moreGames)
     end
 
-    @supplemental_documents = Document.where(owner_id: @reportUser.id, run_key: @runKey)
+    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey)
 
     response.headers.delete 'X-Frame-Options'
     render layout: 'launch'
