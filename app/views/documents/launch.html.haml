@@ -36,6 +36,8 @@
     phone.addListener('getInteractiveState', function () {
       if (!learnerUrlSet) {
         phone.post('interactiveState', state);
+      } else {
+        phone.post('interactiveState', 'nochange');
       }
     });
     phone.addListener('authInfo', function(info) {
