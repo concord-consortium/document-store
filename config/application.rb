@@ -24,7 +24,7 @@ module Documentstore
 
     config.active_record.schema_format = :sql
 
-    config.middleware.use Rack::Cors do
+    config.middleware.insert_before Warden::Manager, Rack::Cors do
       allow do
         origins '*'
         resource '*', headers: :any, expose: ['Document-Id'], methods: [:get, :post, :options], credentials: true

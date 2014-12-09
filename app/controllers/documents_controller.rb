@@ -7,6 +7,8 @@ class DocumentsController < ApplicationController
   skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch, :rename, :report]
   skip_before_filter :verify_authenticity_token, :only => [:save]
 
+  before_filter :check_session_expiration, :only => [:all, :save, :open, :delete, :rename]
+
   include DocumentsHelper
 
   cattr_accessor :run_key_generator
@@ -269,6 +271,14 @@ class DocumentsController < ApplicationController
         document = Document.includes(:owner).find(p[:recordid]) rescue nil
       end
       return document
+    end
+
+    def check_session_expiration
+      if !current_user && flash.detect{|k,v| v =~ /session expired/}
+        render json: {status: "Session Expired", valid: false, message: 'error.sessionExpired' }, status: 401
+        return false
+      end
+      return true
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.
