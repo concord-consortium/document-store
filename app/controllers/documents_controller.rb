@@ -177,11 +177,13 @@ class DocumentsController < ApplicationController
 
     @report_url = @learner_url.dup
     @report_url.path = report_path
+
+    new_query = @report_url.query_values || {}
+    new_query.delete("auth_provider")
     if current_user
-      new_query = @report_url.query_values || {}
       new_query["reportUser"] = current_user.username
-      @report_url.query_values = new_query
     end
+    @report_url.query_values = new_query
     @report_url = @report_url.to_s
 
     @learner_url = @learner_url.to_s
