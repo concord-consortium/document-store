@@ -17,13 +17,19 @@
       Error: The requested document could not be found.
 :javascript
   $(document).ready(function() {
+    var runKey = '#{@runKey}',
+        reportingUrl = '#{@report_url}',
+        learnerUrl = '#{@learner_url}',
+        areLoggedIn = #{!current_user.nil?},
+        currentEmail = #{current_user.nil? ? "null" : "'#{current_user.email}'"};
+
     var phone = iframePhone.getIFrameEndpoint(),
         learnerUrlSet = false,
-        state = {runKey: '#{@runKey}', lara_options: { reporting_url: '#{@report_url}' }};
+        state = {runKey: runKey, lara_options: { reporting_url:  reportingUrl }};
 
     phone.addListener('getLearnerUrl', function () {
       if (!learnerUrlSet) {
-        phone.post('setLearnerUrl', '#{@learner_url}');
+        phone.post('setLearnerUrl', learnerUrl);
         learnerUrlSet = true;
 
         // this will trigger a save of the learner url, and not require waiting 42 seconds...
@@ -42,13 +48,40 @@
     });
     phone.addListener('authInfo', function(info) {
       if (!info["loggedIn"]) {
-        // Tell CODAP that we're running anonymously
-        $('.launch-button,.original-reset').each(function() {
-          var origHref = $(this).attr('href');
-          $(this).attr('href', $.param.querystring(origHref, 'runAsGuest=true'));
-        });
-      } else if (info["loggedIn"] && #{current_user.nil?} && window.location.href.indexOf('auth_provider=') == -1) {
-        window.location = $.param.querystring(window.location.href, "auth_provider="+info["provider"]);
+        // We're not supposed to be logged in.
+        if (areLoggedIn) {
+          // But... we are.
+          if (window.location.href.indexOf('require_anonymous=') == -1) {
+            // Log the current user out
+            window.location = $.param.querystring(window.location.href, "require_anonymous=true");
+          }
+        } else {
+          // And we're not logged in. Good!
+          // Tell CODAP that we're running anonymously
+          $('.launch-button,.original-reset').each(function() {
+            var origHref = $(this).attr('href');
+            $(this).attr('href', $.param.querystring(origHref, 'runAsGuest=true'));
+          });
+        }
+      } else {
+        // We're supposed to be logged in.
+        if (!areLoggedIn) {
+          // But... we aren't.
+          if(window.location.href.indexOf('auth_provider=') == -1) {
+            // Try to log a user in.
+            window.location = $.param.querystring(window.location.href, "auth_provider="+info["provider"]);
+          }
+        } else {
+          // And we are logged in. Good!
+          // Are we the right person?
+          if (info["email"] && info["email"] != currentEmail) {
+            // Wrong person. Try to log in again.
+            if(window.location.href.indexOf('require_email=') == -1) {
+              // Try to log a user in.
+              window.location = $.param.querystring(window.location.href, "require_email="+info["email"]);
+            }
+          }
+        }
       }
     });
     phone.addListener('getExtendedSupport', function() {
@@ -58,7 +91,7 @@
     phone.initialize();
 
     // Some initial messages we're going to *always* send
-    phone.post('setLearnerUrl', '#{@learner_url}');
+    phone.post('setLearnerUrl', learnerUrl);
     phone.post('interactiveState', state);
     phone.post('getAuthInfo');
   });

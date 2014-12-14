@@ -234,7 +234,14 @@ class DocumentsController < ApplicationController
     end
 
     def auto_authenticate
-      unless current_user
+      if current_user
+        if auth_params[:require_anonymous] ||
+          (auth_params[:require_email] && auth_params[:require_email] != current_user.email && current_user.authentications.detect {|a| a.updated_at > 1.minute.ago }.nil? )
+          # if we need to be running as anonymous, OR the current user doesn't match the requirements and they didn't just log in.
+          sign_out current_user
+        end
+      end
+      if current_user.nil? && auth_params[:auth_provider]
         provider = auth_params[:auth_provider]
         if referer = request.env['HTTP_REFERER'] || provider
           Concord::AuthPortal.all.each_pair do |key,portal|
@@ -305,7 +312,7 @@ class DocumentsController < ApplicationController
     end
 
     def auth_params
-      params.permit(:auth_provider)
+      params.permit(:auth_provider, :require_anonymous, :require_email)
     end
 
     def render_not_found
