@@ -630,12 +630,21 @@ feature 'Document', :codap do
           r_url = report_url(doc: doc.title, owner: user.username, reportUser: user2.username, runKey: 'foo', server: 'http://foo.com/')
           signin(user2.email, user2.password)
           visit launch_path(doc: doc.title, owner: user.username, server: 'http://foo.com/')
-          expect(page.html).to have_text("state = {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }};")
+          expect(page.html).to have_text("state = {runKey: runKey, lara_options: { reporting_url: reportingUrl }};")
+          expect(page.html).to have_text(
+            <<-JS
+              var runKey = 'foo',
+                reportingUrl = '#{r_url}',
+                learnerUrl = '#{l_url}',
+                areLoggedIn = true,
+                currentEmail = '#{user2.email}';
+            JS
+          )
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getLearnerUrl', function () {
                 if (!learnerUrlSet) {
-                  phone.post('setLearnerUrl', '#{l_url}');
+                  phone.post('setLearnerUrl', learnerUrl);
                   learnerUrlSet = true;
 
                   // this will trigger a save of the learner url, and not require waiting 42 seconds...
@@ -652,6 +661,8 @@ feature 'Document', :codap do
               phone.addListener('getInteractiveState', function () {
                 if (!learnerUrlSet) {
                   phone.post('interactiveState', state);
+                } else {
+                  phone.post('interactiveState', 'nochange');
                 }
               });
             JS
@@ -668,34 +679,15 @@ feature 'Document', :codap do
 
           signin(user2.email, user2.password)
           visit launch_path(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
-          expect(page.html).to have_text("state = {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }};")
           expect(page.html).to have_text(
             <<-JS
-              phone.addListener('getLearnerUrl', function () {
-                if (!learnerUrlSet) {
-                  phone.post('setLearnerUrl', '#{l_url}');
-                  learnerUrlSet = true;
-
-                  // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                  phone.post('interactiveState', state);
-
-                  // then make sure we're logged in when we need to be
-                  phone.post('getAuthInfo');
-                }
-              });
+              var runKey = 'bar',
+                reportingUrl = '#{r_url}',
+                learnerUrl = '#{l_url}',
+                areLoggedIn = true,
+                currentEmail = '#{user2.email}';
             JS
           )
-          expect(page.html).to have_text(
-            <<-JS
-              phone.addListener('getInteractiveState', function () {
-                if (!learnerUrlSet) {
-                  phone.post('interactiveState', state);
-                }
-              });
-            JS
-          )
-          expect(page.html).to have_text("phone.addListener('authInfo', function(info) {")
-          expect(page.html).to have_text("phone.addListener('getExtendedSupport', function() {")
         end
         scenario 'page has correct iframe phone code when anonymous' do
           user = FactoryGirl.create(:user, username: 'test2')
@@ -703,34 +695,15 @@ feature 'Document', :codap do
           l_url = launch_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
           r_url = report_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
           visit launch_path(doc: doc.title, owner: user.username, server: 'http://foo.com/')
-          expect(page.html).to have_text("state = {runKey: 'foo', lara_options: { reporting_url: '#{r_url}' }};")
           expect(page.html).to have_text(
             <<-JS
-              phone.addListener('getLearnerUrl', function () {
-                if (!learnerUrlSet) {
-                  phone.post('setLearnerUrl', '#{l_url}');
-                  learnerUrlSet = true;
-
-                  // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                  phone.post('interactiveState', state);
-
-                  // then make sure we're logged in when we need to be
-                  phone.post('getAuthInfo');
-                }
-              });
+              var runKey = 'foo',
+                reportingUrl = '#{r_url}',
+                learnerUrl = '#{l_url}',
+                areLoggedIn = false,
+                currentEmail = null;
             JS
           )
-          expect(page.html).to have_text(
-            <<-JS
-              phone.addListener('getInteractiveState', function () {
-                if (!learnerUrlSet) {
-                  phone.post('interactiveState', state);
-                }
-              });
-            JS
-          )
-          expect(page.html).to have_text("phone.addListener('authInfo', function(info) {")
-          expect(page.html).to have_text("phone.addListener('getExtendedSupport', function() {")
         end
         scenario 'page has correct iframe phone code when the runKey is supplied when anonymous' do
           user = FactoryGirl.create(:user, username: 'test2')
@@ -739,34 +712,15 @@ feature 'Document', :codap do
           r_url = report_url(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
 
           visit launch_path(doc: doc.title, owner: user.username, runKey: 'bar', server: 'http://foo.com/')
-          expect(page.html).to have_text("state = {runKey: 'bar', lara_options: { reporting_url: '#{r_url}' }};")
           expect(page.html).to have_text(
             <<-JS
-              phone.addListener('getLearnerUrl', function () {
-                if (!learnerUrlSet) {
-                  phone.post('setLearnerUrl', '#{l_url}');
-                  learnerUrlSet = true;
-
-                  // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                  phone.post('interactiveState', state);
-
-                  // then make sure we're logged in when we need to be
-                  phone.post('getAuthInfo');
-                }
-              });
+              var runKey = 'bar',
+                reportingUrl = '#{r_url}',
+                learnerUrl = '#{l_url}',
+                areLoggedIn = false,
+                currentEmail = null;
             JS
           )
-          expect(page.html).to have_text(
-            <<-JS
-              phone.addListener('getInteractiveState', function () {
-                if (!learnerUrlSet) {
-                  phone.post('interactiveState', state);
-                }
-              });
-            JS
-          )
-          expect(page.html).to have_text("phone.addListener('authInfo', function(info) {")
-          expect(page.html).to have_text("phone.addListener('getExtendedSupport', function() {")
         end
       end
     end
