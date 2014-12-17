@@ -5,11 +5,11 @@
   %li= link_to 'Home', root_path
   %li= link_to 'Documents', documents_path
   %li.current
-    %a{href: '#'}= @document.title
+    %a{href: '#'}= @document.title || ""
 
 %p
   %b Title:
-  = @document.title + (@document.run_key ? " [#{@document.run_key}]" : "")
+  = (@document.title || "") + (@document.run_key ? " [#{@document.run_key}]" : "")
 %p
   %b Shared:
   = @document.shared
