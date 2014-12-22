@@ -4,11 +4,11 @@ class User < ActiveRecord::Base
   if Settings.enable_user_registration
     devise :database_authenticatable, :registerable, :confirmable,
            :recoverable, :rememberable, :trackable, :validatable,
-           :omniauthable, :timeoutable, :timeout_in => 1.hour,
+           :omniauthable, :timeoutable, :timeout_in => 90.minutes,
            :omniauth_providers => Concord::AuthPortal.all_strategy_names
   else
     devise :database_authenticatable, :rememberable, :trackable,
-           :omniauthable, :timeoutable, :timeout_in => 1.hour,
+           :omniauthable, :timeoutable, :timeout_in => 90.minutes,
            :omniauth_providers => Concord::AuthPortal.all_strategy_names
   end
 
