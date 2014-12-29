@@ -1,13 +1,13 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch, :report]
-  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :delete, :launch, :rename]
+  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :patch, :delete, :launch, :rename]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
   load_and_authorize_resource
-  skip_load_and_authorize_resource :only => [:all, :save, :open, :delete, :launch, :rename, :report]
-  skip_before_filter :verify_authenticity_token, :only => [:save]
+  skip_load_and_authorize_resource :only => [:all, :save, :patch, :open, :delete, :launch, :rename, :report]
+  skip_before_filter :verify_authenticity_token, :only => [:save, :patch]
 
-  before_filter :check_session_expiration, :only => [:all, :save, :open, :delete, :rename]
+  before_filter :check_session_expiration, :only => [:all, :save, :patch, :open, :delete, :rename]
 
   include DocumentsHelper
 
@@ -125,6 +125,39 @@ class DocumentsController < ApplicationController
     else
       render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
     end
+  end
+
+  def patch
+    if codap_api_params[:recordid].present?
+      document = Document.find(codap_api_params[:recordid].to_i)
+    else
+      render_not_found
+      return
+    end
+    authorize! :save, document rescue (render_not_authorized && return)
+
+    begin
+      patchset = JSON.parse(request.raw_post)
+      raise "Empty patchset" unless patchset && patchset.is_a?(Array)
+    rescue => e
+      render json: {status: "Error", errors: ["Invalid patch JSON (parsing)", e.to_s, patchset], valid: false, message: 'error.writeFailed' }, status: 400
+      return
+    end
+
+    begin
+      # Use JSON Patch to bring the content up-to-date
+      res = JSON::Patch.new(document.content, patchset).call
+
+      # Just using 'document.content = res; document.save' didn't seem to actually persist things, so we'll be more forceful.
+      if document.update_columns({content: res, updated_at: Time.current})
+        render json: {status: "Patched", valid: true, id: document.id }, status: 200
+      else
+        render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+      end
+    rescue => e
+      render json: {status: "Error", errors: ["Invalid patch JSON (executing)", e.to_s], valid: false, message: 'error.writeFailed' }, status: 400
+    end
+
   end
 
   def rename

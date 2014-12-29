@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   get 'document/launch' => 'documents#launch', :as => :launch
   get 'document/report' => 'documents#report', :as => :report
   post 'document/save' => 'documents#save'
+  post 'document/patch' => 'documents#patch'
   get 'document/rename' => 'documents#rename'
   get 'document/delete' => 'documents#delete'
   get 'user/info' => 'users#info'
