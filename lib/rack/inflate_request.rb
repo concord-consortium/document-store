@@ -21,7 +21,6 @@ module Rack
     def call(env)
       if method_handled?(env) && encoding_handled?(env)
         extracted                         = decode(env['rack.input'], env['HTTP_CONTENT_ENCODING'])
-        Rails.logger.warn "Handled extraction!\n\n#{extracted}\n\n"
         env['X_REQUEST_CONTENT_ENCODING'] = env.delete('HTTP_CONTENT_ENCODING')
         env['CONTENT_LENGTH']             = extracted.bytesize
         env['rack.input']                 = StringIO.new(extracted)
@@ -30,7 +29,6 @@ module Rack
     end
 
     def decode(input, content_encoding)
-      Rails.logger.warn "Attempting extraction..."
       case content_encoding
         when 'gzip' then Zlib::GzipReader.new(input).read
         when 'deflate' then Zlib::Inflate.inflate(input.read)
