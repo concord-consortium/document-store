@@ -24,6 +24,8 @@ module Documentstore
 
     config.active_record.schema_format = :sql
 
+    config.middleware.use Rack::Deflater
+
     config.middleware.insert_before Warden::Manager, Rack::Cors do
       allow do
         origins '*'
