@@ -26,6 +26,9 @@ module Documentstore
 
     config.middleware.use Rack::Deflater
 
+    require 'rack/inflate_request'
+    config.middleware.insert_before Rack::Runtime, Rack::InflateRequest
+
     config.middleware.insert_before Warden::Manager, Rack::Cors do
       allow do
         origins '*'
