@@ -205,7 +205,7 @@ class DocumentsController < ApplicationController
 
     @buttonText = launch_params[:buttonText] || 'Launch'
 
-    @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey)
+    @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey).select{|d| d.content.has_key? "_permissions" }
 
     @learner_url = Addressable::URI.parse(request.original_url)
     new_query = @learner_url.query_values || {}
@@ -247,7 +247,7 @@ class DocumentsController < ApplicationController
       @master_document_url = codap_link(@codap_server, moreGames)
     end
 
-    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey)
+    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey).select{|d| d.content.has_key? "_permissions" }
 
     response.headers.delete 'X-Frame-Options'
     render layout: 'launch'
