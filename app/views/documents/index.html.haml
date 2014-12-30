@@ -33,7 +33,7 @@
           %td= link_to 'Delete', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
         - else
           %td= " "
-        - if can? :open, document
+        - if can?(:open, document) && document.content.has_key?('_permissions')
           %td= link_to 'Launch', codap_link(nil, document), target: "_blank"
         - else
           %td= " "
