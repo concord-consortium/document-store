@@ -118,7 +118,7 @@ class DocumentsController < ApplicationController
     authorize! :save, document rescue (render_not_authorized && return)
     document.form_content = content
     document.original_content = document.content if document.new_record?
-    document.shared = document.content['_permissions'] == 1
+    document.shared = document.content.has_key?('_permissions') && document.content['_permissions'] == 1
 
     if document.save
       render json: {status: "Created", valid: true, id: document.id }, status: :created
