@@ -21,6 +21,10 @@ class Document < ActiveRecord::Base
     @form_content || (content && content.to_json) || ""
   end
 
+  def is_codap_main_document?
+    return content.is_a?(Hash) && content.has_key?("appName") && content["appName"] == "DG"
+  end
+
   protected
 
   def validate_form_content

@@ -77,7 +77,7 @@ class DocumentsController < ApplicationController
   # CODAP API
   def all
     authorize! :all, Document rescue (render_not_authorized && return)
-    render json: @documents.select{|d| d.content.has_key? "_permissions" }.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
+    render json: @documents.select{|d| d.is_codap_main_document? }.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
@@ -95,7 +95,7 @@ class DocumentsController < ApplicationController
       authorize! :open, document rescue (render_not_authorized && return)
     end
     if document.owner != current_user
-      content["_permissions"] = 0 if content && content.has_key?("_permissions")
+      content["_permissions"] = 0 if content && content.is_a?(Hash) && content.has_key?("_permissions")
       if can? :save, :document
         # create a copy of this document under the current user or current run key if it doesn't already exist, with the original_content set
         new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
@@ -118,7 +118,7 @@ class DocumentsController < ApplicationController
     authorize! :save, document rescue (render_not_authorized && return)
     document.form_content = content
     document.original_content = document.content if document.new_record?
-    document.shared = document.content.has_key?('_permissions') && document.content['_permissions'] == 1
+    document.shared = document.content.is_a?(Hash) && document.content.has_key?('_permissions') && document.content['_permissions'] == 1
 
     if document.save
       render json: {status: "Created", valid: true, id: document.id }, status: :created
@@ -205,7 +205,7 @@ class DocumentsController < ApplicationController
 
     @buttonText = launch_params[:buttonText] || 'Launch'
 
-    @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey).select{|d| d.content.has_key? "_permissions" }
+    @supplemental_documents = Document.where(owner_id: (current_user ? current_user.id : nil), run_key: @runKey).select{|d| d.is_codap_main_document? }
 
     @learner_url = Addressable::URI.parse(request.original_url)
     new_query = @learner_url.query_values || {}
@@ -247,7 +247,7 @@ class DocumentsController < ApplicationController
       @master_document_url = codap_link(@codap_server, moreGames)
     end
 
-    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey).select{|d| d.content.has_key? "_permissions" }
+    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey).select{|d| d.is_codap_main_document? }
 
     response.headers.delete 'X-Frame-Options'
     render layout: 'launch'
