@@ -77,7 +77,7 @@ class DocumentsController < ApplicationController
   # CODAP API
   def all
     authorize! :all, Document rescue (render_not_authorized && return)
-    render json: @documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
+    render json: @documents.select{|d| d.content.has_key? "_permissions" }.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
