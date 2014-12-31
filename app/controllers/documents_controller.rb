@@ -257,13 +257,13 @@ class DocumentsController < ApplicationController
     def load_index_documents
       if current_user
         if codap_api_params[:runKey]
-          @documents = Document.where(owner_id: current_user.id, run_key: codap_api_params[:runKey])
+          @documents = Document.where(owner_id: current_user.id, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
         else
-          @documents = current_user.documents
+          @documents = Document.where(owner_id: current_user.id).order(title: :asc, run_key: :asc)
         end
       else
         if codap_api_params[:runKey]
-          @documents = Document.where(owner_id: nil, run_key: codap_api_params[:runKey])
+          @documents = Document.where(owner_id: nil, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
         else
           @documents = []
         end
