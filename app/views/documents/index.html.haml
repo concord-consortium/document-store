@@ -37,7 +37,7 @@
           %td= link_to 'Launch', codap_link(nil, document), target: "_blank"
         - else
           %td= " "
-        - if can?(:update, document) && document.shared
+        - if can?(:update, document) && document.shared && document.is_codap_main_document?
           - docs_with_dialogs << document
           %td
             %a.link_button{href: '#', "data-reveal-id" => "linkModal#{document.id}"}= 'Link...'
