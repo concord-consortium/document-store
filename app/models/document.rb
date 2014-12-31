@@ -24,7 +24,7 @@ class Document < ActiveRecord::Base
   # A document is a codap main document if it has all 3 keys: appName, appVersion, appBuildNum.
   # Don't worry about their value, since that can change.
   def is_codap_main_document?
-    return content.is_a?(Hash) && (["appName", "appVersion", "appBuildNum"] - d.content.keys).empty?
+    return content.is_a?(Hash) && (["appName", "appVersion", "appBuildNum"] - content.keys).empty?
   end
 
   protected
