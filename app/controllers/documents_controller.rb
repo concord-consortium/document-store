@@ -17,6 +17,7 @@ class DocumentsController < ApplicationController
   # GET /documents
   # GET /documents.json
   def index
+    @documents = @documents.paginate(page: index_params[:page], :per_page => 20) if @documents.respond_to?('paginate')
   end
 
   # GET /documents/1
@@ -328,6 +329,10 @@ class DocumentsController < ApplicationController
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.
+    def index_params
+      params.permit(:page)
+    end
+
     def document_params
       params.require(:document).permit(:title, :content, :shared, :form_content)
     end

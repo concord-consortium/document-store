@@ -2,6 +2,8 @@
 
 - docs_with_dialogs = []
 
+= will_paginate(@documents, renderer: FoundationPagination::Rails)
+
 %table
   %thead
     %tr
@@ -43,6 +45,8 @@
             %a.link_button{href: '#', "data-reveal-id" => "linkModal#{document.id}"}= 'Link...'
         - else
           %td= " "
+
+= will_paginate(@documents, renderer: FoundationPagination::Rails)
 
 %br
 
