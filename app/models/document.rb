@@ -21,8 +21,10 @@ class Document < ActiveRecord::Base
     @form_content || (content && content.to_json) || ""
   end
 
+  # A document is a codap main document if it has all 3 keys: appName, appVersion, appBuildNum.
+  # Don't worry about their value, since that can change.
   def is_codap_main_document?
-    return content.is_a?(Hash) && content.has_key?("appName") && content["appName"] == "DG"
+    return content.is_a?(Hash) && (["appName", "appVersion", "appBuildNum"] - d.content.keys).empty?
   end
 
   protected
