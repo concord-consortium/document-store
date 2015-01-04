@@ -111,15 +111,18 @@ class DocumentsController < ApplicationController
 
   def save
     content = request.raw_post
+    parsed_content = JSON.parse(content) rescue {}
+
     if codap_api_params[:recordid].present?
       document = Document.find(codap_api_params[:recordid].to_i)
     else
       document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
     end
     authorize! :save, document rescue (render_not_authorized && return)
+
     document.form_content = content
     document.original_content = document.content if document.new_record?
-    document.shared = document.content.is_a?(Hash) && document.content.has_key?('_permissions') && document.content['_permissions'] == 1
+    document.shared = parsed_content.is_a?(Hash) && parsed_content.has_key?('_permissions') && parsed_content['_permissions'].to_i == 1
 
     if document.save
       render json: {status: "Created", valid: true, id: document.id }, status: :created
@@ -149,8 +152,10 @@ class DocumentsController < ApplicationController
       # Use JSON Patch to bring the content up-to-date
       res = JSON::Patch.new(document.content, patchset).call
 
+      shared = res.is_a?(Hash) && res.has_key?('_permissions') && res['_permissions'].to_i == 1
+
       # Just using 'document.content = res; document.save' didn't seem to actually persist things, so we'll be more forceful.
-      if document.update_columns({content: res, updated_at: Time.current})
+      if document.update_columns({content: res, updated_at: Time.current, shared: shared})
         render json: {status: "Patched", valid: true, id: document.id }, status: 200
       else
         render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
