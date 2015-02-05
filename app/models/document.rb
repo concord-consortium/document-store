@@ -21,9 +21,7 @@ class Document < ActiveRecord::Base
     @form_content || (content && content.to_json) || ""
   end
 
-  # A document is a codap main document if it has all 3 keys: appName, appVersion, appBuildNum.
-  # Don't worry about their value, since that can change.
-  def is_codap_main_document?
+  def _is_codap_main_doc
     return content.is_a?(Hash) && (["appName", "appVersion", "appBuildNum"] - content.keys).empty?
   end
 
@@ -46,9 +44,15 @@ class Document < ActiveRecord::Base
     original_content_dirty ||= _set_attribute(oc, "name", title)
     original_content_dirty ||= _set_attribute(oc, "_permissions", (shared ? 1 : 0))
 
+    # A document is a codap main document if it has all 3 keys: appName, appVersion, appBuildNum.
+    # Don't worry about their value, since that can change.
+    is_main_doc = _is_codap_main_doc
+    is_main_doc_dirty = is_codap_main_document != is_main_doc
+
     atts_to_update = {}
     atts_to_update[:content] = c if content_dirty
     atts_to_update[:original_content] = oc if original_content_dirty
+    atts_to_update[:is_codap_main_document] = is_main_doc if is_main_doc_dirty
     update_columns(atts_to_update) if atts_to_update.size > 0
 
     return true
