@@ -461,15 +461,15 @@ feature 'Document', :codap do
         describe 'anonymous' do
           scenario 'can launch a document via owner and recordname' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
             expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
           end
           scenario 'also has a single document that matches the run key, a link to it is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
             expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
@@ -478,10 +478,10 @@ feature 'Document', :codap do
           scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
             doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
@@ -489,11 +489,11 @@ feature 'Document', :codap do
           end
           scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
-            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
@@ -506,7 +506,7 @@ feature 'Document', :codap do
           end
           scenario 'moreGames in url and one document with run key, 2 links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
@@ -514,10 +514,10 @@ feature 'Document', :codap do
           end
           scenario 'moreGames in url and multiple documents with run key, all links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
             expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
@@ -527,7 +527,7 @@ feature 'Document', :codap do
         describe 'logged in user' do
           scenario 'can launch a document via owner and recordname' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             user4 = FactoryGirl.create(:user, username: 'test4')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
@@ -536,9 +536,9 @@ feature 'Document', :codap do
           end
           scenario 'also has a single document that matches the run key, a link to it is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
@@ -547,12 +547,12 @@ feature 'Document', :codap do
           end
           scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
@@ -561,12 +561,12 @@ feature 'Document', :codap do
           end
           scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
             user = FactoryGirl.create(:user, username: 'test2')
-            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+            doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
-            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
@@ -582,7 +582,7 @@ feature 'Document', :codap do
           end
           scenario 'moreGames in url and one document with run key, 2 links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
@@ -591,10 +591,10 @@ feature 'Document', :codap do
           end
           scenario 'moreGames in url and multiple documents with run key, all links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
-            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar" }')
-            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar" }')
+            doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc3  = FactoryGirl.create(:document, title: "something3", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc4  = FactoryGirl.create(:document, title: "something4", shared: false, owner_id: user4.id, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
+            doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: user4.id, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
@@ -606,7 +606,7 @@ feature 'Document', :codap do
       describe 'auto authentication' do
         scenario 'the user will be authenticated if auth_provider is set and the user is not logged in' do
           user = FactoryGirl.create(:user, username: 'test2')
-          doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
           expect {
             visit '/document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com'
           }.to raise_error(ActionController::RoutingError) # capybara doesn't handle the redirects well
@@ -614,7 +614,7 @@ feature 'Document', :codap do
         end
         scenario 'the user will not be authenticated if auth_provider is set and the user is logged in' do
           user = FactoryGirl.create(:user, username: 'test2')
-          doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
           user2 = FactoryGirl.create(:user, username: 'test4')
           signin(user2.email, user2.password)
           visit '/document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com/'
@@ -625,7 +625,7 @@ feature 'Document', :codap do
         scenario 'page has correct iframe phone code' do
           user = FactoryGirl.create(:user, username: 'test2')
           user2 = FactoryGirl.create(:user, username: 'test4')
-          doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
           l_url = launch_url(doc: doc.title, owner: user.username, runKey: 'foo', server: 'http://foo.com/')
           r_url = report_url(doc: doc.title, owner: user.username, reportUser: user2.username, runKey: 'foo', server: 'http://foo.com/')
           signin(user2.email, user2.password)
@@ -729,19 +729,19 @@ feature 'Document', :codap do
       let(:author)   { FactoryGirl.create(:user, username: 'author') }
       let(:student)  { FactoryGirl.create(:user, username: 'student') }
       let(:teacher)  { FactoryGirl.create(:user, username: 'teacher') }
-      let(:template) { FactoryGirl.create(:document, title: "template", shared: true, owner_id: author.id, form_content: '{ "foo": "bar" }') }
-      let(:student_doc1a) { FactoryGirl.create(:document, title: "student1a", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1a" }', run_key: 'foo') }
-      let(:student_doc1b) { FactoryGirl.create(:document, title: "student1b", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1b" }', run_key: 'foo') }
-      let(:student_doc1c) { FactoryGirl.create(:document, title: "student1c", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1c" }', run_key: 'foo') }
-      let(:student_doc2a) { FactoryGirl.create(:document, title: "student2a", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2a" }', run_key: 'bar') }
-      let(:student_doc2b) { FactoryGirl.create(:document, title: "student2b", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2b" }', run_key: 'bar') }
-      let(:student_doc2c) { FactoryGirl.create(:document, title: "student2c", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2c" }', run_key: 'bar') }
-      let(:anon_doc1a) { FactoryGirl.create(:document, title: "anon1a", shared: false, owner_id: nil, form_content: '{ "foo": "baz1a" }', run_key: 'foo') }
-      let(:anon_doc1b) { FactoryGirl.create(:document, title: "anon1b", shared: false, owner_id: nil, form_content: '{ "foo": "baz1b" }', run_key: 'foo') }
-      let(:anon_doc1c) { FactoryGirl.create(:document, title: "anon1c", shared: false, owner_id: nil, form_content: '{ "foo": "baz1c" }', run_key: 'foo') }
-      let(:anon_doc2a) { FactoryGirl.create(:document, title: "anon2a", shared: false, owner_id: nil, form_content: '{ "foo": "baz2a" }', run_key: 'bar') }
-      let(:anon_doc2b) { FactoryGirl.create(:document, title: "anon2b", shared: false, owner_id: nil, form_content: '{ "foo": "baz2b" }', run_key: 'bar') }
-      let(:anon_doc2c) { FactoryGirl.create(:document, title: "anon2c", shared: false, owner_id: nil, form_content: '{ "foo": "baz2c" }', run_key: 'bar') }
+      let(:template) { FactoryGirl.create(:document, title: "template", shared: true, owner_id: author.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }') }
+      let(:student_doc1a) { FactoryGirl.create(:document, title: "student1a", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1a", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'foo') }
+      let(:student_doc1b) { FactoryGirl.create(:document, title: "student1b", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1b", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'foo') }
+      let(:student_doc1c) { FactoryGirl.create(:document, title: "student1c", shared: false, owner_id: student.id, form_content: '{ "foo": "baz1c", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'foo') }
+      let(:student_doc2a) { FactoryGirl.create(:document, title: "student2a", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2a", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
+      let(:student_doc2b) { FactoryGirl.create(:document, title: "student2b", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2b", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
+      let(:student_doc2c) { FactoryGirl.create(:document, title: "student2c", shared: false, owner_id: student.id, form_content: '{ "foo": "baz2c", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
+      let(:anon_doc1a) { FactoryGirl.create(:document, title: "anon1a", shared: false, owner_id: nil, form_content: '{ "foo": "baz1a", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'foo') }
+      let(:anon_doc1b) { FactoryGirl.create(:document, title: "anon1b", shared: false, owner_id: nil, form_content: '{ "foo": "baz1b", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'foo') }
+      let(:anon_doc1c) { FactoryGirl.create(:document, title: "anon1c", shared: false, owner_id: nil, form_content: '{ "foo": "baz1c", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'foo') }
+      let(:anon_doc2a) { FactoryGirl.create(:document, title: "anon2a", shared: false, owner_id: nil, form_content: '{ "foo": "baz2a", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
+      let(:anon_doc2b) { FactoryGirl.create(:document, title: "anon2b", shared: false, owner_id: nil, form_content: '{ "foo": "baz2b", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
+      let(:anon_doc2c) { FactoryGirl.create(:document, title: "anon2c", shared: false, owner_id: nil, form_content: '{ "foo": "baz2c", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
       let(:server)   { 'http://foo.com/' }
 
       scenario 'user needs to be logged in' do
