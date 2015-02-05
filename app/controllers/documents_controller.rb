@@ -78,7 +78,7 @@ class DocumentsController < ApplicationController
   # CODAP API
   def all
     authorize! :all, Document rescue (render_not_authorized && return)
-    render json: @documents.select{|d| d.is_codap_main_document? }.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
+    render json: @documents.where(is_codap_main_document: true).map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
@@ -275,7 +275,7 @@ class DocumentsController < ApplicationController
         if codap_api_params[:runKey]
           @documents = Document.where(owner_id: nil, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
         else
-          @documents = []
+          @documents = Document.none
         end
       end
     end
