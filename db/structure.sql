@@ -64,19 +64,51 @@ ALTER SEQUENCE authentications_id_seq OWNED BY authentications.id;
 
 
 --
+-- Name: document_contents; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE document_contents (
+    id integer NOT NULL,
+    document_id integer,
+    content json,
+    original_content json,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: document_contents_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE document_contents_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: document_contents_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE document_contents_id_seq OWNED BY document_contents.id;
+
+
+--
 -- Name: documents; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE documents (
     id integer NOT NULL,
     title text,
-    content json,
     shared boolean DEFAULT false,
     owner_id integer,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     run_key character varying(255),
-    original_content json
+    is_codap_main_document boolean DEFAULT true
 );
 
 
@@ -199,6 +231,13 @@ ALTER TABLE ONLY authentications ALTER COLUMN id SET DEFAULT nextval('authentica
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY document_contents ALTER COLUMN id SET DEFAULT nextval('document_contents_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY documents ALTER COLUMN id SET DEFAULT nextval('documents_id_seq'::regclass);
 
 
@@ -222,6 +261,14 @@ ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regcl
 
 ALTER TABLE ONLY authentications
     ADD CONSTRAINT authentications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: document_contents_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY document_contents
+    ADD CONSTRAINT document_contents_pkey PRIMARY KEY (id);
 
 
 --
@@ -260,6 +307,13 @@ CREATE INDEX index_authentications_on_provider_and_uid ON authentications USING 
 --
 
 CREATE INDEX index_authentications_on_user_id ON authentications USING btree (user_id);
+
+
+--
+-- Name: index_document_contents_on_document_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_document_contents_on_document_id ON document_contents USING btree (document_id);
 
 
 --
@@ -341,4 +395,8 @@ INSERT INTO schema_migrations (version) VALUES ('20140616212832');
 INSERT INTO schema_migrations (version) VALUES ('20140902175846');
 
 INSERT INTO schema_migrations (version) VALUES ('20140919181410');
+
+INSERT INTO schema_migrations (version) VALUES ('20150205102715');
+
+INSERT INTO schema_migrations (version) VALUES ('20150205185407');
 

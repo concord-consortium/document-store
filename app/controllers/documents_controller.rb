@@ -100,9 +100,12 @@ class DocumentsController < ApplicationController
       if can? :save, :document
         # create a copy of this document under the current user or current run key if it doesn't already exist, with the original_content set
         new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
-        new_doc.content = content if new_doc.new_record?
-        new_doc.original_content = content
-        new_doc.save
+        if new_doc.new_record?
+          new_doc.content = content
+          new_doc.original_content = content
+          new_doc.save
+        end
+        content = new_doc.content
       end
     end
     response.headers['Document-Id'] = "#{new_doc.nil? ? document.id : new_doc.id}"
@@ -155,10 +158,10 @@ class DocumentsController < ApplicationController
       shared = res.is_a?(Hash) && res.has_key?('_permissions') && res['_permissions'].to_i == 1
 
       # Just using 'document.content = res; document.save' didn't seem to actually persist things, so we'll be more forceful.
-      if document.update_columns({content: res, updated_at: Time.current, shared: shared})
+      if document.update_columns({updated_at: Time.current, shared: shared}) && document.contents.update_columns({content: res, updated_at: Time.current})
         render json: {status: "Patched", valid: true, id: document.id }, status: 200
       else
-        render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+        render json: {status: "Error", errors: document.errors.full_messages + document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
       end
     rescue => e
       render json: {status: "Error", errors: ["Invalid patch JSON (executing)", e.to_s], valid: false, message: 'error.writeFailed' }, status: 400
@@ -181,7 +184,8 @@ class DocumentsController < ApplicationController
       oc = document.original_content
       c["name"] = codap_api_params[:newRecordname] if c.has_key?("name")
       oc["name"] = codap_api_params[:newRecordname] if oc && oc.has_key?("name")
-      document.update_columns(title: codap_api_params[:newRecordname], content: c, updated_at: Time.now)
+      document.update_columns(title: codap_api_params[:newRecordname], updated_at: Time.now)
+      document.contents.update_columns(content: c, updated_at: Time.now)
       render json: {success: true }
     end
   end
