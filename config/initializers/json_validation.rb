@@ -1,9 +1,12 @@
 require 'json'
 
 class String
+  attr_reader :parsed_json
+
   def is_json?
     begin
-      !!JSON.parse(self)
+      @parsed_json = JSON.parse(self)
+      !!@parsed_json
     rescue
       false
     end

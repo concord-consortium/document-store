@@ -115,7 +115,6 @@ class DocumentsController < ApplicationController
 
   def save
     content = request.raw_post
-    parsed_content = JSON.parse(content) rescue {}
 
     if codap_api_params[:recordid].present?
       document = Document.find(codap_api_params[:recordid].to_i)
@@ -126,7 +125,7 @@ class DocumentsController < ApplicationController
 
     document.form_content = content
     document.original_content = document.content if document.new_record?
-    document.shared = parsed_content.is_a?(Hash) && parsed_content.has_key?('_permissions') && parsed_content['_permissions'].to_i == 1
+    document.shared = document.content.is_a?(Hash) && document.content.has_key?('_permissions') && document.content['_permissions'].to_i == 1
 
     if document.save
       render json: {status: "Created", valid: true, id: document.id }, status: :created

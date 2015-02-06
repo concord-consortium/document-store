@@ -13,7 +13,7 @@ class Document < ActiveRecord::Base
 
   def form_content=(new_content)
     if new_content.is_json?
-      self.content = JSON.parse(new_content)
+      self.content = new_content.parsed_json
       @form_content = nil
     else
       @form_content = new_content
