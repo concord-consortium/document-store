@@ -20,7 +20,8 @@ class CreateDocumentContents < ActiveRecord::Migration
 
     Progress.start("Migrating #{Document.count} Documents' contents", Document.count) do
       Document.find_each(batch_size: 100) do |doc|
-        DocumentContent.create(document_id: doc.id, content: doc.content, original_content: doc.original_content, created_at: doc.created_at, updated_at: doc.updated_at)
+        dc = DocumentContent.find_or_create_by(document_id: doc.id)
+        dc.update_columns(content: doc.content, original_content: doc.original_content, created_at: doc.created_at, updated_at: doc.updated_at)
         Progress.step 1
       end
     end
