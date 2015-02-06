@@ -104,8 +104,9 @@ class DocumentsController < ApplicationController
           new_doc.content = content
           new_doc.original_content = content
           new_doc.save
+        else
+          content = new_doc.content
         end
-        content = new_doc.content
       end
     end
     response.headers['Document-Id'] = "#{new_doc.nil? ? document.id : new_doc.id}"
