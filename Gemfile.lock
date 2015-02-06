@@ -149,6 +149,8 @@ GEM
       multi_json (~> 1.3)
       multi_xml (~> 0.5)
       rack (~> 1.2)
+    oj (2.11.4)
+    oj_mimic_json (1.0.1)
     omniauth (1.2.1)
       hashie (>= 1.2, < 3)
       rack (~> 1.0)
@@ -309,6 +311,8 @@ DEPENDENCIES
   json-patch
   launchy
   newrelic_rpm
+  oj
+  oj_mimic_json
   omniauth
   omniauth-oauth2
   pg

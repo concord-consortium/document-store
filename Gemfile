@@ -28,6 +28,8 @@ gem 'json-patch'
 gem 'will_paginate'
 gem 'will_paginate-foundation'
 gem 'progress'
+gem 'oj' # a faster json library
+gem 'oj_mimic_json'  # use the oj lib *everywhere* when dealing with json
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]
