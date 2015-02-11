@@ -13,6 +13,8 @@ gem 'haml-rails'
 gem 'pg'
 gem 'unicorn'
 gem 'unicorn-rails'
+gem 'unicorn-worker-killer', require: false
+gem 'gctools', require: false
 gem 'rails_12factor', group: :production
 gem 'rails-settings-cached'
 gem 'cancancan', '~> 1.9'
