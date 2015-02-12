@@ -1,6 +1,6 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch, :report]
-  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :patch, :delete, :launch, :rename]
+  before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :patch, :delete, :launch, :rename, :report]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
   load_and_authorize_resource
@@ -242,7 +242,7 @@ class DocumentsController < ApplicationController
 
   def report
     raise ActiveRecord::RecordNotFound.new if report_params[:runKey].blank? || report_params[:server].blank?
-    authorize! :report, current_user
+    authorize! :report, (current_user || :nil_user)
     @codap_server = report_params[:server]
     @runKey = report_params[:runKey]
     u = User.find_by(username: report_params[:reportUser])
@@ -257,7 +257,8 @@ class DocumentsController < ApplicationController
       @master_document_url = codap_link(@codap_server, moreGames)
     end
 
-    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey).select{|d| d.is_codap_main_document? }
+    @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey, is_codap_main_document: true)
+    @supplemental_documents = @supplemental_documents.to_a.select {|d| can? :report, d }
 
     response.headers.delete 'X-Frame-Options'
     render layout: 'launch'

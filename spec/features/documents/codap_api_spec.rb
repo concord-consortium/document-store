@@ -744,12 +744,24 @@ feature 'Document', :codap do
       let(:anon_doc2c) { FactoryGirl.create(:document, title: "anon2c", shared: false, owner_id: nil, form_content: '{ "foo": "baz2c", "appName": "name", "appVersion": "version", "appBuildNum": 1 }', run_key: 'bar') }
       let(:server)   { 'http://foo.com/' }
 
-      scenario 'user needs to be logged in' do
-        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
-        expect(page.current_url).to match 'http://www.example.com/users/sign_in'
-        signin(teacher.email, teacher.password)
+      scenario 'user needs to be logged in to view non-anonymous work' do
+        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_content 'No documents have been saved!'
+        signin(teacher.email, teacher.password)
+        visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 1)
+        expect(page).to have_selector "a.launch-button[href='#{url}']"
+      end
+      scenario 'user does not need to be logged in to view anonymous work' do
+        url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 1)
+        expect(page).to have_selector "a.launch-button[href='#{url}']"
+        signin(teacher.email, teacher.password)
+        visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
+        expect(page).to have_selector('.launch-button', count: 1)
+        expect(page).to have_selector "a.launch-button[href='#{url}']"
       end
       scenario 'the template document needs to exist' do
         signin(teacher.email, teacher.password)

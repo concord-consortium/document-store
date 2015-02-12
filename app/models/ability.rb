@@ -20,13 +20,13 @@ class Ability
       can [:index, :list, :create, :new, :all], Document
 
       # read a doc
-      can [:read, :show, :open], Document do |doc|
-          doc.owner == user || (!doc.run_key.blank? && doc.run_key == extra[:runKey])
+      can [:read, :show, :open, :report], Document do |doc|
+          doc.owner == user || (doc.run_key.present? && doc.run_key == extra[:runKey])
       end
 
       # write a doc
       can [:edit, :update, :destroy, :save, :open_original], Document do |doc|
-          doc.owner == user || (doc.owner.nil? && !doc.run_key.blank? && doc.run_key == extra[:runKey])
+          doc.owner == user || (doc.owner.nil? && doc.run_key.present? && doc.run_key == extra[:runKey])
       end
 
       # User
@@ -37,9 +37,10 @@ class Ability
       # anonymous gets read/write access to documents if they know the documents run_key
       if extra[:runKey]
         can [:index, :list, :all], Document
-        can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original], Document do |doc|
-            doc.owner.nil? && !doc.run_key.blank? && doc.run_key == extra[:runKey]
+        can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original, :report], Document do |doc|
+            doc.owner.nil? && doc.run_key.present? && doc.run_key == extra[:runKey]
         end
+        can [:report], :nil_user
       end
       # anonymous can't do anything else
     end
