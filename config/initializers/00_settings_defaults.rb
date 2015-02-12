@@ -35,10 +35,13 @@ Settings.defaults['enable_user_registration'] = Rails.env != "production"
 # }
 
 if Rails.env == 'test'
-  Settings['auth.bar'] = {
-    display_name: 'Bar',
-    url: 'http://bar.com',
-    client_id: 'documentstore',
-    client_secret: '1234'
-  }
+  begin
+    Settings['auth.bar'] = {
+      display_name: 'Bar',
+      url: 'http://bar.com',
+      client_id: 'documentstore',
+      client_secret: '1234'
+    }
+  rescue
+  end
 end
