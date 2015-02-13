@@ -17,6 +17,13 @@
       Error: The requested document could not be found.
 :javascript
   $(document).ready(function() {
+    // Hide the launch buttons until we talk with LARA
+    $('.launch-button, .original-reset').hide();
+    // But show them after a while, just in case
+    setTimeout(function() {
+      $('.launch-button, .original-reset').show();
+    }, 10000);
+
     var runKey = '#{@runKey}',
         reportingUrl = '#{@report_url}',
         learnerUrl = '#{@learner_url}',
@@ -54,6 +61,7 @@
           if (window.location.href.indexOf('require_anonymous=') == -1) {
             // Log the current user out
             window.location = $.param.querystring(window.location.href, "require_anonymous=true");
+            return;
           }
         } else {
           // And we're not logged in. Good!
@@ -70,6 +78,7 @@
           if(window.location.href.indexOf('auth_provider=') == -1) {
             // Try to log a user in.
             window.location = $.param.querystring(window.location.href, "auth_provider="+info["provider"]);
+            return;
           }
         } else {
           // And we are logged in. Good!
@@ -79,10 +88,13 @@
             if(window.location.href.indexOf('require_email=') == -1) {
               // Try to log a user in.
               window.location = $.param.querystring(window.location.href, "require_email="+info["email"]);
+              return;
             }
           }
         }
       }
+
+      $('.launch-button,.original-reset').show();
     });
     phone.addListener('getExtendedSupport', function() {
       phone.post('extendedSupport', { reset: false });
