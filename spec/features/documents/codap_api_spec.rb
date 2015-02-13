@@ -754,14 +754,15 @@ feature 'Document', :codap do
         expect(page).to have_selector "a.launch-button[href='#{url}']"
       end
       scenario 'user does not need to be logged in to view anonymous work' do
-        url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo', runAsGuest: 'true'})
+        url2 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 1)
-        expect(page).to have_selector "a.launch-button[href='#{url}']"
+        expect(page).to have_selector "a.launch-button[href='#{url1}']"
         signin(teacher.email, teacher.password)
         visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 1)
-        expect(page).to have_selector "a.launch-button[href='#{url}']"
+        expect(page).to have_selector "a.launch-button[href='#{url2}']"
       end
       scenario 'the template document needs to exist' do
         signin(teacher.email, teacher.password)
