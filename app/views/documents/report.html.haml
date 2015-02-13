@@ -4,11 +4,11 @@
     .row
       .small-3.text-center.columns
         - most_recent = sorted_docs.shift  # remove the first (most recent) doc from the array and use it
-        = link_to 'Launch most recent!', codap_link(@codap_server, most_recent), class: :"launch-button", target: "_blank"
+        = link_to 'Launch most recent!', codap_link(@codap_server, most_recent, current_user.nil?), class: :"launch-button", target: "_blank"
       .small-9.columns
         %ul.small-block-grid-5
           - sorted_docs.each do |doc|
-            %li= link_to doc.title, codap_link(@codap_server, doc), class: :"launch-button", target: "_blank"
+            %li= link_to doc.title, codap_link(@codap_server, doc, current_user.nil?), class: :"launch-button", target: "_blank"
   - else
     .row
       .small-12.text-center.columns
