@@ -6,6 +6,8 @@ class User < ActiveRecord::Base
            :recoverable, :rememberable, :trackable, :validatable,
            :omniauthable, :timeoutable, :timeout_in => 90.minutes,
            :omniauth_providers => Concord::AuthPortal.all_strategy_names
+
+    validates :username, uniqueness: true, presence: true
   else
     devise :database_authenticatable, :rememberable, :trackable,
            :omniauthable, :timeoutable, :timeout_in => 90.minutes,
@@ -14,8 +16,6 @@ class User < ActiveRecord::Base
 
   has_many :documents, inverse_of: :owner, foreign_key: 'owner_id'
   has_many :authentications, dependent: :delete_all
-
-  validates :username, uniqueness: true, presence: true
 
   def self.find_for_concord_portal_oauth(auth, signed_in_resource=nil)
     authentication = Authentication.find_by_provider_and_uid auth.provider, auth.uid
@@ -42,7 +42,11 @@ class User < ActiveRecord::Base
       # There is no authentication for this provider and user
       user = existing_user_by_email
     else
-      # no user with this email, so make a new user with a random password
+      if Settings.enable_user_registration && User.find_by(username: auth.extra.username)
+        raise "Can't have duplicate usernames: #{auth.extra.username}. " +
+              "There is a user with the same username already."
+      end
+      # no user with this email or username, so make a new user with a random password
       user = User.new(
         email:    email,
         username: auth.extra.username,
@@ -50,7 +54,7 @@ class User < ActiveRecord::Base
         password: Devise.friendly_token[0,20]
       )
       user.skip_confirmation! if Settings.enable_user_registration # This isn't defined if local registrations aren't enabled
-      user.save
+      user.save!
     end
     # create new authentication for this user that we found or created
     user.authentications.create(
