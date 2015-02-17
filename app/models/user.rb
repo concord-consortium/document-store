@@ -35,7 +35,7 @@ class User < ActiveRecord::Base
 
     if existing_user_by_email
       if existing_user_by_email.authentications.find_by_provider auth.provider
-        throw "Can't have duplicate email addresses: #{email}. " +
+        raise "Can't have duplicate email addresses: #{email}. " +
               "There is an user with an authentication for this provider #{auth.provider} " +
               "and the same email already."
       end
