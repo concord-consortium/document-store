@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140919181410) do
+ActiveRecord::Schema.define(version: 20150224222201) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -28,19 +28,30 @@ ActiveRecord::Schema.define(version: 20140919181410) do
   add_index "authentications", ["provider", "uid"], name: "index_authentications_on_provider_and_uid", using: :btree
   add_index "authentications", ["user_id"], name: "index_authentications_on_user_id", using: :btree
 
+  create_table "document_contents", force: true do |t|
+    t.integer  "document_id"
+    t.json     "content"
+    t.json     "original_content"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "document_contents", ["document_id"], name: "index_document_contents_on_document_id", using: :btree
+
   create_table "documents", force: true do |t|
     t.text     "title"
-    t.json     "content"
-    t.boolean  "shared",           default: false
+    t.boolean  "shared",                 default: false
     t.integer  "owner_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "run_key"
-    t.json     "original_content"
+    t.boolean  "is_codap_main_document", default: true
+    t.integer  "parent_id"
   end
 
   add_index "documents", ["owner_id", "title", "run_key"], name: "index_documents_on_owner_id_and_title_and_run_key", using: :btree
   add_index "documents", ["owner_id", "title"], name: "index_documents_on_owner_id_and_title", using: :btree
+  add_index "documents", ["parent_id"], name: "index_documents_on_parent_id", using: :btree
   add_index "documents", ["shared"], name: "index_documents_on_shared", using: :btree
 
   create_table "settings", force: true do |t|
