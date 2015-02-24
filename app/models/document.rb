@@ -2,6 +2,9 @@ class Document < ActiveRecord::Base
   belongs_to :owner, inverse_of: :documents, class_name: 'User'
   has_one :contents, class_name: 'DocumentContent', dependent: :destroy, autosave: true
 
+  has_many :children, class_name: 'Document', foreign_key: 'parent_id', dependent: :destroy
+  belongs_to :parent, class_name: 'Document'
+
   delegate :content, :content=, :original_content, :original_content=, to: :contents
 
   scope :shared, -> { where(shared: true) }

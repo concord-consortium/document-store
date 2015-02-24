@@ -126,6 +126,7 @@ class DocumentsController < ApplicationController
     document.form_content = content
     document.original_content = document.content if document.new_record?
     document.shared = document.content.is_a?(Hash) && document.content.has_key?('_permissions') && document.content['_permissions'].to_i == 1
+    document.parent_id = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
 
     if document.save
       render json: {status: "Created", valid: true, id: document.id }, status: :created
@@ -157,8 +158,11 @@ class DocumentsController < ApplicationController
 
       shared = res.is_a?(Hash) && res.has_key?('_permissions') && res['_permissions'].to_i == 1
 
+      doc_updates = {updated_at: Time.current, shared: shared}
+      doc_updates[:parentDocumentId] = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
+
       # Just using 'document.content = res; document.save' didn't seem to actually persist things, so we'll be more forceful.
-      if document.update_columns({updated_at: Time.current, shared: shared}) && document.contents.update_columns({content: res, updated_at: Time.current})
+      if document.update_columns(doc_updates) && document.contents.update_columns({content: res, updated_at: Time.current})
         render json: {status: "Patched", valid: true, id: document.id }, status: 200
       else
         render json: {status: "Error", errors: document.errors.full_messages + document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
@@ -348,7 +352,7 @@ class DocumentsController < ApplicationController
     end
 
     def codap_api_params
-      params.permit(:recordname, :recordid, :doc, :owner, :runKey, :original, :newRecordname)
+      params.permit(:recordname, :recordid, :doc, :owner, :runKey, :original, :newRecordname, :parentDocumentId)
     end
 
     def launch_params

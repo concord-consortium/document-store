@@ -108,7 +108,8 @@ CREATE TABLE documents (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     run_key character varying(255),
-    is_codap_main_document boolean DEFAULT true
+    is_codap_main_document boolean DEFAULT true,
+    parent_id integer
 );
 
 
@@ -331,6 +332,13 @@ CREATE INDEX index_documents_on_owner_id_and_title_and_run_key ON documents USIN
 
 
 --
+-- Name: index_documents_on_parent_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_documents_on_parent_id ON documents USING btree (parent_id);
+
+
+--
 -- Name: index_documents_on_shared; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -399,4 +407,6 @@ INSERT INTO schema_migrations (version) VALUES ('20140919181410');
 INSERT INTO schema_migrations (version) VALUES ('20150205102715');
 
 INSERT INTO schema_migrations (version) VALUES ('20150205185407');
+
+INSERT INTO schema_migrations (version) VALUES ('20150224222201');
 

@@ -375,6 +375,18 @@ feature 'Document', :codap do
         expect(doc.original_content).to match({"def" => [1,2,3,4] })
       end
 
+      scenario 'a document can be associated with a parent document' do
+        user = FactoryGirl.create(:user, username: 'test')
+        doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        page.driver.browser.submit :post, "/document/save?recordname=newdoc-context&parentDocumentId=#{doc.id}", '{ "def": [1,2,3,4] }'
+        doc.reload
+        doc2 = Document.find_by(title: 'newdoc-context', owner_id: user.id)
+        expect(doc.children.size).to eq(1)
+        expect(doc.children.first).to eq(doc2)
+        expect(doc2.parent).to eq(doc)
+      end
+
       describe 'anonymous' do
         scenario 'user cannot save documents when no run_key is present' do
           expect(Document.find_by(title: "newdoc")).to be_nil
@@ -412,6 +424,16 @@ feature 'Document', :codap do
           expect(doc.run_key).to eq('foo')
           expect(doc2.content).to match({"def" => [1,2,3,4] })
           expect(doc2.run_key).to eq('bar')
+        end
+
+        scenario 'a document can be associated with a parent document' do
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: nil, form_content: '{ "foo": "bar" }')
+          page.driver.browser.submit :post, "/document/save?recordname=newdoc-context&runKey=bar&parentDocumentId=#{doc.id}", '{ "def": [1,2,3,4] }'
+          doc.reload
+          doc2 = Document.find_by(title: 'newdoc-context', owner_id: nil)
+          expect(doc.children.size).to eq(1)
+          expect(doc.children.first).to eq(doc2)
+          expect(doc2.parent).to eq(doc)
         end
 
       end
