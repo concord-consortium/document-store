@@ -3,7 +3,7 @@ class Document < ActiveRecord::Base
   has_one :contents, class_name: 'DocumentContent', dependent: :destroy, autosave: true
 
   has_many :children, class_name: 'Document', foreign_key: 'parent_id', dependent: :destroy
-  belongs_to :parent, class_name: 'Document'
+  belongs_to :parent, class_name: 'Document', dependent: :destroy
 
   delegate :content, :content=, :original_content, :original_content=, to: :contents
 
