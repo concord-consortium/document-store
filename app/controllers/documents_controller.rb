@@ -231,6 +231,8 @@ class DocumentsController < ApplicationController
 
     new_query = @report_url.query_values || {}
     new_query.delete("auth_provider")
+    new_query.delete("require_email")
+    new_query.delete("require_anonymous")
     if current_user
       new_query["reportUser"] = current_user.username
     end
