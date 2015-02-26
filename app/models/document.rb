@@ -3,7 +3,7 @@ class Document < ActiveRecord::Base
   has_one :contents, class_name: 'DocumentContent', dependent: :destroy, autosave: true
 
   has_many :children, class_name: 'Document', foreign_key: 'parent_id', dependent: :destroy
-  belongs_to :parent, class_name: 'Document', dependent: :destroy
+  belongs_to :parent, class_name: 'Document' #, dependent: :destroy -- handled in after_destroy :destroy_parent
 
   delegate :content, :content=, :original_content, :original_content=, to: :contents
 
@@ -13,6 +13,8 @@ class Document < ActiveRecord::Base
   validate :validate_form_content
 
   after_save :sync_attributes
+  before_destroy :store_parent
+  after_destroy :destroy_parent # workaround for https://github.com/rails/rails/issues/13609
 
   def form_content=(new_content)
     if new_content.is_json?
@@ -49,6 +51,16 @@ class Document < ActiveRecord::Base
     update_columns(atts_to_update) if atts_to_update.size > 0
 
     return true
+  end
+
+  def store_parent
+    @saved_parent = parent
+    self.parent = nil
+  end
+
+  def destroy_parent
+    return unless @saved_parent
+    @saved_parent.destroy unless @saved_parent.destroyed?
   end
 
 end
