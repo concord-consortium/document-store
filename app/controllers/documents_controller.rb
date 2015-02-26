@@ -249,8 +249,19 @@ class DocumentsController < ApplicationController
     authorize! :report, (current_user || :nil_user)
     @codap_server = report_params[:server]
     @runKey = report_params[:runKey]
-    u = User.find_by(username: report_params[:reportUser])
-    @reportUserId = u ? u.id : nil
+
+    users = User.where(username: report_params[:reportUser])
+    num_users = users.count
+    if (num_users == 0)
+      @reportUserId = nil
+    elsif (num_users == 1)
+      @reportUserId = users.first.id
+    else
+      # Try to find a user that came from the same authentication source as we did
+      source = current_user.authentications.first.provider rescue nil
+      u = users.to_a.detect {|user| !user.authentications.detect {|a| a.provider == source }.nil? }
+      @reportUserId = u ? u.id : nil
+    end
 
     if report_params[:recordid] || (report_params[:owner] && (report_params[:recordname] || report_params[:doc]))
       original_doc = find_doc_via_params(report_params)
