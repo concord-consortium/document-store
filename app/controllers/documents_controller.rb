@@ -1,5 +1,5 @@
 class DocumentsController < ApplicationController
-  before_filter :auto_authenticate, :only => [:launch, :report]
+  before_filter :auto_authenticate, :only => [:launch]
   before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :patch, :delete, :launch, :rename, :report]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
