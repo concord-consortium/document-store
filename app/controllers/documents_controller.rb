@@ -159,7 +159,7 @@ class DocumentsController < ApplicationController
       shared = res.is_a?(Hash) && res.has_key?('_permissions') && res['_permissions'].to_i == 1
 
       doc_updates = {updated_at: Time.current, shared: shared}
-      doc_updates[:parentDocumentId] = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
+      doc_updates[:parent_id] = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
 
       # Just using 'document.content = res; document.save' didn't seem to actually persist things, so we'll be more forceful.
       if document.update_columns(doc_updates) && document.contents.update_columns({content: res, updated_at: Time.current})
