@@ -940,9 +940,14 @@ feature 'Document', :codap do
         end
       end
       describe 'auto authentication' do
-        scenario 'the user will be authenticated if auth_provider is set and the user is not logged in' do
+        scenario 'the user will not be authenticated if auth_provider is set and the user is not logged in' do
+          visit report_path(auth_provider: 'http://bar.com', owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+          expect(page).to have_content 'No documents have been saved!'
+        end
+        scenario 'the user will be authenticated if referrer is set and the user is not logged in' do
+          Capybara.current_session.driver.header 'Referer', 'http://bar.com/portal/offerings/1/report'
           expect {
-            visit report_path(auth_provider: 'http://bar.com', owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
+            visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
           }.to raise_error(ActionController::RoutingError) # capybara doesn't handle the redirects well
           expect(page.current_url).to match 'http://bar.com/auth/concord_id/authorize'
         end

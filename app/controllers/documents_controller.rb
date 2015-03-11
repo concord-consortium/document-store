@@ -1,5 +1,6 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch]
+  before_filter :auto_authenticate_from_referrer, :only => [:report]
   before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :patch, :delete, :launch, :rename, :report]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
@@ -312,6 +313,22 @@ class DocumentsController < ApplicationController
           Concord::AuthPortal.all.each_pair do |key,portal|
             if (referer && referer.include?(portal.url)) ||  # may fail if the protocol differs
                (provider && provider.include?(portal.url))
+              # we came from a configured authentication provider
+              # so let's authenticate ourselves
+              session[:user_return_to] = request.original_url
+              redirect_to omniauth_authorize_path("user", portal.strategy_name)
+              return true
+            end
+          end
+        end
+      end
+    end
+
+    def auto_authenticate_from_referrer
+      if current_user.nil?
+        if referer = request.env['HTTP_REFERER']
+          Concord::AuthPortal.all.each_pair do |key,portal|
+            if (referer && referer.include?(portal.url))  # may fail if the protocol differs
               # we came from a configured authentication provider
               # so let's authenticate ourselves
               session[:user_return_to] = request.original_url
