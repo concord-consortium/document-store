@@ -18,7 +18,7 @@ class DocumentsController < ApplicationController
   # GET /documents
   # GET /documents.json
   def index
-    @documents = @documents.paginate(page: index_params[:page], :per_page => 20) if @documents.respond_to?('paginate')
+    @documents = @documents.includes(:children).paginate(page: index_params[:page], :per_page => 20) if @documents.respond_to?('paginate')
   end
 
   # GET /documents/1
@@ -79,7 +79,7 @@ class DocumentsController < ApplicationController
   # CODAP API
   def all
     authorize! :all, Document rescue (render_not_authorized && return)
-    render json: @documents.where(is_codap_main_document: true).map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
+    render json: @documents.map {|d| {name: d.title, id: d.id, _permissions: (d.shared ? 1 : 0) } }
   end
 
   def open
@@ -286,13 +286,13 @@ class DocumentsController < ApplicationController
     def load_index_documents
       if current_user
         if codap_api_params[:runKey]
-          @documents = Document.where(owner_id: current_user.id, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
+          @documents = Document.where(owner_id: current_user.id, is_codap_main_document: true, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
         else
-          @documents = Document.where(owner_id: current_user.id).order(title: :asc, run_key: :asc)
+          @documents = Document.where(owner_id: current_user.id, is_codap_main_document: true).order(title: :asc, run_key: :asc)
         end
       else
         if codap_api_params[:runKey]
-          @documents = Document.where(owner_id: nil, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
+          @documents = Document.where(owner_id: nil, is_codap_main_document: true, run_key: codap_api_params[:runKey]).order(title: :asc, run_key: :asc)
         else
           @documents = Document.none
         end

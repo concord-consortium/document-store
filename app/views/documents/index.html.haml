@@ -8,29 +8,23 @@
   %thead
     %tr
       %th{width: 500} Title
-      %th Shared
-      %th
-      %th
-      %th
-      %th
-      %th
+      %th{width:  68} Shared
+      %th{width:  63}
+      %th{width:  44}
+      %th{width:  61}
+      %th{width:  67}
+      %th{width:  58}
 
   %tbody
     - @documents.each do |document|
-      %tr
-        %td= (document.title || "") + (document.run_key ? " [#{document.run_key}]" : "")
+      %tr.wrapper.collapsed
+        %td.title= (document.title || "") + (document.run_key ? " [#{document.run_key}]" : "")
         %td.centered
           - if document.shared
             %span.green-check &#x2714;
 
-        - if can? :read, document
-          %td= link_to 'Details', document
-        - else
-          %td= " "
-        - if can? :update, document
-          %td= link_to 'Edit', edit_document_path(document)
-        - else
-          %td= " "
+        %td= " "
+        %td= " "
         - if can? :destroy, document
           %td= link_to 'Delete', document, :method => :delete, :data => { :confirm => 'Are you sure?' }
         - else
@@ -45,8 +39,62 @@
             %a.link_button{href: '#', "data-reveal-id" => "linkModal#{document.id}"}= 'Link...'
         - else
           %td= " "
+      %tr.doc_part
+        %td.title= (document.title || "") + (document.run_key ? " [#{document.run_key}]" : "")
+        %td.centered= " "
+        - if can? :read, document
+          %td= link_to 'Details', document
+        - else
+          %td= " "
+        - if can? :update, document
+          %td= link_to 'Edit', edit_document_path(document)
+        - else
+          %td= " "
+        %td= " "
+        %td= " "
+        %td= " "
+      - document.children.each do |child|
+        %tr.doc_part
+          %td.title= (child.title || "") + (child.run_key ? " [#{document.run_key}]" : "")
+          %td.centered= " "
+          - if can? :read, child
+            %td= link_to 'Details', child
+          - else
+            %td= " "
+          - if can? :update, child
+            %td= link_to 'Edit', edit_document_path(child)
+          - else
+            %td= " "
+          %td= " "
+          %td= " "
+          %td= " "
 
 = will_paginate(@documents, renderer: FoundationPagination::Rails)
+
+:javascript
+  $(document).ready(function() {
+    $('.doc_part').hide();
+    function getChildren($row) {
+      var children = [];
+      while($row.next().hasClass('doc_part')) {
+        children.push($row.next());
+        $row = $row.next();
+      }
+      return children;
+    }
+
+    $('.wrapper').on('click', function() {
+      var children = getChildren($(this));
+      $.each(children, function() {
+        $(this).toggle();
+      })
+      if ($(this).hasClass('expanded')) {
+        $(this).removeClass('expanded').addClass('collapsed');
+      } else {
+        $(this).removeClass('collapsed').addClass('expanded');
+      }
+    });
+  })
 
 %br
 

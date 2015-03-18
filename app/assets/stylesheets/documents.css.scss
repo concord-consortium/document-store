@@ -1,3 +1,28 @@
 // Place all the styles related to the Documents controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
+
+.wrapper {
+  &.collapsed {
+    .title:before {
+      content: "\25ba";
+      padding-right: 5px;
+    }
+  }
+
+  &.expanded {
+    .title:before {
+      content: "\25bc";
+      padding-right: 5px;
+    }
+  }
+
+  background-color: #f9f9f9 !important;
+}
+
+.doc_part {
+  background-color: #e4e4ff !important;
+  .title {
+    padding-left: 50px;
+  }
+}
