@@ -81,6 +81,15 @@ feature 'Document', :codap do
           expect(page.status_code).to eq(403)
           expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
         end
+        scenario 'user will always get the other person\'s document content when opening a doc shared by someone else' do
+          user = FactoryGirl.create(:user, username: 'test')
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc1 = FactoryGirl.create(:document, title: "test2 doc", owner_id: user.id, form_content: '{ "nice": "content" }')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          visit "/document/open?recordid=#{doc2.id}"
+          expect(page).to have_content %!{"foo":"bar"}!
+        end
       end
 
       scenario 'user can open their own document' do
@@ -109,6 +118,16 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         visit '/document/open?owner=test2&recordname=test2%20doc'
         expect(page).to have_content %!{"foo":"bar","_permissions":0}!
+      end
+
+      scenario 'user will always get the other person\'s document content when opening a doc shared by someone else' do
+        user = FactoryGirl.create(:user, username: 'test')
+        user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+        doc1 = FactoryGirl.create(:document, title: "test2 doc", owner_id: user.id, form_content: '{ "nice": "content" }')
+        doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+        signin(user.email, user.password)
+        visit "/document/open?owner=test2&recordname=test2%20doc"
+        expect(page).to have_content %!{"foo":"bar"}!
       end
 
       scenario 'user cannot open a document that is not shared by another person' do
@@ -169,6 +188,14 @@ feature 'Document', :codap do
           expect(page).to have_content %!{"foo":"bar","_permissions":0}!
         end
 
+        scenario 'anonymous will always get the other person\'s document content when opening a doc shared by someone else' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc1 = FactoryGirl.create(:document, title: "test2 doc", form_content: '{ "nice": "content" }')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          visit "/document/open?owner=test2&recordname=test2%20doc"
+          expect(page).to have_content %!{"foo":"bar"}!
+        end
+
         scenario 'anonymous user can not open a document not shared by another person' do
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
@@ -180,6 +207,14 @@ feature 'Document', :codap do
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
           visit '/document/open?owner=test2&recordname=test2%20doc&runKey=foo'
+          expect(page).to have_content %!{"foo":"bar"}!
+        end
+
+        scenario 'anonymous will always get the other person\'s document content when opening a doc shared by someone else (wih a run key)' do
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc1 = FactoryGirl.create(:document, title: "test2 doc", form_content: '{ "nice": "content" }', run_key: 'biz')
+          doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          visit "/document/open?owner=test2&recordname=test2%20doc&runKey=biz"
           expect(page).to have_content %!{"foo":"bar"}!
         end
 
