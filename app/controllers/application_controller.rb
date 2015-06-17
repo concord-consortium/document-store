@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  before_filter :p3p_header
+
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
@@ -21,5 +23,9 @@ class ApplicationController < ActionController::Base
 
   def access_params
     params.permit(:runKey)
+  end
+
+  def p3p_header
+    response.headers['P3P'] = "CP='This site does not have a P3P policy.'"
   end
 end
