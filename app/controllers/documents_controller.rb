@@ -223,6 +223,9 @@ class DocumentsController < ApplicationController
     @learner_url = Addressable::URI.parse(request.original_url)
     new_query = @learner_url.query_values || {}
     new_query["runKey"] = @runKey
+    new_query.delete("auth_provider")
+    new_query.delete("require_email")
+    new_query.delete("require_anonymous")
     @learner_url.query_values = new_query
 
     @report_url = @learner_url.dup
