@@ -34,25 +34,6 @@
         learnerUrlSet = false,
         state = {runKey: runKey, lara_options: { reporting_url:  reportingUrl }};
 
-    phone.addListener('getLearnerUrl', function () {
-      if (!learnerUrlSet) {
-        phone.post('setLearnerUrl', learnerUrl);
-        learnerUrlSet = true;
-
-        // this will trigger a save of the learner url, and not require waiting 42 seconds...
-        phone.post('interactiveState', state);
-
-        // then make sure we're logged in when we need to be
-        phone.post('getAuthInfo');
-      }
-    });
-    phone.addListener('getInteractiveState', function () {
-      if (!learnerUrlSet) {
-        phone.post('interactiveState', state);
-      } else {
-        phone.post('interactiveState', 'nochange');
-      }
-    });
     phone.addListener('authInfo', function(info) {
       if (!info["loggedIn"]) {
         // We're not supposed to be logged in.
@@ -94,6 +75,12 @@
         }
       }
 
+      // if we get here, we're the correct user
+      phone.addListener('getInteractiveState', function () {
+        phone.post('interactiveState', 'nochange');
+      });
+      phone.post('setLearnerUrl', learnerUrl);
+      phone.post('interactiveState', state);
       $('.launch-button,.original-reset').show();
     });
     phone.addListener('getExtendedSupport', function() {
@@ -103,7 +90,5 @@
     phone.initialize();
 
     // Some initial messages we're going to *always* send
-    phone.post('setLearnerUrl', learnerUrl);
-    phone.post('interactiveState', state);
     phone.post('getAuthInfo');
   });
