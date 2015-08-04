@@ -226,6 +226,7 @@ class DocumentsController < ApplicationController
     new_query.delete("auth_provider")
     new_query.delete("require_email")
     new_query.delete("require_anonymous")
+    new_query.delete("auto_auth_in_progress")
     @learner_url.query_values = new_query
 
     @report_url = @learner_url.dup
@@ -235,6 +236,7 @@ class DocumentsController < ApplicationController
     new_query.delete("auth_provider")
     new_query.delete("require_email")
     new_query.delete("require_anonymous")
+    new_query.delete("auto_auth_in_progress")
     if current_user
       new_query["reportUser"] = current_user.username
     end
@@ -303,7 +305,7 @@ class DocumentsController < ApplicationController
     def auto_authenticate
       if current_user
         if auth_params[:require_anonymous] ||
-          (auth_params[:require_email] && auth_params[:require_email] != current_user.email && current_user.authentications.detect {|a| a.updated_at > 1.minute.ago }.nil? )
+          (auth_params[:require_email] && auth_params[:require_email] != current_user.email && auth_params[:auto_auth_in_progress].nil? )
           # if we need to be running as anonymous, OR the current user doesn't match the requirements and they didn't just log in.
           sign_out current_user
         end
@@ -316,7 +318,13 @@ class DocumentsController < ApplicationController
                (provider && provider.include?(portal.url))
               # we came from a configured authentication provider
               # so let's authenticate ourselves
-              session[:user_return_to] = request.original_url
+
+              orig_url = Addressable::URI.parse(request.original_url)
+              new_query = orig_url.query_values || {}
+              new_query["auto_auth_in_progress"] = 'true'
+              orig_url.query_values = new_query
+              session[:user_return_to] = orig_url.to_s
+
               redirect_to omniauth_authorize_path("user", portal.strategy_name)
               return true
             end
@@ -399,7 +407,7 @@ class DocumentsController < ApplicationController
     end
 
     def auth_params
-      params.permit(:auth_provider, :require_anonymous, :require_email)
+      params.permit(:auth_provider, :require_anonymous, :require_email, :auto_auth_in_progress)
     end
 
     def render_not_found
