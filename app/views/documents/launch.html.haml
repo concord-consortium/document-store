@@ -1,3 +1,6 @@
+.row.login-error{style: "display: none;"}
+  .small-12.text-center.columns{style: "color: #990000" }
+    There was a problem setting up this interactive. Please try refreshing your page.
 -if @master_document_url
   - if @supplemental_documents && @supplemental_documents.size > 0
     .row
@@ -20,7 +23,7 @@
     // Hide the launch buttons until we talk with LARA
     $('.launch-button, .original-reset').hide();
     // But show them after a while, just in case
-    setTimeout(function() {
+    var showTimeoutId = setTimeout(function() {
       $('.launch-button, .original-reset').show();
     }, 10000);
 
@@ -35,6 +38,7 @@
         state = {runKey: runKey, lara_options: { reporting_url:  reportingUrl }};
 
     phone.addListener('authInfo', function(info) {
+      clearTimeout(showTimeoutId); // We're communicating fine, so don't automatically show the launch buttons
       if (!info["loggedIn"]) {
         // We're not supposed to be logged in.
         if (areLoggedIn) {
@@ -42,6 +46,9 @@
           if (window.location.href.indexOf('require_anonymous=') == -1) {
             // Log the current user out
             window.location = $.param.querystring(window.location.href, "require_anonymous=true");
+            return;
+          } else {
+            $('.login-error').show();
             return;
           }
         } else {
@@ -60,6 +67,9 @@
             // Try to log a user in.
             window.location = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
             return;
+          } else {
+            $('.login-error').show();
+            return;
           }
         } else {
           // And we are logged in. Good!
@@ -69,6 +79,9 @@
             if(window.location.href.indexOf('require_email=') == -1) {
               // Try to log a user in.
               window.location = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
+              return;
+            } else {
+              $('.login-error').show();
               return;
             }
           }
