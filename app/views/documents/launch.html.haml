@@ -41,18 +41,23 @@
       clearTimeout(showTimeoutId); // We're communicating fine, so don't automatically show the launch buttons
       if (!info["loggedIn"]) {
         // We're not supposed to be logged in.
+        console.log("Not supposed to be logged in");
         if (areLoggedIn) {
+          console.log("but we are");
           // But... we are.
           if (window.location.href.indexOf('require_anonymous=') == -1) {
             // Log the current user out
+            console.log("attempting to log out");
             window.location = $.param.querystring(window.location.href, "require_anonymous=true");
             return;
           } else {
+            console.log("we already tried to log out, but failed apparently");
             $('.login-error').show();
             return;
           }
         } else {
           // And we're not logged in. Good!
+          console.log("and we're not logged in. GOOD!");
           // Tell CODAP that we're running anonymously
           $('.launch-button,.original-reset').each(function() {
             var origHref = $(this).attr('href');
@@ -61,34 +66,47 @@
         }
       } else {
         // We're supposed to be logged in.
+          console.log("we want to be logged in...");
         if (!areLoggedIn) {
           // But... we aren't.
+          console.log("BUT, we're not");
           if(window.location.href.indexOf('auth_provider=') == -1) {
             // Try to log a user in.
+            console.log("trying to log someone in via", info["provider"]);
             window.location = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
             return;
           } else {
+            console.log("we already tried to log in, but failed apparently");
             $('.login-error').show();
             return;
+          } else {
           }
         } else {
           // And we are logged in. Good!
+          console.log("and we ARE!");
           // Are we the right person?
           if (info["email"] && info["email"] != currentEmail) {
             // Wrong person. Try to log in again.
+            console.log("BUT, we're the wrong person. desired:", info["email"], "actual: ", currentEmail);
             if(window.location.href.indexOf('require_email=') == -1) {
               // Try to log a user in.
+              console.log("trying to log them in");
               window.location = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
               return;
             } else {
               $('.login-error').show();
               return;
+            } else {
+              console.log("we already tried to log in the correct user, but failed apparently");
             }
+          } else {
+            console.log("And we're the right person. GOOD!");
           }
         }
       }
 
       // if we get here, we're the correct user
+      console.log("doc server is correct user", currentEmail, areLoggedIn, runKey, learnerUrl, reportingUrl);
       phone.addListener('getInteractiveState', function () {
         phone.post('interactiveState', 'nochange');
       });
@@ -97,11 +115,14 @@
       $('.launch-button,.original-reset').show();
     });
     phone.addListener('getExtendedSupport', function() {
+      console.log("doc server phone posting extendedSupport");
       phone.post('extendedSupport', { reset: false });
     });
     // Initialize connection after all message listeners are added!
     phone.initialize();
+    console.log("doc server phone initialized");
 
     // Some initial messages we're going to *always* send
+    console.log("doc server phone posting getAuthInfo");
     phone.post('getAuthInfo');
   });
