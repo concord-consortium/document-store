@@ -713,28 +713,15 @@ feature 'Document', :codap do
           )
           expect(page.html).to have_text(
             <<-JS
-              phone.addListener('getLearnerUrl', function () {
-                if (!learnerUrlSet) {
-                  phone.post('setLearnerUrl', learnerUrl);
-                  learnerUrlSet = true;
-
-                  // this will trigger a save of the learner url, and not require waiting 42 seconds...
-                  phone.post('interactiveState', state);
-
-                  // then make sure we're logged in when we need to be
-                  phone.post('getAuthInfo');
-                }
+              phone.addListener('getExtendedSupport', function() {
+                phone.post('extendedSupport', { reset: false });
               });
             JS
           )
           expect(page.html).to have_text(
             <<-JS
               phone.addListener('getInteractiveState', function () {
-                if (!learnerUrlSet) {
-                  phone.post('interactiveState', state);
-                } else {
-                  phone.post('interactiveState', 'nochange');
-                }
+                phone.post('interactiveState', 'nochange');
               });
             JS
           )
