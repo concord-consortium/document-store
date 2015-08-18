@@ -101,6 +101,7 @@ class DocumentsController < ApplicationController
       if can? :save, :document
         # create a copy of this document under the current user or current run key if it doesn't already exist, with the original_content set
         new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
+        new_doc_existed = !new_doc.new_record?
         if new_doc.new_record?
           new_doc.content = content
           new_doc.original_content = content
@@ -109,6 +110,7 @@ class DocumentsController < ApplicationController
       end
     end
     response.headers['Document-Id'] = "#{new_doc.nil? ? document.id : new_doc.id}"
+    response.headers['X-CODAP-Will-Overwrite'] = "true" if new_doc && new_doc_existed
     render json: content
   end
 

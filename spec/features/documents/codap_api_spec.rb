@@ -44,6 +44,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           visit "/document/open?recordid=#{doc1.id}"
           expect(page).to have_content %![1,2,3]!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
         scenario 'expect Document-Id header to be set correctly' do
           user = FactoryGirl.create(:user, username: 'test')
@@ -61,6 +62,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           visit "/document/open?recordid=#{doc2.id}"
           expect(page).to have_content %!{"foo":"bar"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
         scenario 'another user\'s shared doc will not be shared when opened' do
           user = FactoryGirl.create(:user, username: 'test')
@@ -89,6 +91,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           visit "/document/open?recordid=#{doc2.id}"
           expect(page).to have_content %!{"foo":"bar"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to eq("true")
         end
       end
 
@@ -98,6 +101,7 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         visit "/document/open?owner=#{user.username}&recordname=#{doc1.title}"
         expect(page).to have_content %![1,2,3]!
+        expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
       end
 
       scenario 'user can open a document shared by another person' do
@@ -108,6 +112,7 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         visit '/document/open?owner=test2&recordname=test2%20doc'
         expect(page).to have_content %!{"foo":"bar"}!
+        expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
       end
 
       scenario 'another user\'s shared doc will not be shared when opened' do
@@ -128,6 +133,7 @@ feature 'Document', :codap do
         signin(user.email, user.password)
         visit "/document/open?owner=test2&recordname=test2%20doc"
         expect(page).to have_content %!{"foo":"bar"}!
+        expect(page.response_headers['X-CODAP-Will-Overwrite']).to eq("true")
       end
 
       scenario 'user cannot open a document that is not shared by another person' do
@@ -179,6 +185,7 @@ feature 'Document', :codap do
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
           visit '/document/open?owner=test2&recordname=test2%20doc'
           expect(page).to have_content %!{"foo":"bar"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'another user\'s shared doc will not be shared when opened' do
@@ -194,6 +201,7 @@ feature 'Document', :codap do
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
           visit "/document/open?owner=test2&recordname=test2%20doc"
           expect(page).to have_content %!{"foo":"bar"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'anonymous user can not open a document not shared by another person' do
@@ -208,26 +216,30 @@ feature 'Document', :codap do
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
           visit '/document/open?owner=test2&recordname=test2%20doc&runKey=foo'
           expect(page).to have_content %!{"foo":"bar"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'anonymous will always get the other person\'s document content when opening a doc shared by someone else (wih a run key)' do
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
-          doc1 = FactoryGirl.create(:document, title: "test2 doc", form_content: '{ "nice": "content" }', run_key: 'biz')
+          doc1 = FactoryGirl.create(:document, title: "test2 doc", owner_id: nil, form_content: '{ "nice": "content" }', run_key: 'biz')
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: true, owner_id: user2.id, form_content: '{ "foo": "bar" }')
           visit "/document/open?owner=test2&recordname=test2%20doc&runKey=biz"
           expect(page).to have_content %!{"foo":"bar"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to eq("true")
         end
 
         scenario 'anonymous user can open an owner-less document with a matching run_key' do
           doc = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: nil, run_key: 'run1', form_content: '{ "foo": "bar2" }')
           visit '/document/open?runKey=run1&recordname=test2%20doc'
           expect(page).to have_content %!{"foo":"bar2"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'anonymous user can open an owner-less document with a matching run_key (second url)' do
           doc = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: nil, run_key: 'run1', form_content: '{ "foo": "bar2" }')
           visit '/document/open?runKey=run1&owner=&recordname=test2%20doc'
           expect(page).to have_content %!{"foo":"bar2"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'anonymous user can not open an owner-less document with a non-matching run_key' do
@@ -257,6 +269,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           visit '/document/open?owner=&recordname=test3%20doc&runKey=biz'
           expect(page).to have_content %!{"foo":"baz"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'logged in user can open a non-shared document owned by someone else with the correct run key' do
@@ -266,6 +279,7 @@ feature 'Document', :codap do
           signin(user.email, user.password)
           visit '/document/open?owner=test4&recordname=test3%20doc&runKey=biz'
           expect(page).to have_content %!{"foo":"baz"}!
+          expect(page.response_headers['X-CODAP-Will-Overwrite']).to be_nil
         end
 
         scenario 'logged in user cannot open a non-shared document owned by anonymous with the incorrect run key' do
