@@ -142,6 +142,38 @@ CREATE TABLE schema_migrations (
 
 
 --
+-- Name: sessions; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE sessions (
+    id integer NOT NULL,
+    session_id character varying(255) NOT NULL,
+    data text,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
+);
+
+
+--
+-- Name: sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE sessions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sessions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE sessions_id_seq OWNED BY sessions.id;
+
+
+--
 -- Name: settings; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -246,6 +278,13 @@ ALTER TABLE ONLY documents ALTER COLUMN id SET DEFAULT nextval('documents_id_seq
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY sessions ALTER COLUMN id SET DEFAULT nextval('sessions_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY settings ALTER COLUMN id SET DEFAULT nextval('settings_id_seq'::regclass);
 
 
@@ -278,6 +317,14 @@ ALTER TABLE ONLY document_contents
 
 ALTER TABLE ONLY documents
     ADD CONSTRAINT documents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
 
 
 --
@@ -346,6 +393,20 @@ CREATE INDEX index_documents_on_shared ON documents USING btree (shared);
 
 
 --
+-- Name: index_sessions_on_session_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE UNIQUE INDEX index_sessions_on_session_id ON sessions USING btree (session_id);
+
+
+--
+-- Name: index_sessions_on_updated_at; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_sessions_on_updated_at ON sessions USING btree (updated_at);
+
+
+--
 -- Name: index_settings_on_thing_type_and_thing_id_and_var; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -409,4 +470,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150205102715');
 INSERT INTO schema_migrations (version) VALUES ('20150205185407');
 
 INSERT INTO schema_migrations (version) VALUES ('20150224222201');
+
+INSERT INTO schema_migrations (version) VALUES ('20150910210757');
 
