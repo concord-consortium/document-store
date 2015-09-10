@@ -1,12 +1,12 @@
 source 'https://rubygems.org'
-ruby '2.1.2'
-gem 'rails', '4.1.5'
+ruby '2.1.5'
+gem 'rails', '4.2.4'
 gem 'activerecord-session_store'
-gem 'sass-rails', '~> 4.0.3'
-gem 'uglifier', '>= 1.3.0'
-gem 'coffee-rails', '~> 4.0.0'
+gem 'sass-rails'
+gem 'uglifier'
+gem 'coffee-rails'
 gem 'jquery-rails'
-gem 'jbuilder', '~> 2.0'
+gem 'jbuilder'
 gem 'sdoc', '~> 0.4.0',          group: :doc
 gem 'spring',        group: :development
 gem 'devise'
@@ -18,8 +18,9 @@ gem 'unicorn-worker-killer', require: false
 gem 'gctools', require: false
 gem 'rails_12factor', group: :production
 gem 'rails-settings-cached'
-gem 'cancancan', '~> 1.9'
+gem 'cancancan'
 gem 'omniauth'
+gem 'oauth2'
 gem 'omniauth-oauth2'
 gem 'rack-cors', :require => 'rack/cors'
 gem 'foundation-rails'
