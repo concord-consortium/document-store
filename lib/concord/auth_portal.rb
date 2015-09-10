@@ -134,13 +134,8 @@ module Concord
           return <<-CONTROLLER_ACTION
             def #{@strategy_name}
               omniauth = request.env["omniauth.auth"]
-              begin
-                @user = User.find_for_concord_portal_oauth(omniauth, current_user)
-                sign_in_and_redirect @user, :event => :authentication if @user
-              rescue => e
-                flash[:alert] = e.message
-                redirect_to new_user_session_path
-              end
+              @user = User.find_for_concord_portal_oauth(omniauth, current_user)
+              sign_in_and_redirect @user, :event => :authentication
             end
           CONTROLLER_ACTION
         end

@@ -20,6 +20,11 @@
       Error: The requested document could not be found.
 :javascript
   $(document).ready(function() {
+    if (#{@in_a_window.to_s}) {
+      // Set all links to replace this page instead of opening yet another window.
+      $('a').attr('target', '');
+      return;
+    }
     // Hide the launch buttons until we talk with LARA
     $('.launch-button, .original-reset').hide();
     // But show them after a while, just in case
@@ -31,7 +36,8 @@
         reportingUrl = '#{@report_url}',
         learnerUrl = '#{@learner_url}',
         areLoggedIn = #{!current_user.nil?},
-        currentEmail = #{current_user.nil? ? "null" : "'#{current_user.email}'"};
+        currentEmail = #{current_user.nil? ? "null" : "'#{current_user.email}'"},
+        authFailed = #{@auth_failed.to_s};
 
     var phone = iframePhone.getIFrameEndpoint(),
         learnerUrlSet = false,
@@ -45,7 +51,14 @@
           // But... we are.
           if (window.location.href.indexOf('require_anonymous=') == -1) {
             // Log the current user out
-            window.location = $.param.querystring(window.location.href, "require_anonymous=true");
+            var loc = $.param.querystring(window.location.href, "require_anonymous=true");
+            if (authFailed) {
+              loc = $.param.querystring(loc, "window=true");
+              $('.login-error .text-center').html("There was a problem setting up this interactive. <a href='" + loc + "' target='_blank'>Try again</a>");
+              $('.login-error').show();
+            } else {
+              window.location = loc;
+            }
             return;
           } else {
             $('.login-error').show();
@@ -65,7 +78,14 @@
           // But... we aren't.
           if(window.location.href.indexOf('auth_provider=') == -1) {
             // Try to log a user in.
-            window.location = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
+            var loc = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
+            if (authFailed) {
+              loc = $.param.querystring(loc, "window=true");
+              $('.login-error .text-center').html("There was a problem setting up this interactive. <a href='" + loc + "' target='_blank'>Try again</a>");
+              $('.login-error').show();
+            } else {
+              window.location = loc;
+            }
             return;
           } else {
             $('.login-error').show();
@@ -78,7 +98,14 @@
             // Wrong person. Try to log in again.
             if(window.location.href.indexOf('require_email=') == -1) {
               // Try to log a user in.
-              window.location = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
+              var loc = $.param.querystring(window.location.href, { require_email: info["email"], auth_provider: info["provider"]});
+              if (authFailed) {
+                loc = $.param.querystring(loc, "window=true");
+                $('.login-error .text-center').html("There was a problem setting up this interactive. <a href='" + loc + "' target='_blank'>Try again</a>");
+                $('.login-error').show();
+              } else {
+                window.location = loc;
+              }
               return;
             } else {
               $('.login-error').show();

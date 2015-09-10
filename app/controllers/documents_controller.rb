@@ -247,6 +247,9 @@ class DocumentsController < ApplicationController
 
     @learner_url = @learner_url.to_s
 
+    @auth_failed = auth_params[:auto_auth_failed] == 'true'
+    @in_a_window = launch_params[:window] == 'true'
+
     authorize! :open, :url_document
     response.headers.delete 'X-Frame-Options'
     render layout: 'launch'
@@ -397,7 +400,7 @@ class DocumentsController < ApplicationController
     end
 
     def launch_params
-      params.permit(:owner, :recordname, :recordid, :server, :moreGames, :doc, :runKey, :buttonText)
+      params.permit(:owner, :recordname, :recordid, :server, :moreGames, :doc, :runKey, :buttonText, :window)
     end
 
     def report_params
@@ -409,7 +412,7 @@ class DocumentsController < ApplicationController
     end
 
     def auth_params
-      params.permit(:auth_provider, :require_anonymous, :require_email, :auto_auth_in_progress)
+      params.permit(:auth_provider, :require_anonymous, :require_email, :auto_auth_in_progress, :auto_auth_failed)
     end
 
     def render_not_found
