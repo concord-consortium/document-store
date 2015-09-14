@@ -24,7 +24,7 @@ module Documentstore
 
     config.active_record.schema_format = :sql
 
-    config.middleware.use Rack::Deflater
+    config.middleware.use Rack::Deflater, :if => lambda { |env, status, headers, body| status.to_i == 200 }
 
     require 'rack/inflate_request'
     config.middleware.insert_before Rack::Runtime, Rack::InflateRequest
