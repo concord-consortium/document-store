@@ -24,6 +24,8 @@ module Documentstore
 
     config.active_record.schema_format = :sql
 
+    config.middleware.delete Rack::ETag
+
     config.middleware.use Rack::Deflater, :if => lambda { |env, status, headers, body| status.to_i == 200 }
 
     require 'rack/inflate_request'
