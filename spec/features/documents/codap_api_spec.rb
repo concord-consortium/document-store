@@ -708,7 +708,8 @@ feature 'Document', :codap do
                 reportingUrl = '#{r_url}',
                 learnerUrl = '#{l_url}',
                 areLoggedIn = true,
-                currentEmail = '#{user2.email}';
+                currentEmail = '#{user2.email}',
+                authFailed = false;
             JS
           )
           expect(page.html).to have_text(
@@ -743,7 +744,8 @@ feature 'Document', :codap do
                 reportingUrl = '#{r_url}',
                 learnerUrl = '#{l_url}',
                 areLoggedIn = true,
-                currentEmail = '#{user2.email}';
+                currentEmail = '#{user2.email}',
+                authFailed = false;
             JS
           )
         end
@@ -759,7 +761,8 @@ feature 'Document', :codap do
                 reportingUrl = '#{r_url}',
                 learnerUrl = '#{l_url}',
                 areLoggedIn = false,
-                currentEmail = null;
+                currentEmail = null,
+                authFailed = false;
             JS
           )
         end
@@ -776,7 +779,8 @@ feature 'Document', :codap do
                 reportingUrl = '#{r_url}',
                 learnerUrl = '#{l_url}',
                 areLoggedIn = false,
-                currentEmail = null;
+                currentEmail = null,
+                authFailed = false;
             JS
           )
         end
