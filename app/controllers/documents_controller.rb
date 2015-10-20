@@ -105,7 +105,8 @@ class DocumentsController < ApplicationController
       end
     end
     response.headers['Document-Id'] = "#{document.id}"
-    response.headers['X-CODAP-Will-Overwrite'] = "true" if new_doc && new_doc_existed
+    response.headers['X-Codap-Opened-From-Shared-Document'] = "true" if new_doc
+    response.headers['X-Codap-Will-Overwrite'] = "true" if new_doc && new_doc_existed
     render json: content
   end
 
