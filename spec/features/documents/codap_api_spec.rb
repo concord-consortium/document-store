@@ -390,10 +390,11 @@ feature 'Document', :codap do
           page.driver.browser.submit :post, "/document/save?recordid=#{doc2.id}", '{ "def": [1,2,3,4] }'
           doc = Document.find_by(title: "newdoc", owner_id: user.id)
           doc2 = Document.find_by(title: "newdoc", owner_id: user2.id)
-          expect(doc).to be_nil
+          expect(doc).not_to be_nil
           expect(doc2).not_to be_nil
+          expect(doc.content).to match({"def" => [1,2,3,4] })
           expect(doc2.content).to match({"foo" => "bar" })
-          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+          expect(page).to have_content %!{"status":"Created","valid":true,"id":#{doc.id}}!
         end
 
         scenario 'when a document is saved for the second or later time, original_content is not updated' do
