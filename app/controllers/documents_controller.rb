@@ -117,12 +117,19 @@ class DocumentsController < ApplicationController
   def save
     content = request.raw_post
 
+    warn_overwrite = false
     if codap_api_params[:recordid].present?
       document = Document.find(codap_api_params[:recordid].to_i)
     else
       document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
+      warn_overwrite = !document.new_record? && !codap_api_params[:runKey]
     end
     authorize! :save, document rescue (render_not_authorized && return)
+
+    if warn_overwrite
+      render_duplicate_error
+      return
+    end
 
     document.form_content = content
     document.original_content = document.content if document.new_record?

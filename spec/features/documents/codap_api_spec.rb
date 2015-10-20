@@ -161,7 +161,8 @@ feature 'Document', :codap do
         user2 = FactoryGirl.create(:user, username: 'test2')
         signin(user.email, user.password)
         page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4], "_permissions": 1 }'
-        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
+        doc = Document.find_by(title: 'testDoc', owner: user)
+        page.driver.browser.submit :post, "/document/save?recordid=#{doc.id}", '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
         signout
         signin(user2.email, user2.password)
         visit "/document/open?owner=test&recordname=testDoc&original=true"
@@ -172,7 +173,7 @@ feature 'Document', :codap do
         user = FactoryGirl.create(:user, username: 'test')
         signin(user.email, user.password)
         doc2 = FactoryGirl.create(:document, title: "testDoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
-        page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6] }'
+        page.driver.browser.submit :post, "/document/save?recordid=#{doc2.id}", '{ "def": [1,2,3,4,5,6] }'
         visit "/document/open?owner=test&recordname=testDoc&original=true"
         doc2.reload
         expect(doc2.original_content).to be_nil
@@ -309,7 +310,8 @@ feature 'Document', :codap do
           user = FactoryGirl.create(:user, username: 'test')
           signin(user.email, user.password)
           page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4], "_permissions": 1 }'
-          page.driver.browser.submit :post, '/document/save?recordname=testDoc', '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
+          doc = Document.find_by(title: 'testDoc', owner: user)
+          page.driver.browser.submit :post, "/document/save?recordid=#{doc.id}", '{ "def": [1,2,3,4,5,6], "_permissions": 1 }'
           signout
           visit "/document/open?owner=test&recordname=testDoc&runKey=foo&original=true"
           expect(page).to have_content %!{"def":[1,2,3,4,5,6],"_permissions":0}!
@@ -360,80 +362,133 @@ feature 'Document', :codap do
     end
 
     describe 'save' do
-      scenario 'user can save their own document' do
-        user = FactoryGirl.create(:user, username: 'test')
-        expect(Document.find_by(title: "newdoc")).to be_nil
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
-        doc = Document.find_by(title: "newdoc")
-        expect(doc).not_to be_nil
-        expect(doc.title).to eq("newdoc")
-        expect(doc.content).to match({"def" => [1,2,3,4] })
-        expect(doc.owner_id).to eq(user.id)
-      end
-      scenario 'save should return the document id' do
-        user = FactoryGirl.create(:user, username: 'test')
-        expect(Document.find_by(title: "newdoc")).to be_nil
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
-        doc = Document.find_by(title: "newdoc")
-        expect(page).to have_content %!{"status":"Created","valid":true,"id":#{doc.id}}!
-      end
-      scenario 'user can not save over a document owned by someone else' do
-        user = FactoryGirl.create(:user, username: 'test')
-        user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
-        doc2 = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
-        expect(Document.find_by(title: "newdoc", owner_id: user.id)).to be_nil
-        expect(Document.find_by(title: "newdoc", owner_id: user2.id)).not_to be_nil
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
-        doc = Document.find_by(title: "newdoc", owner_id: user.id)
-        doc2 = Document.find_by(title: "newdoc", owner_id: user2.id)
-        expect(doc).not_to be_nil
-        expect(doc.content).to match({"def" => [1,2,3,4] })
-        expect(doc2).not_to be_nil
-        expect(doc2.content).to match({"foo" => "bar" })
+      describe 'by record id' do
+        scenario 'user can save their own document' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, "/document/save?recordid=#{doc.id}", '{ "def": [1,2,3,4] }'
+          doc = Document.find(doc.id)
+          expect(doc).not_to be_nil
+          expect(doc.title).to eq("newdoc")
+          expect(doc.content).to match({"def" => [1,2,3,4] })
+        end
+        scenario 'save should return the document id' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, "/document/save?recordid=#{doc.id}", '{ "def": [1,2,3,4] }'
+          expect(page).to have_content %!{"status":"Created","valid":true,"id":#{doc.id}}!
+        end
+        scenario 'user can not save over a document owned by someone else' do
+          user = FactoryGirl.create(:user, username: 'test')
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          expect(Document.find_by(title: "newdoc", owner_id: user.id)).to be_nil
+          expect(Document.find_by(title: "newdoc", owner_id: user2.id)).not_to be_nil
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, "/document/save?recordid=#{doc2.id}", '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc", owner_id: user.id)
+          doc2 = Document.find_by(title: "newdoc", owner_id: user2.id)
+          expect(doc).to be_nil
+          expect(doc2).not_to be_nil
+          expect(doc2.content).to match({"foo" => "bar" })
+          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+        end
+
+        scenario 'when a document is saved for the second or later time, original_content is not updated' do
+          user = FactoryGirl.create(:user, username: 'test')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc")
+          page.driver.browser.submit :post, "/document/save?recordid=#{doc.id}", '{ "def": [1,2,3,4,5,6] }'
+          doc.reload
+          expect(doc).not_to be_nil
+          expect(doc.content).to match({"def" => [1,2,3,4,5,6] })
+          expect(doc.original_content).to match({"def" => [1,2,3,4] })
+        end
+
+        scenario 'a document can be associated with a parent document' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          doc2 = FactoryGirl.create(:document, title: "newdoc-context", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, "/document/save?recordid=#{doc2.id}&parentDocumentId=#{doc.id}", '{ "def": [1,2,3,4] }'
+          doc.reload
+          doc2.reload
+          expect(doc.children.size).to eq(1)
+          expect(doc.children.first).to eq(doc2)
+          expect(doc2.parent).to eq(doc)
+        end
       end
 
-      scenario 'user overwrites their own document when a document by the same name exists' do
-        user = FactoryGirl.create(:user, username: 'test')
-        doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
-        doc.reload
-        expect(doc).not_to be_nil
-        expect(doc.content).to match({"def" => [1,2,3,4] })
-      end
+      describe 'by record name' do
+        scenario 'user can save their own new document' do
+          user = FactoryGirl.create(:user, username: 'test')
+          expect(Document.find_by(title: "newdoc")).to be_nil
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc")
+          expect(doc).not_to be_nil
+          expect(doc.title).to eq("newdoc")
+          expect(doc.content).to match({"def" => [1,2,3,4] })
+          expect(doc.owner_id).to eq(user.id)
+        end
+        scenario 'save should return the document id' do
+          user = FactoryGirl.create(:user, username: 'test')
+          expect(Document.find_by(title: "newdoc")).to be_nil
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc")
+          expect(page).to have_content %!{"status":"Created","valid":true,"id":#{doc.id}}!
+        end
+        scenario 'user can not save over a document owned by someone else' do
+          user = FactoryGirl.create(:user, username: 'test')
+          user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
+          doc2 = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user2.id, form_content: '{ "foo": "bar" }')
+          expect(Document.find_by(title: "newdoc", owner_id: user.id)).to be_nil
+          expect(Document.find_by(title: "newdoc", owner_id: user2.id)).not_to be_nil
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc", owner_id: user.id)
+          doc2 = Document.find_by(title: "newdoc", owner_id: user2.id)
+          expect(doc).not_to be_nil
+          expect(doc.content).to match({"def" => [1,2,3,4] })
+          expect(doc2).not_to be_nil
+          expect(doc2.content).to match({"foo" => "bar" })
+        end
 
-      scenario 'when a document is saved for the first time, original_content is set' do
-        user = FactoryGirl.create(:user, username: 'test')
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
-        doc = Document.find_by(title: "newdoc")
-        expect(doc).not_to be_nil
-        expect(doc.original_content).to match({"def" => [1,2,3,4] })
-      end
+        scenario 'user gets an overwrite error if a document by the same name exists' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc.reload
+          expect(doc).not_to be_nil
+          expect(doc.content).to match({"foo" => "bar" })
+          expect(page).to have_content %!{"valid":false,"message":"error.duplicate"}!
+        end
 
-      scenario 'when a document is saved for the second or later time, original_content is not updated' do
-        user = FactoryGirl.create(:user, username: 'test')
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
-        page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4,5,6] }'
-        doc = Document.find_by(title: "newdoc")
-        expect(doc).not_to be_nil
-        expect(doc.original_content).to match({"def" => [1,2,3,4] })
-      end
+        scenario 'when a document is saved for the first time, original_content is set' do
+          user = FactoryGirl.create(:user, username: 'test')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, '/document/save?recordname=newdoc', '{ "def": [1,2,3,4] }'
+          doc = Document.find_by(title: "newdoc")
+          expect(doc).not_to be_nil
+          expect(doc.original_content).to match({"def" => [1,2,3,4] })
+        end
 
-      scenario 'a document can be associated with a parent document' do
-        user = FactoryGirl.create(:user, username: 'test')
-        doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
-        signin(user.email, user.password)
-        page.driver.browser.submit :post, "/document/save?recordname=newdoc-context&parentDocumentId=#{doc.id}", '{ "def": [1,2,3,4] }'
-        doc.reload
-        doc2 = Document.find_by(title: 'newdoc-context', owner_id: user.id)
-        expect(doc.children.size).to eq(1)
-        expect(doc.children.first).to eq(doc2)
-        expect(doc2.parent).to eq(doc)
+        scenario 'a document can be associated with a parent document' do
+          user = FactoryGirl.create(:user, username: 'test')
+          doc = FactoryGirl.create(:document, title: "newdoc", shared: false, owner_id: user.id, form_content: '{ "foo": "bar" }')
+          signin(user.email, user.password)
+          page.driver.browser.submit :post, "/document/save?recordname=newdoc-context&parentDocumentId=#{doc.id}", '{ "def": [1,2,3,4] }'
+          doc.reload
+          doc2 = Document.find_by(title: 'newdoc-context', owner_id: user.id)
+          expect(doc.children.size).to eq(1)
+          expect(doc.children.first).to eq(doc2)
+          expect(doc2.parent).to eq(doc)
+        end
       end
 
       describe 'anonymous' do
