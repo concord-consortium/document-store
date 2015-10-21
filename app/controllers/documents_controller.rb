@@ -127,7 +127,7 @@ class DocumentsController < ApplicationController
         render_not_authorized
         return
       else
-        new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
+        new_doc = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname] || document.title, run_key: codap_api_params[:runKey] )
         if new_doc.new_record? || codap_api_params[:runKey]
           document = new_doc
         else
