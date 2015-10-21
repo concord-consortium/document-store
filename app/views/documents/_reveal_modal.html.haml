@@ -1,4 +1,4 @@
-- current_codap_server = (session[:codap_server_url] || ENV['CODAP_DEFAULT_URL'] || 'http://codap.concord.org/releases/latest/')
+- current_codap_server = (session[:codap_server_url] || ENV['CODAP_DEFAULT_URL'] || 'https://codap.concord.org/releases/latest/')
 - link = launch_url(server: current_codap_server, recordid: document.id)
 .reveal-modal{id: "linkModal#{document.id}", "data-reveal" => true}
   %h3= "Launch Link"
