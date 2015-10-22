@@ -98,31 +98,48 @@ class DocumentsController < ApplicationController
     end
     if document.owner != current_user
       content["_permissions"] = 0 if content && content.is_a?(Hash) && content.has_key?("_permissions")
-      if can? :save, :document
-        # create a copy of this document under the current user or current run key if it doesn't already exist, with the original_content set
+      if can?(:save, :document)
+        # check if a document exists with the same name for the current_user
         new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
         new_doc_existed = !new_doc.new_record?
-        if new_doc.new_record?
-          new_doc.content = content
-          new_doc.original_content = content
-          new_doc.save
-        end
       end
     end
-    response.headers['Document-Id'] = "#{new_doc.nil? ? document.id : new_doc.id}"
-    response.headers['X-CODAP-Will-Overwrite'] = "true" if new_doc && new_doc_existed
+    response.headers['Document-Id'] = "#{document.id}"
+    response.headers['X-Codap-Opened-From-Shared-Document'] = "true" if new_doc
+    response.headers['X-Codap-Will-Overwrite'] = "true" if new_doc && new_doc_existed
     render json: content
   end
 
   def save
     content = request.raw_post
 
+    warn_overwrite = false
     if codap_api_params[:recordid].present?
       document = Document.find(codap_api_params[:recordid].to_i)
     else
       document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
+      warn_overwrite = !document.new_record? && !codap_api_params[:runKey]
     end
-    authorize! :save, document rescue (render_not_authorized && return)
+    begin
+      authorize! :save, document
+    rescue
+      if document.owner == current_user
+        render_not_authorized
+        return
+      else
+        new_doc = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname] || document.title, run_key: codap_api_params[:runKey] )
+        if new_doc.new_record? || codap_api_params[:runKey]
+          document = new_doc
+        else
+          warn_overwrite = true
+        end
+      end
+    end
+
+    if warn_overwrite
+      render_duplicate_error
+      return
+    end
 
     document.form_content = content
     document.original_content = document.content if document.new_record?
