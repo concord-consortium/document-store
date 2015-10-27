@@ -1,7 +1,7 @@
 module DocumentsHelper
   def codap_link(codap_server, document, runAsGuest=false)
     data = {
-      "documentServer" => root_url
+      "documentServer" => root_url(protocol: 'https')
     }
     rkey = (@runKey || document.run_key)
     data["runKey"] = rkey if rkey
@@ -12,7 +12,7 @@ module DocumentsHelper
     end
     data["runAsGuest"] = 'true' if runAsGuest
 
-    url = Addressable::URI.parse(codap_server || ENV['CODAP_DEFAULT_URL'] || 'http://codap.concord.org/releases/latest/')
+    url = Addressable::URI.parse(codap_server || ENV['CODAP_DEFAULT_URL'] || 'https://codap.concord.org/releases/latest/')
     new_query = url.query_values || {}
     new_query.merge!(data)
     url.query_values = new_query
