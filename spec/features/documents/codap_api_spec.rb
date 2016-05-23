@@ -567,19 +567,19 @@ feature 'Document', :codap do
         doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
         visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/'
         expect(page).to have_selector('.launch-button', count: 1)
-        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
+        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
       end
       scenario 'user can launch a document via owner and doc' do
         user = FactoryGirl.create(:user, username: 'test2')
         doc  = FactoryGirl.create(:document, title: "something2", shared: true, owner_id: user.id, form_content: '{ "foo": "bar" }')
         visit '/document/launch?owner=test2&doc=something2&server=http://foo.com/'
         expect(page).to have_selector('.launch-button', count: 1)
-        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
+        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
       end
       scenario 'user can launch a document via moreGames' do
         visit '/document/launch?server=http://foo.com/&moreGames=%5B%7B%7D%5D'
         expect(page).to have_selector('.launch-button', count: 1)
-        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=foo']"
+        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=foo']"
       end
       scenario 'user can be logged in to launch' do
         # really, the requirement is that we don't need to be logged in, but that's already tested above,
@@ -590,7 +590,7 @@ feature 'Document', :codap do
         signin(user2.email, user2.password)
         visit '/document/launch?owner=test2&recordname=something2&server=http://foo.com/'
         expect(page).to have_selector('.launch-button', count: 1)
-        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
+        expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
       end
       scenario 'the document needs to exist to launch' do
         r = SecureRandom.hex
@@ -605,7 +605,7 @@ feature 'Document', :codap do
             doc  = FactoryGirl.create(:document, title: "something", shared: true, owner_id: user.id, form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
           end
           scenario 'also has a single document that matches the run key, a link to it is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
@@ -613,8 +613,8 @@ feature 'Document', :codap do
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&runKey=bar&server=http://foo.com/'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
-            expect(page).to have_selector  "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector  "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
           end
           scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
@@ -625,8 +625,8 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc5.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc5.id}&runKey=bar']"
           end
           scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
             user = FactoryGirl.create(:user, username: 'test2')
@@ -637,21 +637,21 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc3.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc3.id}&runKey=bar']"
           end
           scenario 'moreGames in url and no documents with run key, only a link to the moregames url is present' do
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
           end
           scenario 'moreGames in url and one document with run key, 2 links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
             doc2  = FactoryGirl.create(:document, title: "something", shared: false, owner_id: nil, run_key: 'bar', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
           end
           scenario 'moreGames in url and multiple documents with run key, all links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
@@ -661,8 +661,8 @@ feature 'Document', :codap do
             doc5  = FactoryGirl.create(:document, title: "something5", shared: false, owner_id: nil, run_key: 'baz', form_content: '{ "foo": "bar", "appName": "name", "appVersion": "version", "appBuildNum": 1 }')
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc4.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc4.id}&runKey=bar']"
           end
         end
         describe 'logged in user' do
@@ -673,7 +673,7 @@ feature 'Document', :codap do
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
           end
           scenario 'also has a single document that matches the run key, a link to it is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
@@ -683,8 +683,8 @@ feature 'Document', :codap do
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
           end
           scenario 'also has multiple documents that match the run key, a link to each of them is displayed too' do
             user = FactoryGirl.create(:user, username: 'test2')
@@ -697,8 +697,8 @@ feature 'Document', :codap do
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc5.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc5.id}&runKey=bar']"
           end
           scenario 'also has documents that do not match the run key, a link to each of them is not also displayed' do
             user = FactoryGirl.create(:user, username: 'test2')
@@ -711,15 +711,15 @@ feature 'Document', :codap do
             signin(user4.email, user4.password)
             visit '/document/launch?owner=test2&recordname=something&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc3.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc3.id}&runKey=bar']"
           end
           scenario 'moreGames in url and no documents with run key, only a link to the moregames url is present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
           end
           scenario 'moreGames in url and one document with run key, 2 links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
@@ -727,8 +727,8 @@ feature 'Document', :codap do
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc2.id}&runKey=bar']"
           end
           scenario 'moreGames in url and multiple documents with run key, all links are present' do
             user4 = FactoryGirl.create(:user, username: 'test4')
@@ -739,8 +739,8 @@ feature 'Document', :codap do
             signin(user4.email, user4.password)
             visit '/document/launch?moreGames=%5B%7B%7D%5D&server=http://foo.com/&runKey=bar'
             expect(page).to have_selector('.launch-button', count: 1)
-            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
-            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc4.id}&runKey=bar']"
+            expect(page).to have_selector "a.original-reset[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&moreGames=%5B%7B%7D%5D&runKey=bar']"
+            expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc4.id}&runKey=bar']"
           end
         end
       end
@@ -759,7 +759,7 @@ feature 'Document', :codap do
           user2 = FactoryGirl.create(:user, username: 'test4')
           signin(user2.email, user2.password)
           visit '/document/launch?owner=test2&recordname=something2&server=http://foo.com/&auth_provider=http://bar.com/'
-          expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=http%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
+          expect(page).to have_selector "a.launch-button[href='http://foo.com/?documentServer=https%3A%2F%2Fwww.example.com%2F&recordid=#{doc.id}&runKey=foo']"
         end
       end
       describe 'LARA integration' do
@@ -877,7 +877,7 @@ feature 'Document', :codap do
       let(:server)   { 'http://foo.com/' }
 
       scenario 'user needs to be logged in to view non-anonymous work' do
-        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_content 'No documents have been saved!'
         signin(teacher.email, teacher.password)
@@ -886,8 +886,8 @@ feature 'Document', :codap do
         expect(page).to have_selector "a.launch-button[href='#{url}']"
       end
       scenario 'user does not need to be logged in to view anonymous work' do
-        url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo', runAsGuest: 'true'})
-        url2 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo', runAsGuest: 'true'})
+        url2 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 1)
         expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -921,21 +921,21 @@ feature 'Document', :codap do
       end
       scenario 'user can report a document via owner and recordname' do
         signin(teacher.email, teacher.password)
-        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 1)
         expect(page).to have_selector "a.launch-button[href='#{url}']"
       end
       scenario 'user can report a document via owner and doc' do
         signin(teacher.email, teacher.password)
-        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, doc: template.title, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 1)
         expect(page).to have_selector "a.launch-button[href='#{url}']"
       end
       scenario 'user can report a document via recordid' do
         signin(teacher.email, teacher.password)
-        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordid: template.id, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 1)
         expect(page).to have_selector "a.launch-button[href='#{url}']"
@@ -947,8 +947,8 @@ feature 'Document', :codap do
       end
       scenario 'reportUser also has multiple documents that match the run key, a link to each of them is displayed too' do
         signin(teacher.email, teacher.password)
-        url1 = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-        url2 = doc_url(server, {recordid: student_doc1b.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url1 = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+        url2 = doc_url(server, {recordid: student_doc1b.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 2)
         expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -956,11 +956,11 @@ feature 'Document', :codap do
       end
       scenario 'reportUser also has documents that do not match the run key, a link to each of them is not also displayed' do
         signin(teacher.email, teacher.password)
-        url1 = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-        url2 = doc_url(server, {recordid: student_doc1b.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-        url3 = doc_url(server, {recordid: student_doc1c.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-        url4 = doc_url(server, {recordid: student_doc2a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-        url5 = doc_url(server, {recordid: student_doc2b.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url1 = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+        url2 = doc_url(server, {recordid: student_doc1b.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+        url3 = doc_url(server, {recordid: student_doc1c.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+        url4 = doc_url(server, {recordid: student_doc2a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+        url5 = doc_url(server, {recordid: student_doc2b.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
         expect(page).to have_selector('.launch-button', count: 3)
         expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -969,15 +969,15 @@ feature 'Document', :codap do
       end
       scenario 'moreGames in url and one document with run key, 1 link is present' do
         signin(teacher.email, teacher.password)
-        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(server: server, moreGames: '[{}]', runKey: 'foo', reportUser: student.username)
         expect(page).to have_selector('.launch-button', count: 1)
         expect(page).to have_selector "a.launch-button[href='#{url}']"
       end
       scenario 'moreGames in url and multiple documents with run key, all links are present' do
         signin(teacher.email, teacher.password)
-        url1 = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-        url2 = doc_url(server, {recordid: student_doc1c.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+        url1 = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+        url2 = doc_url(server, {recordid: student_doc1c.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
         visit report_path(server: server, moreGames: '[{}]', runKey: 'foo', reportUser: student.username)
         expect(page).to have_selector('.launch-button', count: 2)
         expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -986,21 +986,21 @@ feature 'Document', :codap do
       describe 'anonymous' do
         scenario 'user can report a document via owner and recordname' do
           signin(teacher.email, teacher.password)
-          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 1)
           expect(page).to have_selector "a.launch-button[href='#{url}']"
         end
         scenario 'user can report a document via owner and doc' do
           signin(teacher.email, teacher.password)
-          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(owner: author.username, doc: template.title, server: server, runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 1)
           expect(page).to have_selector "a.launch-button[href='#{url}']"
         end
         scenario 'user can report a document via recordid' do
           signin(teacher.email, teacher.password)
-          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(owner: author.username, recordid: template.id, server: server, runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 1)
           expect(page).to have_selector "a.launch-button[href='#{url}']"
@@ -1012,8 +1012,8 @@ feature 'Document', :codap do
         end
         scenario 'reportUser also has multiple documents that match the run key, a link to each of them is displayed too' do
           signin(teacher.email, teacher.password)
-          url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-          url2 = doc_url(server, {recordid: anon_doc1b.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+          url2 = doc_url(server, {recordid: anon_doc1b.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 2)
           expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -1021,11 +1021,11 @@ feature 'Document', :codap do
         end
         scenario 'reportUser also has documents that do not match the run key, a link to each of them is not also displayed' do
           signin(teacher.email, teacher.password)
-          url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-          url2 = doc_url(server, {recordid: anon_doc1b.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-          url3 = doc_url(server, {recordid: anon_doc1c.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-          url4 = doc_url(server, {recordid: anon_doc2a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-          url5 = doc_url(server, {recordid: anon_doc2b.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+          url2 = doc_url(server, {recordid: anon_doc1b.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+          url3 = doc_url(server, {recordid: anon_doc1c.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+          url4 = doc_url(server, {recordid: anon_doc2a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+          url5 = doc_url(server, {recordid: anon_doc2b.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(owner: author.username, recordname: template.title, server: server, runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 3)
           expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -1034,15 +1034,15 @@ feature 'Document', :codap do
         end
         scenario 'moreGames in url and one document with run key, 1 link is present' do
           signin(teacher.email, teacher.password)
-          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(server: server, moreGames: '[{}]', runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 1)
           expect(page).to have_selector "a.launch-button[href='#{url}']"
         end
         scenario 'moreGames in url and multiple documents with run key, all links are present' do
           signin(teacher.email, teacher.password)
-          url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
-          url2 = doc_url(server, {recordid: anon_doc1c.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url1 = doc_url(server, {recordid: anon_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
+          url2 = doc_url(server, {recordid: anon_doc1c.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(server: server, moreGames: '[{}]', runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 2)
           expect(page).to have_selector "a.launch-button[href='#{url1}']"
@@ -1063,7 +1063,7 @@ feature 'Document', :codap do
         end
         scenario 'the user will not be authenticated if auth_provider is set and the user is logged in' do
           signin(teacher.email, teacher.password)
-          url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'http://www.example.com/', runKey: 'foo'})
+          url = doc_url(server, {recordid: student_doc1a.id, documentServer: 'https://www.example.com/', runKey: 'foo'})
           visit report_path(auth_provider: 'http://bar.com', owner: author.username, recordname: template.title, server: server, reportUser: student.username, runKey: 'foo')
           expect(page).to have_selector('.launch-button', count: 1)
           expect(page).to have_selector "a.launch-button[href='#{url}']"
