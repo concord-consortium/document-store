@@ -1,5 +1,5 @@
 module DocumentsHelper
-  def codap_link(codap_server, document, runAsGuest=false)
+  def codap_link(codap_server, document, runAsGuest=false, fromLaunchPage=false)
     data = {
       "documentServer" => root_url(protocol: 'https')
     }
@@ -11,6 +11,7 @@ module DocumentsHelper
       data["moreGames"] = document
     end
     data["runAsGuest"] = 'true' if runAsGuest
+    data["launchFromLara"] = 'true' if fromLaunchPage
 
     url = Addressable::URI.parse(codap_server || ENV['CODAP_DEFAULT_URL'] || 'https://codap.concord.org/releases/latest/')
     new_query = url.query_values || {}

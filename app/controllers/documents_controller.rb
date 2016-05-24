@@ -228,11 +228,11 @@ class DocumentsController < ApplicationController
 
     if launch_params[:recordid] || (launch_params[:owner] && (launch_params[:recordname] || launch_params[:doc]))
       original_doc = find_doc_via_params(launch_params)
-      @master_document_url = codap_link(@codap_server, original_doc) if original_doc
+      @master_document_url = codap_link(@codap_server, original_doc, false, true) if original_doc
     elsif launch_params[:moreGames]
       moreGames = launch_params[:moreGames]
       moreGames = moreGames.to_json if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
-      @master_document_url = codap_link(@codap_server, moreGames)
+      @master_document_url = codap_link(@codap_server, moreGames, false, true)
     end
 
     @buttonText = launch_params[:buttonText] || 'Launch'

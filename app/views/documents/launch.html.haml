@@ -6,7 +6,7 @@
     .row
       .small-12.text-center.columns
         - most_recent = @supplemental_documents.sort_by{|d| d.updated_at }.last
-        = link_to h(@buttonText), codap_link(@codap_server, most_recent), class: :"launch-button", target: "_blank"
+        = link_to h(@buttonText), codap_link(@codap_server, most_recent, false, true), class: :"launch-button", target: "_blank"
     .row.more-space-above
       .small-12.text-center.columns
         = link_to 'Reset to Original', @master_document_url, class: :"original-reset", target: "_blank"
