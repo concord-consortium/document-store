@@ -261,11 +261,11 @@ feature 'Document', :codap do
           expect(page).to have_content %!{"valid":false,"message":"error.notFound"}!
         end
 
-        scenario 'anonymous user can not open a document owned by another person even with the correct run_key' do
+        scenario 'anonymous user can open a non-shared document owned by someone else with the correct run_key' do
           user2 = FactoryGirl.create(:user, username: 'test2', email: 'test2@email.com')
           doc2 = FactoryGirl.create(:document, title: "test2 doc", shared: false, owner_id: user2.id, run_key: 'run2', form_content: '{ "foo": "bar" }')
           visit '/document/open?runKey=run2&owner=test2&recordname=test2%20doc'
-          expect(page).to have_content %!{"valid":false,"message":"error.permissions"}!
+          expect(page).to have_content %!{"foo":"bar"}!
         end
 
         scenario 'logged in user can open a non-shared document owned by anonymous with the correct run key' do

@@ -13,6 +13,18 @@ class Ability
       !user.nil? || !extra[:runKey].blank?
     end
 
+    if extra[:runKey]
+      # anyone can view reports if they know the runKey
+      can [:report], Document do |doc|
+        doc.nil? || (doc.run_key.present? && doc.run_key == extra[:runKey])
+      end
+
+      # anyone can open a document if they know the runKey
+      can [:open], Document do |doc|
+        doc.run_key.present? && doc.run_key == extra[:runKey]
+      end
+    end
+
     if user
       # Stuff logged in people can do
 
@@ -20,7 +32,7 @@ class Ability
       can [:index, :list, :create, :new, :all], Document
 
       # read a doc
-      can [:read, :show, :open, :report], Document do |doc|
+      can [:read, :show, :open], Document do |doc|
           doc.owner == user || (doc.run_key.present? && doc.run_key == extra[:runKey])
       end
 
@@ -30,17 +42,16 @@ class Ability
       end
 
       # User
-      can [:read, :update, :info, :authenticate, :report], User do |u|
+      can [:read, :update, :info, :authenticate], User do |u|
         u == user
       end
     else
       # anonymous gets read/write access to documents if they know the documents run_key
       if extra[:runKey]
         can [:index, :list, :all], Document
-        can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original, :report], Document do |doc|
+        can [:read, :show, :edit, :update, :destroy, :save, :open, :open_original], Document do |doc|
             doc.owner.nil? && doc.run_key.present? && doc.run_key == extra[:runKey]
         end
-        can [:report], :nil_user
       end
       # anonymous can't do anything else
     end

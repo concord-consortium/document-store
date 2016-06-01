@@ -20,6 +20,7 @@ module Features
 
     def doc_url(base, query_hash)
       uri = Addressable::URI.parse(base)
+      query_hash[:runAsGuest] = 'true'
       uri.query_values = (uri.query_values(Hash) || {}).merge(query_hash)
       uri.to_s
     end
