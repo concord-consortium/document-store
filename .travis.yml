@@ -1,6 +1,9 @@
+sudo: false
 language: ruby
 services:
   - postgresql
+addons:
+  postgresql: "9.3"
 before_script:
   - cp config/database.yml.travis config/database.yml
   - bundle exec rake db:create
