@@ -1,4 +1,4 @@
--if @master_document_url
+-if @found_master_document
   - if @supplemental_documents && @supplemental_documents.size > 0
     - sorted_docs = @supplemental_documents.sort_by{|d| d.updated_at }.reverse
     .row

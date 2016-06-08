@@ -1,6 +1,5 @@
 class DocumentsController < ApplicationController
   before_filter :auto_authenticate, :only => [:launch]
-  before_filter :auto_authenticate_from_referrer, :only => [:report]
   before_filter :authenticate_user!, :except => [:index, :show, :all, :open, :save, :patch, :delete, :launch, :rename, :report]
   before_filter :run_key_or_authenticate, :only => [:index, :show]
   before_filter :load_index_documents, :only => [:index, :all]
@@ -274,7 +273,9 @@ class DocumentsController < ApplicationController
 
   def report
     raise ActiveRecord::RecordNotFound.new if report_params[:runKey].blank? || report_params[:server].blank?
-    authorize! :report, (current_user || :nil_user)
+
+    authorize! :report, Document
+
     @codap_server = report_params[:server]
     @runKey = report_params[:runKey]
 
@@ -285,19 +286,47 @@ class DocumentsController < ApplicationController
     elsif (num_users == 1)
       @reportUserId = users.first.id
     else
-      # Try to find a user that came from the same authentication source as we did
-      source = current_user.authentications.first.provider rescue nil
-      u = users.to_a.detect {|user| !user.authentications.detect {|a| a.provider == source }.nil? }
-      @reportUserId = u ? u.id : nil
+      # HACK: because usernames are not unique, just passing the username is not enough to find the user.
+      #  the username is taken from the authentication provider. It is common in testing to have the same
+      #  username on production and staging portals. So this problem happens often in testing. We do have
+      #  a runKey though, and it seems that is generally unique between portals, so it can be used to figure
+      #  out the correct user.
+      #
+      #  A better solution would be to enforce unique runKeys for each document, and then there would be no
+      #  need to lookup the user here. I think doing that would require defining the runKey only on the server
+      #  currently the runKey can be set by the client when a document is created.
+      unique_owner_docs = Document.select(:owner_id).where(owner_id: users.map(&:id), run_key: @runKey).group(:owner_id)
+      owners = unique_owner_docs.map{|doc| doc.owner}
+
+      if owners.count == 1
+        @reportUserId = owners.first.id
+      else
+        # either there are no documents matching any of these users with the pass runkey
+        # or there are mutliple users that have documents with the same runkey
+        # if there are no documents then we fall back to initial users list, otherwise
+        # we now look at just the owners of the documents.
+        if owners.count > 1
+          users = owners
+        end
+
+        # As a last resort for filtering out multiple users, try to filter the users based on the authentication
+        # of the current_user.  When running the report the current_user will probably be the teacher. And in
+        # the majority cases the teacher will only have one authentication provider, so this is a good filter.
+        # However for test teachers it is very likely the teacher will have multiple authentications so in that
+        # case this probably isn't going to filter very much.
+        source = current_user.authentications.first.provider rescue nil
+        u = users.to_a.detect {|user| !user.authentications.detect {|a| a.provider == source }.nil? }
+        @reportUserId = u ? u.id : nil
+      end
     end
 
+    # It isn't entirely clear why we need to find the master document
+    # The report view has different messages if we do or don't
     if report_params[:recordid] || (report_params[:owner] && (report_params[:recordname] || report_params[:doc]))
       original_doc = find_doc_via_params(report_params)
-      @master_document_url = codap_link(@codap_server, original_doc) if original_doc
+      @found_master_document = original_doc.present?
     elsif report_params[:moreGames]
-      moreGames = report_params[:moreGames]
-      moreGames = moreGames.to_json if moreGames.is_a?(Hash) || moreGames.is_a?(Array)
-      @master_document_url = codap_link(@codap_server, moreGames)
+      @found_master_document = true
     end
 
     @supplemental_documents = Document.where(owner_id: @reportUserId, run_key: @runKey, is_codap_main_document: true)
@@ -347,22 +376,6 @@ class DocumentsController < ApplicationController
               orig_url.query_values = new_query
               session[:user_return_to] = orig_url.to_s
 
-              redirect_to omniauth_authorize_path("user", portal.strategy_name)
-              return true
-            end
-          end
-        end
-      end
-    end
-
-    def auto_authenticate_from_referrer
-      if current_user.nil?
-        if referer = request.env['HTTP_REFERER']
-          Concord::AuthPortal.all.each_pair do |key,portal|
-            if (referer && referer.include?(portal.url))  # may fail if the protocol differs
-              # we came from a configured authentication provider
-              # so let's authenticate ourselves
-              session[:user_return_to] = request.original_url
               redirect_to omniauth_authorize_path("user", portal.strategy_name)
               return true
             end
