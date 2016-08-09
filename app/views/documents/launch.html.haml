@@ -9,6 +9,10 @@
         = link_to h(@buttonText), codap_link(@codap_server, most_recent, false, true), class: :"launch-button", target: "_blank"
     .row.more-space-above
       .small-12.text-center.columns
+        -# This will be a link to the master document with the learners runKey
+        -# when it is opened the contents of the master document will be shown
+        -# When this document is saved the document-store will look for another document
+        -# with the same runKey owned by the current_user and override that document
         = link_to 'Reset to Original', @master_document_url, class: :"original-reset", target: "_blank"
   - else
     .row
