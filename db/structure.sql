@@ -109,7 +109,9 @@ CREATE TABLE documents (
     updated_at timestamp without time zone,
     run_key character varying(255),
     is_codap_main_document boolean DEFAULT true,
-    parent_id integer
+    parent_id integer,
+    read_access_key character varying(255),
+    read_write_access_key character varying(255)
 );
 
 
@@ -339,6 +341,20 @@ CREATE INDEX index_documents_on_parent_id ON documents USING btree (parent_id);
 
 
 --
+-- Name: index_documents_on_read_access_key; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_documents_on_read_access_key ON documents USING btree (read_access_key);
+
+
+--
+-- Name: index_documents_on_read_write_access_key; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_documents_on_read_write_access_key ON documents USING btree (read_write_access_key);
+
+
+--
 -- Name: index_documents_on_shared; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -409,4 +425,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150205102715');
 INSERT INTO schema_migrations (version) VALUES ('20150205185407');
 
 INSERT INTO schema_migrations (version) VALUES ('20150224222201');
+
+INSERT INTO schema_migrations (version) VALUES ('20160816181715');
 
