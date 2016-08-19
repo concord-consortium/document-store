@@ -13,11 +13,10 @@ Rails.application.routes.draw do
   get 'user/info' => 'users#info'
   get 'user/authenticate' => 'users#authenticate'
 
-  get 'v2/document/open' => 'documents_v2#open'
-  put 'v2/document/save' => 'documents_v2#save'
-  post 'v2/document/patch' => 'documents_v2#patch'
-  patch 'v2/document/patch' => 'documents_v2#patch'
-  post 'v2/document/copy_shared' => 'documents_v2#copy_shared'
+  get 'v2/document/:id' => 'documents_v2#open'
+  put 'v2/document/:id' => 'documents_v2#save'
+  patch 'v2/document/:id' => 'documents_v2#patch'
+  post 'v2/document' => 'documents_v2#copy_shared'
 
   root :to => "home#index"
   devise_for :users, :controllers => {:registrations => "registrations", :omniauth_callbacks => "omniauth_callbacks"}

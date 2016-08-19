@@ -1,3 +1,5 @@
+require 'ostruct'
+
 class DocumentsV2Controller < ApplicationController
 
   # don't check for csrf token
@@ -9,29 +11,28 @@ class DocumentsV2Controller < ApplicationController
   include DocumentsV2Helper
 
   def open
-    if params[:readAccessKey].present?
-      document = Document.find_by(read_access_key: params[:readAccessKey])
-    elsif params[:readWriteAccessKey].present?
-      document = Document.find_by(read_write_access_key: params[:readWriteAccessKey])
-    else
-      render_missing_param('readAccessKey or readWriteAccessKey')
-      return
-    end
-
+    document = Document.find_by(id: params[:id])
     render_not_found && return unless document
 
-    read_only = params[:readAccessKey].present?
-    response.headers['Document-Id'] = "#{document.id}"
+    access_key = parse_access_key
+
+    # If an access key is present it must be checked. Shared documents without access keys are ok, unshared documents need to have a valid access key of either type.
+    if access_key || !document.shared
+      render_missing_param("accessKey") && return unless access_key
+      render_invalid_access_key_format && return unless access_key.valid_format?
+      render_invalid_access_key && return unless valid_document_access_key(document, access_key)
+    end
+
+    read_only = !access_key || access_key.read_only?
     response.headers['Allow'] = "GET, HEAD, OPTIONS#{read_only ? '' : ', PUT, PATCH'}"
-    response.headers['X-Document-Store-Read-Only'] = read_only ? 'true' : 'false'
     render json: document.content
   end
 
   def save
-    render_missing_param("readWriteAccessKey") && return unless params[:readWriteAccessKey].present?
-
-    document = Document.find_by(read_write_access_key: params[:readWriteAccessKey])
+    document = Document.find_by(id: params[:id])
     render_not_found && return unless document
+
+    return unless require_valid_read_write_access_key(document)
 
     document.form_content = request.raw_post
     if document.save
@@ -42,10 +43,10 @@ class DocumentsV2Controller < ApplicationController
   end
 
   def patch
-    render_missing_param("readWriteAccessKey") && return unless params[:readWriteAccessKey].present?
-
-    document = Document.find_by(read_write_access_key: params[:readWriteAccessKey])
+    document = Document.find_by(id: params[:id])
     render_not_found && return unless document
+
+    return unless require_valid_read_write_access_key(document)
 
     begin
       patchset = JSON.parse(request.raw_post)
@@ -68,8 +69,9 @@ class DocumentsV2Controller < ApplicationController
   end
 
   def copy_shared
-    render_missing_param("recordid") && return unless params[:recordid].present?
-    document = Document.find_by(id: params[:recordid])
+    render_missing_param("source") && return unless params[:source].present?
+
+    document = Document.find_by(id: params[:source])
     render_not_found && return unless document
 
     if document.shared
@@ -109,4 +111,45 @@ class DocumentsV2Controller < ApplicationController
   def render_not_found
     render json: {valid: false, message: "error.notFound"}, status: 404
   end
+
+  def render_invalid_access_key_format
+    render json: {valid: false, errors: ["Invalid accessKey format"], message: "error.invalidAccessKeyFormat"}, status: 400
+  end
+
+  def render_invalid_access_key_type
+    render json: {valid: false, errors: ["Invalid accessKey type"], message: "error.invalidAccessKeyType"}, status: 400
+  end
+
+  def render_invalid_access_key
+    render json: {valid: false, errors: ["Invalid accessKey"], message: "error.invalidAccessKey"}, status: 400
+  end
+
+  def parse_access_key
+    if params[:accessKey].present?
+      type, key = params[:accessKey].split('::')
+      return OpenStruct.new({key: key, read_only?: type == 'RO', read_write?: type == 'RW', valid_format?: ((type == 'RO') || (type == 'RW')) && (key != nil)})
+    else
+      return nil
+    end
+  end
+
+  def valid_document_access_key(document, access_key)
+    if access_key.read_only?
+      document.read_access_key == access_key.key
+    elsif access_key.read_write?
+      document.read_write_access_key == access_key.key
+    else
+      false
+    end
+  end
+
+  def require_valid_read_write_access_key(document)
+    access_key = parse_access_key
+    render_missing_param("accessKey") && return unless access_key
+    render_invalid_access_key_format && return unless access_key.valid_format?
+    render_invalid_access_key_type && return unless access_key.read_write?
+    render_invalid_access_key && return unless valid_document_access_key(document, access_key)
+    access_key
+  end
+
 end
