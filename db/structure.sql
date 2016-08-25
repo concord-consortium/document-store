@@ -64,6 +64,39 @@ ALTER SEQUENCE authentications_id_seq OWNED BY authentications.id;
 
 
 --
+-- Name: document_access_log; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE document_access_log (
+    id integer NOT NULL,
+    document_id integer,
+    api_version character varying(255),
+    action character varying(255),
+    access_params character varying(255),
+    accessed_at timestamp without time zone
+);
+
+
+--
+-- Name: document_access_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE document_access_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: document_access_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE document_access_log_id_seq OWNED BY document_access_log.id;
+
+
+--
 -- Name: document_contents; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -234,6 +267,13 @@ ALTER TABLE ONLY authentications ALTER COLUMN id SET DEFAULT nextval('authentica
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY document_access_log ALTER COLUMN id SET DEFAULT nextval('document_access_log_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY document_contents ALTER COLUMN id SET DEFAULT nextval('document_contents_id_seq'::regclass);
 
 
@@ -264,6 +304,14 @@ ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regcl
 
 ALTER TABLE ONLY authentications
     ADD CONSTRAINT authentications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: document_access_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY document_access_log
+    ADD CONSTRAINT document_access_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -427,4 +475,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150205185407');
 INSERT INTO schema_migrations (version) VALUES ('20150224222201');
 
 INSERT INTO schema_migrations (version) VALUES ('20160816181715');
+
+INSERT INTO schema_migrations (version) VALUES ('20160817184931');
 

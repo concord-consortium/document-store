@@ -9,6 +9,8 @@ class DocumentsController < ApplicationController
 
   before_filter :check_session_expiration, :only => [:all, :save, :patch, :open, :delete, :rename]
 
+  after_filter :log_access, :only => [:show, :edit, :create, :update, :destroy, :open, :save, :patch, :rename, :delete]
+
   include DocumentsHelper
 
   cattr_accessor :run_key_generator
@@ -82,28 +84,28 @@ class DocumentsController < ApplicationController
   end
 
   def open
-    document = find_doc_via_params
+    @document = find_doc_via_params
     new_doc = nil
-    render_not_found && return unless document
-    content = document.content
+    render_not_found && return unless @document
+    content = @document.content
     if codap_api_params[:original]
       begin
-        authorize! :open_original, document
-        content = document.original_content || document.content
+        authorize! :open_original, @document
+        content = @document.original_content || @document.content
       rescue
       end
     else
-      authorize! :open, document rescue (render_not_authorized && return)
+      authorize! :open, @document rescue (render_not_authorized && return)
     end
-    if document.owner != current_user
+    if @document.owner != current_user
       content["_permissions"] = 0 if content && content.is_a?(Hash) && content.has_key?("_permissions")
       if can?(:save, :document)
         # check if a document exists with the same name for the current_user
-        new_doc = Document.find_or_initialize_by(owner: current_user, title: document.title, run_key: codap_api_params[:runKey] )
+        new_doc = Document.find_or_initialize_by(owner: current_user, title: @document.title, run_key: codap_api_params[:runKey] )
         new_doc_existed = !new_doc.new_record?
       end
     end
-    response.headers['Document-Id'] = "#{document.id}"
+    response.headers['Document-Id'] = "#{@document.id}"
     response.headers['X-Codap-Opened-From-Shared-Document'] = "true" if new_doc
     response.headers['X-Codap-Will-Overwrite'] = "true" if new_doc && new_doc_existed
     render json: content
@@ -114,21 +116,23 @@ class DocumentsController < ApplicationController
 
     warn_overwrite = false
     if codap_api_params[:recordid].present?
-      document = Document.find(codap_api_params[:recordid].to_i)
+      @document = Document.find(codap_api_params[:recordid].to_i)
+      @access_params = {recordid: codap_api_params[:recordid]}
     else
-      document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
-      warn_overwrite = !document.new_record? && !codap_api_params[:runKey]
+      @document = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey])
+      @access_params = {owner: current_user ? current_user.id : nil, title: codap_api_params[:recordname], run_key: codap_api_params[:runKey]}
+      warn_overwrite = !@document.new_record? && !codap_api_params[:runKey]
     end
     begin
-      authorize! :save, document
+      authorize! :save, @document
     rescue
-      if document.owner == current_user
+      if @document.owner == current_user
         render_not_authorized
         return
       else
-        new_doc = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname] || document.title, run_key: codap_api_params[:runKey] )
+        new_doc = Document.find_or_initialize_by(owner: current_user, title: codap_api_params[:recordname] || @document.title, run_key: codap_api_params[:runKey] )
         if new_doc.new_record? || codap_api_params[:runKey]
-          document = new_doc
+          @document = new_doc
         else
           warn_overwrite = true
         end
@@ -140,26 +144,27 @@ class DocumentsController < ApplicationController
       return
     end
 
-    document.form_content = content
-    document.original_content = document.content if document.new_record?
-    document.shared = document.content.is_a?(Hash) && document.content.has_key?('_permissions') && document.content['_permissions'].to_i == 1
-    document.parent_id = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
+    @document.form_content = content
+    @document.original_content = @document.content if @document.new_record?
+    @document.shared = @document.content.is_a?(Hash) && @document.content.has_key?('_permissions') && @document.content['_permissions'].to_i == 1
+    @document.parent_id = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
 
-    if document.save
-      render json: {status: "Created", valid: true, id: document.id }, status: :created
+    if @document.save
+      render json: {status: "Created", valid: true, id: @document.id }, status: :created
     else
-      render json: {status: "Error", errors: document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+      render json: {status: "Error", errors: @document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
     end
   end
 
   def patch
     if codap_api_params[:recordid].present?
-      document = Document.find(codap_api_params[:recordid].to_i)
+      @document = Document.find(codap_api_params[:recordid].to_i)
+      @access_params = {recordid: codap_api_params[:recordid]}
     else
       render_not_found
       return
     end
-    authorize! :save, document rescue (render_not_authorized && return)
+    authorize! :save, @document rescue (render_not_authorized && return)
 
     begin
       patchset = JSON.parse(request.raw_post)
@@ -171,18 +176,18 @@ class DocumentsController < ApplicationController
 
     begin
       # Use JSON Patch to bring the content up-to-date
-      res = JSON::Patch.new(document.content, patchset).call
+      res = JSON::Patch.new(@document.content, patchset).call
 
       shared = res.is_a?(Hash) && res.has_key?('_permissions') && res['_permissions'].to_i == 1
 
       doc_updates = {updated_at: Time.current, shared: shared}
       doc_updates[:parent_id] = codap_api_params[:parentDocumentId].to_i if codap_api_params[:parentDocumentId].present?
 
-      # Just using 'document.content = res; document.save' didn't seem to actually persist things, so we'll be more forceful.
-      if document.update_columns(doc_updates) && document.contents.update_columns({content: res, updated_at: Time.current})
-        render json: {status: "Patched", valid: true, id: document.id }, status: 200
+      # Just using '@document.content = res; @document.save' didn't seem to actually persist things, so we'll be more forceful.
+      if @document.update_columns(doc_updates) && @document.contents.update_columns({content: res, updated_at: Time.current})
+        render json: {status: "Patched", valid: true, id: @document.id }, status: 200
       else
-        render json: {status: "Error", errors: document.errors.full_messages + document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+        render json: {status: "Error", errors: @document.errors.full_messages + @document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
       end
     rescue => e
       render json: {status: "Error", errors: ["Invalid patch JSON (executing)", e.to_s], valid: false, message: 'error.writeFailed' }, status: 400
@@ -191,9 +196,9 @@ class DocumentsController < ApplicationController
   end
 
   def rename
-    document = find_doc_via_params
-    (render_not_found && return) unless document
-    authorize! :save, document rescue (render_not_authorized && return)
+    @document = find_doc_via_params
+    (render_not_found && return) unless @document
+    authorize! :save, @document rescue (render_not_authorized && return)
     owner_id = current_user.nil? ? nil : current_user.id
     newDoc = Document.find_by(owner_id: owner_id, title: codap_api_params[:newRecordname], run_key: codap_api_params[:runKey])
 
@@ -201,12 +206,12 @@ class DocumentsController < ApplicationController
       # render error!
       render_duplicate_error
     else
-      c = document.content
-      oc = document.original_content
+      c = @document.content
+      oc = @document.original_content
       c["name"] = codap_api_params[:newRecordname] if c.has_key?("name")
       oc["name"] = codap_api_params[:newRecordname] if oc && oc.has_key?("name")
-      document.update_columns(title: codap_api_params[:newRecordname], updated_at: Time.now)
-      document.contents.update_columns(content: c, updated_at: Time.now)
+      @document.update_columns(title: codap_api_params[:newRecordname], updated_at: Time.now)
+      @document.contents.update_columns(content: c, updated_at: Time.now)
       render json: {success: true }
     end
   end
@@ -214,10 +219,10 @@ class DocumentsController < ApplicationController
   def delete
     opts = delete_params
     opts[:owner] = current_user.username if current_user
-    document = find_doc_via_params(opts)
-    (render_not_found && return) unless document
-    authorize! :destroy, document rescue (render_not_authorized && return)
-    document.destroy
+    @document = find_doc_via_params(opts)
+    (render_not_found && return) unless @document
+    authorize! :destroy, @document rescue (render_not_authorized && return)
+    @document.destroy
     render json: {success: true}
   end
 
@@ -390,7 +395,7 @@ class DocumentsController < ApplicationController
     end
 
     def find_doc_via_params(p = codap_api_params)
-      document = nil
+      @document = nil
       if title = (p[:recordname] || p[:doc])
         if p[:owner] && !p[:owner].empty?
           owner = User.find_by(username: p[:owner])
@@ -399,13 +404,18 @@ class DocumentsController < ApplicationController
           owner_id = nil
         end
         if owner_id != -1
-          document = Document.find_by(owner_id: owner_id, title: title, run_key: p[:runKey])
-          document = Document.find_by(owner_id: owner_id, title: title, run_key: nil) if document.nil? && !p[:runKey].nil?
+          @document = Document.find_by(owner_id: owner_id, title: title, run_key: p[:runKey])
+          @access_params = {owner_id: owner_id, title: title, run_key: p[:runKey]}
+          if @document.nil? && !p[:runKey].nil?
+            @document = Document.find_by(owner_id: owner_id, title: title, run_key: nil)
+            @access_params = {owner_id: owner_id, title: title, run_key: nil}
+          end
         end
       elsif p[:recordid]
-        document = Document.includes(:owner).find(p[:recordid]) rescue nil
+        @document = Document.includes(:owner).find(p[:recordid]) rescue nil
+        @access_params = {recordid: p[:recordid]}
       end
-      return document
+      return @document
     end
 
     def check_session_expiration
@@ -458,5 +468,9 @@ class DocumentsController < ApplicationController
     def render_duplicate_error
       authorize! :duplicate_error, :nil_document
       render json: {valid: false, message: "error.duplicate"}, status: 403
+    end
+
+    def log_access
+      DocumentAccessLog.log(@document.id, '1', action_name, (@access_params || {id: params[:id]}).to_json) if @document
     end
 end
