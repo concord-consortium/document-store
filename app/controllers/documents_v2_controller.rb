@@ -3,7 +3,7 @@ require 'ostruct'
 class DocumentsV2Controller < ApplicationController
 
   # don't check for csrf token
-  skip_before_filter :verify_authenticity_token, :only => [:save, :patch, :copy_shared]
+  skip_before_filter :verify_authenticity_token, :only => [:save, :patch, :create]
 
   # v2 of the api is all anonymous access
   skip_authorization_check
@@ -70,6 +70,27 @@ class DocumentsV2Controller < ApplicationController
     end
   end
 
+  def create
+    if params[:source].present?
+      copy_shared
+    else
+      @document = Document.new
+      @document.title = params[:title]
+      @document.form_content = request.raw_post
+      @document.original_content = @document.content
+      @document.shared = true
+      @document.owner = nil
+      create_access_keys(@document)
+      if @document.save
+        render json: {status: "Created", valid: true, id: @document.id, readAccessKey: @document.read_access_key, readWriteAccessKey: @document.read_write_access_key}, status: 201
+      else
+        render json: {status: "Error", errors: @document.errors.full_messages + @document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+      end
+    end
+  end
+
+  private
+
   def copy_shared
     render_missing_param("source") && return unless params[:source].present?
 
@@ -77,25 +98,13 @@ class DocumentsV2Controller < ApplicationController
     render_not_found && return unless @document
 
     if @document.shared
-      # generate two unique new access keys - we can't use a unique index constraint because the keys will be null for older documents
-      # giving the length of the random strings this will probably never loop
-      read_access_key = nil
-      read_write_access_key = nil
-      loop do
-        read_access_key = SecureRandom.hex(20)
-        read_write_access_key = SecureRandom.hex(40)
-        break if !Document.find_by(read_access_key: read_access_key) && !Document.find_by(read_write_access_key: read_write_access_key)
-      end
-
       copy = Document.new
       copy.title = @document.title
       copy.content = @document.content
       copy.original_content = @document.content
-      copy.read_access_key = read_access_key
-      copy.read_write_access_key = read_write_access_key
-      copy.run_key = read_write_access_key  # the run_key needs to be set because of the title validation: "validates :title, uniqueness: {scope: [:owner, :run_key]}"
+      create_access_keys(copy)
       if copy.save
-        render json: {status: "Copied", valid: true, id: copy.id, readAccessKey: copy.read_access_key, readWriteAccessKey: copy.read_write_access_key}, status: 200
+        render json: {status: "Copied", valid: true, id: copy.id, readAccessKey: copy.read_access_key, readWriteAccessKey: copy.read_write_access_key}, status: 201
       else
         render json: {status: "Error", errors: copy.errors.full_messages + copy.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
       end
@@ -104,7 +113,20 @@ class DocumentsV2Controller < ApplicationController
     end
   end
 
-  private
+  def create_access_keys(document)
+    # generate two unique new access keys - we can't use a unique index constraint because the keys will be null for older documents
+    # giving the length of the random strings this will probably never loop
+    read_access_key = nil
+    read_write_access_key = nil
+    loop do
+      read_access_key = SecureRandom.hex(20)
+      read_write_access_key = SecureRandom.hex(40)
+      break if !Document.find_by(read_access_key: read_access_key) && !Document.find_by(read_write_access_key: read_write_access_key)
+    end
+    document.read_access_key = read_access_key
+    document.read_write_access_key = read_write_access_key
+    document.run_key = read_write_access_key  # the run_key needs to be set because of the title validation: "validates :title, uniqueness: {scope: [:owner, :run_key]}"
+  end
 
   def render_missing_param(param)
     render json: {valid: false, errors: ["Missing #{param} parameter"], message: "error.missingParam"}, status: 400

@@ -154,11 +154,38 @@ feature 'Document', :codap do
       end
     end
 
+    describe 'create' do
+      scenario 'documents can be created' do
+        page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Created","valid":true,!
+        response = JSON.parse(page.body)
+        doc = Document.find(response["id"])
+        expect(doc.title).to eq "test"
+        expect(doc.original_content.to_json).to eq '{"foo":"bar"}'
+        expect(doc.original_content.to_json).to eq '{"foo":"bar"}'
+        expect(doc.read_access_key).not_to be_nil
+        expect(doc.read_write_access_key).not_to be_nil
+        expect(doc.read_access_key).not_to eq doc.read_write_access_key
+        expect(doc.run_key).to eq doc.read_write_access_key
+      end
+      scenario 'documents with no data cannot be created' do
+        page.driver.browser.submit :post, "/v2/documents?title=test", ''
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!{"status":"Error","errors":["Form content must be valid json"],"valid":false,"message":"error.writeFailed"}!
+      end
+      scenario 'documents with invalid json cannot be created' do
+        page.driver.browser.submit :post, "/v2/documents?title=test", '{"foo'
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!{"status":"Error","errors":["Form content must be valid json"],"valid":false,"message":"error.writeFailed"}!
+      end
+    end
+
     describe 'copy_shared' do
       scenario 'shared documents can be copied using source id' do
         doc = FactoryGirl.create(:document, title: 'testDoc', shared: true, content: '[1, 2, 3]')
         page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}", ""
-        expect(page.status_code).to eq(200)
+        expect(page.status_code).to eq(201)
         expect(page).to have_content %!{"status":"Copied","valid":true,!
         response = JSON.parse(page.body)
         expect(response["id"]).not_to eq doc.id
@@ -177,27 +204,7 @@ feature 'Document', :codap do
         expect(page.status_code).to eq(403)
         expect(page).to have_content %!{"valid":false,"errors":["Source document is not shared"],"message":"error.notShared"}!
       end
-
-      scenario 'documents cannot be copied with a missing source id' do
-        doc = FactoryGirl.create(:document, title: 'testDoc', shared: false, content: '[1, 2, 3]')
-        page.driver.browser.submit :post, "/v2/documents", ""
-        expect(page.status_code).to eq(400)
-        expect(page).to have_content %!{"valid":false,"errors":["Missing source parameter"],"message":"error.missingParam"}!
-      end
-
-      scenario 'shared documents cannot be copied using read-only access key' do
-        doc = FactoryGirl.create(:document, title: 'testDoc', shared: true, content: '[1, 2, 3]', read_access_key: 'foo')
-        page.driver.browser.submit :post, "/v2/documents?sourceAccessKey=RO::foo", ""
-        expect(page.status_code).to eq(400)
-        expect(page).to have_content %!{"valid":false,"errors":["Missing source parameter"],"message":"error.missingParam"}!
-      end
-
-      scenario 'shared documents cannot be copied using read-write access key' do
-        doc = FactoryGirl.create(:document, title: 'testDoc', shared: true, content: '[1, 2, 3]', read_write_access_key: 'foo')
-        page.driver.browser.submit :post, "/v2/documents?sourceAccessKey=RW::foo", ""
-        expect(page.status_code).to eq(400)
-        expect(page).to have_content %!{"valid":false,"errors":["Missing source parameter"],"message":"error.missingParam"}!
-      end
     end
+
   end
 end
