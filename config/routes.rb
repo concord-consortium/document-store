@@ -13,6 +13,11 @@ Rails.application.routes.draw do
   get 'user/info' => 'users#info'
   get 'user/authenticate' => 'users#authenticate'
 
+  get 'v2/documents/:id' => 'documents_v2#open'
+  put 'v2/documents/:id' => 'documents_v2#save'
+  patch 'v2/documents/:id' => 'documents_v2#patch'
+  post 'v2/documents' => 'documents_v2#copy_shared'
+
   root :to => "home#index"
   devise_for :users, :controllers => {:registrations => "registrations", :omniauth_callbacks => "omniauth_callbacks"}
   resources :users
