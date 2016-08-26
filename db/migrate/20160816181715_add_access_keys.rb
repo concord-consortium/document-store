@@ -7,9 +7,12 @@ class AddAccessKeys < ActiveRecord::Migration
     add_index :documents, :read_write_access_key
 
     # copy the CFM generated run_keys to the read_write_access_key
-    Document.select(:run_key).where(shared: true).where("run_key similar to '[0-9a-f]+'").each do |document|
-      document.read_write_access_key = document.run_key
-      document.save(:validate => false) # some existing documents won't validate because their owner and title are both null
+    reversible do |dir|
+      dir.up do
+        Document.select(:run_key).where(shared: true).where("run_key similar to '[0-9a-f]+'").each do |document|
+          document.update_column(:read_write_access_key, document.run_key)
+        end
+      end
     end
   end
 end
