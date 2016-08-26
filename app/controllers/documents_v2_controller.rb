@@ -71,14 +71,15 @@ class DocumentsV2Controller < ApplicationController
   end
 
   def create
+    new_doc_is_shared = params[:shared].present? ? params[:shared] == 'true' : false
     if params[:source].present?
-      copy_shared
+      copy_shared(new_doc_is_shared)
     else
       @document = Document.new
       @document.title = params[:title]
       @document.form_content = request.raw_post
       @document.original_content = @document.content
-      @document.shared = true
+      @document.shared = new_doc_is_shared
       @document.owner = nil
       create_access_keys(@document)
       if @document.save
@@ -91,7 +92,7 @@ class DocumentsV2Controller < ApplicationController
 
   private
 
-  def copy_shared
+  def copy_shared(new_doc_is_shared)
     render_missing_param("source") && return unless params[:source].present?
 
     @document = Document.find_by(id: params[:source])
@@ -102,6 +103,8 @@ class DocumentsV2Controller < ApplicationController
       copy.title = @document.title
       copy.content = @document.content
       copy.original_content = @document.content
+      copy.shared = new_doc_is_shared
+      copy.owner = nil
       create_access_keys(copy)
       if copy.save
         render json: {status: "Copied", valid: true, id: copy.id, readAccessKey: copy.read_access_key, readWriteAccessKey: copy.read_write_access_key}, status: 201

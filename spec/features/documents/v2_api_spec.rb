@@ -155,7 +155,7 @@ feature 'Document', :codap do
     end
 
     describe 'create' do
-      scenario 'documents can be created' do
+      scenario 'unshared documents can be created' do
         page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
         expect(page.status_code).to eq(201)
         expect(page).to have_content %!{"status":"Created","valid":true,!
@@ -168,6 +168,15 @@ feature 'Document', :codap do
         expect(doc.read_write_access_key).not_to be_nil
         expect(doc.read_access_key).not_to eq doc.read_write_access_key
         expect(doc.run_key).to eq doc.read_write_access_key
+        expect(doc.shared).to eq false
+      end
+      scenario 'shared documents can be created' do
+        page.driver.browser.submit :post, "/v2/documents?title=test&shared=true", '{ "foo": "bar" }'
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Created","valid":true,!
+        response = JSON.parse(page.body)
+        doc = Document.find(response["id"])
+        expect(doc.shared).to eq true
       end
       scenario 'documents with no data cannot be created' do
         page.driver.browser.submit :post, "/v2/documents?title=test", ''
@@ -182,7 +191,7 @@ feature 'Document', :codap do
     end
 
     describe 'copy_shared' do
-      scenario 'shared documents can be copied using source id' do
+      scenario 'shared documents can be copied using source id to an unshared document' do
         doc = FactoryGirl.create(:document, title: 'testDoc', shared: true, content: '[1, 2, 3]')
         page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}", ""
         expect(page.status_code).to eq(201)
@@ -196,6 +205,18 @@ feature 'Document', :codap do
         expect(copy.read_access_key).to eq response["readAccessKey"]
         expect(copy.read_write_access_key).to eq response["readWriteAccessKey"]
         expect(copy.run_key).to eq response["readWriteAccessKey"]
+        expect(copy.shared).to eq false
+      end
+
+      scenario 'shared documents can be copied using source id to a shared document' do
+        doc = FactoryGirl.create(:document, title: 'testDoc', shared: true, content: '[1, 2, 3]')
+        page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}&shared=true", ""
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Copied","valid":true,!
+        response = JSON.parse(page.body)
+        expect(response["id"]).not_to eq doc.id
+        copy = Document.find(response["id"])
+        expect(copy.shared).to eq true
       end
 
       scenario 'unshared documents cannot be copied using source id' do
