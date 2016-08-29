@@ -16,7 +16,7 @@ Rails.application.routes.draw do
   get 'v2/documents/:id' => 'documents_v2#open'
   put 'v2/documents/:id' => 'documents_v2#save'
   patch 'v2/documents/:id' => 'documents_v2#patch'
-  post 'v2/documents' => 'documents_v2#copy_shared'
+  post 'v2/documents' => 'documents_v2#create'
 
   root :to => "home#index"
   devise_for :users, :controllers => {:registrations => "registrations", :omniauth_callbacks => "omniauth_callbacks"}

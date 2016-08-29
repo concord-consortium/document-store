@@ -36,13 +36,13 @@ And a CODAP specific API that was also used for the initial version of the [Clou
 
 The second version of the API is handled by the documents_v2 controller and exposes only a non-GUI programmatic API in the /v2/ namespace as:
 
-- GET /v2/documents/:id - returns the contents of a document specified by id.  This requires either the document's read-only or read-write access keys.
+- GET /v2/documents/:id - returns the contents of a document specified by id.  If the document is not shared this requires either the document's read-only or read-write access keys.
 
 - PUT /v2/documents/:id - updates the contents of a document specified by id.  This requires the document's read-write access keys.
 
 - PATCH /v2/documents/:id - updates the contents of a document specified by id using the JSON Patch specification.  This requires the document's read-write access keys.
 
-- POST /v2/documents - creates a copy of a document identified by the source query parameter and returns the new id of the document along with its read-only and read-write access keys.  The source document must be a shared document or else the copy with fail.  No access key is needed.
+- POST /v2/documents?[shared=(true|false)]&[source=<id>] - either creates a new document using the raw post content or creates a copy of a document identified by the source query parameter.  By default the newly created document does not have the sharing bit set but that can be set by passing ```shared=true``` as a parameter.  If the source parameter is passed it must be a shared document or else the copy with fail.  No access key is needed.  If a document is created this returns a 201 status code with the following json response:  ```{status: "[Created|Copied]", valid: true, id: <document.id>, readAccessKey: <document.read_access_key>, readWriteAccessKey: <document.read_write_access_key>}```.
 
 ### Version 2 Access keys
 
