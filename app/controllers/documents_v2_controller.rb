@@ -76,7 +76,6 @@ class DocumentsV2Controller < ApplicationController
       copy_shared(new_doc_is_shared)
     else
       @document = Document.new
-      @document.title = params[:title]
       @document.form_content = request.raw_post
       @document.original_content = @document.content
       @document.shared = new_doc_is_shared

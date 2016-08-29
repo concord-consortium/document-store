@@ -156,12 +156,11 @@ feature 'Document', :codap do
 
     describe 'create' do
       scenario 'unshared documents can be created' do
-        page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
+        page.driver.browser.submit :post, "/v2/documents", '{ "foo": "bar" }'
         expect(page.status_code).to eq(201)
         expect(page).to have_content %!{"status":"Created","valid":true,!
         response = JSON.parse(page.body)
         doc = Document.find(response["id"])
-        expect(doc.title).to eq "test"
         expect(doc.original_content.to_json).to eq '{"foo":"bar"}'
         expect(doc.original_content.to_json).to eq '{"foo":"bar"}'
         expect(doc.read_access_key).not_to be_nil
@@ -171,31 +170,20 @@ feature 'Document', :codap do
         expect(doc.shared).to eq false
       end
       scenario 'shared documents can be created' do
-        page.driver.browser.submit :post, "/v2/documents?title=test&shared=true", '{ "foo": "bar" }'
+        page.driver.browser.submit :post, "/v2/documents?shared=true", '{ "foo": "bar" }'
         expect(page.status_code).to eq(201)
         expect(page).to have_content %!{"status":"Created","valid":true,!
         response = JSON.parse(page.body)
         doc = Document.find(response["id"])
         expect(doc.shared).to eq true
       end
-      scenario '(anonymous) documents with the same title can be created' do
-        page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
-        expect(page.status_code).to eq(201)
-        expect(page).to have_content %!{"status":"Created","valid":true,!
-        doc1_response = JSON.parse(page.body)
-        page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
-        expect(page.status_code).to eq(201)
-        expect(page).to have_content %!{"status":"Created","valid":true,!
-        doc2_response = JSON.parse(page.body)
-        expect(doc1_response["id"]).not_to eq doc2_response["id"]
-      end
       scenario 'documents with no data cannot be created' do
-        page.driver.browser.submit :post, "/v2/documents?title=test", ''
+        page.driver.browser.submit :post, "/v2/documents", ''
         expect(page.status_code).to eq(400)
         expect(page).to have_content %!{"status":"Error","errors":["Form content must be valid json"],"valid":false,"message":"error.writeFailed"}!
       end
       scenario 'documents with invalid json cannot be created' do
-        page.driver.browser.submit :post, "/v2/documents?title=test", '{"foo'
+        page.driver.browser.submit :post, "/v2/documents", '{"foo'
         expect(page.status_code).to eq(400)
         expect(page).to have_content %!{"status":"Error","errors":["Form content must be valid json"],"valid":false,"message":"error.writeFailed"}!
       end
