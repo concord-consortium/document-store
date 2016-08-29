@@ -167,7 +167,7 @@ feature 'Document', :codap do
         expect(doc.read_access_key).not_to be_nil
         expect(doc.read_write_access_key).not_to be_nil
         expect(doc.read_access_key).not_to eq doc.read_write_access_key
-        expect(doc.run_key).to eq doc.read_write_access_key
+        expect(doc.run_key).to eq nil
         expect(doc.shared).to eq false
       end
       scenario 'shared documents can be created' do
@@ -177,6 +177,17 @@ feature 'Document', :codap do
         response = JSON.parse(page.body)
         doc = Document.find(response["id"])
         expect(doc.shared).to eq true
+      end
+      scenario '(anonymous) documents with the same title can be created' do
+        page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Created","valid":true,!
+        doc1_response = JSON.parse(page.body)
+        page.driver.browser.submit :post, "/v2/documents?title=test", '{ "foo": "bar" }'
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Created","valid":true,!
+        doc2_response = JSON.parse(page.body)
+        expect(doc1_response["id"]).not_to eq doc2_response["id"]
       end
       scenario 'documents with no data cannot be created' do
         page.driver.browser.submit :post, "/v2/documents?title=test", ''
@@ -204,7 +215,7 @@ feature 'Document', :codap do
         expect(copy.original_content).to eq doc.content
         expect(copy.read_access_key).to eq response["readAccessKey"]
         expect(copy.read_write_access_key).to eq response["readWriteAccessKey"]
-        expect(copy.run_key).to eq response["readWriteAccessKey"]
+        expect(copy.run_key).to eq nil
         expect(copy.shared).to eq false
       end
 

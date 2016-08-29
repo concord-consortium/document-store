@@ -128,7 +128,6 @@ class DocumentsV2Controller < ApplicationController
     end
     document.read_access_key = read_access_key
     document.read_write_access_key = read_write_access_key
-    document.run_key = read_write_access_key  # the run_key needs to be set because of the title validation: "validates :title, uniqueness: {scope: [:owner, :run_key]}"
   end
 
   def render_missing_param(param)

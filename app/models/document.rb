@@ -9,7 +9,7 @@ class Document < ActiveRecord::Base
 
   scope :shared, -> { where(shared: true) }
 
-  validates :title, uniqueness: {scope: [:owner, :run_key]}
+  validates :title, uniqueness: {scope: [:owner, :run_key]}, if: :has_owner?
   validate :validate_form_content
 
   after_save :sync_attributes
@@ -61,6 +61,10 @@ class Document < ActiveRecord::Base
   def destroy_parent
     return unless @saved_parent
     @saved_parent.destroy unless @saved_parent.destroyed?
+  end
+
+  def has_owner?
+    self.owner != nil
   end
 
 end
