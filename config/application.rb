@@ -32,7 +32,7 @@ module Documentstore
     config.middleware.insert_before Warden::Manager, Rack::Cors do
       allow do
         origins '*'
-        resource '*', headers: :any, expose: ['Document-Id', 'X-Codap-Will-Overwrite', 'X-Codap-Opened-From-Shared-Document'], methods: [:get, :post, :options], credentials: true
+        resource '*', headers: :any, expose: ['Document-Id', 'X-Codap-Will-Overwrite', 'X-Codap-Opened-From-Shared-Document'], methods: [:get, :post, :options, :put, :patch], credentials: true
       end
     end
     # Settings in config/environments/* take precedence over those specified here.
