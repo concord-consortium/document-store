@@ -9,7 +9,7 @@ class AddAccessKeys < ActiveRecord::Migration
     # copy the CFM generated run_keys to the read_write_access_key
     reversible do |dir|
       dir.up do
-        Document.select(:run_key).where(shared: true).where("run_key similar to '[0-9a-f]+'").each do |document|
+        Document.select(:id, :run_key).where(shared: true).where("run_key similar to '[0-9a-f]+'").each do |document|
           document.update_column(:read_write_access_key, document.run_key)
         end
       end
