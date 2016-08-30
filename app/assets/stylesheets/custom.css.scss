@@ -38,6 +38,10 @@
 
   font-family: "Lato-Regular",Helvetica,Arial,Verdana,sans-serif;
 }
+#launch-reset-message {
+  margin-top: 15px;
+  font-size: 0.9em;
+}
 
 @import "foundation/components/block-grid";
 .launch-block-grid {

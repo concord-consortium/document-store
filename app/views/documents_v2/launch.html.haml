@@ -1,0 +1,154 @@
+-# If the requested document was found then this page waits for Lara to tell it the interactive run state
+-# via iFramePhone.  If there are no access keys in the interactive run state then a call is made back into the
+-# document store to copy the shared document and then a keys are then sent back via posted back
+-# to Lara to be saved in the interactive run state.  Once all of that is done then the launch button is displayed.
+
+.row.launch-error{style: "display: none;"}
+  .small-12.text-center.columns{style: "color: #990000" }
+    There was a problem setting up this interactive. Please try refreshing your page.
+-if @document
+  - if @document.shared
+    .row
+      .small-12.text-center.columns.end
+        #loading-message
+          %span#loading-image
+            =image_tag "loading.gif"
+          %span#loading-text
+            Loading...
+        = link_to h(@button_text), @button_url, class: :"launch-button", target: "_blank"
+    .row.more-space-above
+      .small-12.text-center.columns
+        = link_to 'Reset to Original', @reset_url, class: :"original-reset"
+      #launch-reset-message.small-12.text-center.columns{style: "display: none;"}
+  -else
+    .row
+      .small-12.text-center.columns{style: "color: #990000" }
+        Error: The requested document is not shared.
+-else
+  .row
+    .small-12.text-center.columns{style: "color: #990000" }
+      Error: The requested document could not be found.
+
+-if @document && @document.shared
+  :javascript
+    $(document).ready(function() {
+      if (#{@in_a_window.to_s}) {
+        // Set all links to replace this page instead of opening yet another window.
+        $('a').attr('target', '');
+        return;
+      }
+
+      // Hide the launch buttons until we talk with LARA
+      $('.launch-button, .original-reset').hide();
+
+      // But show them after a while, just in case
+      var showTimeoutId = setTimeout(function() {
+        $('#loading-text').html("Still loading!  You may want to reload this page to try again.")
+      }, 10000);
+
+      var copySharedUrl = '#{@copy_shared_url}',
+          resetUrl = '#{@reset_url}',
+          phone = iframePhone.getIFrameEndpoint(),
+          irsApiUrl = null,
+          newState, showLaunchButton, extractError;
+
+      showLaunchButton = function () {
+        var reportingUrl;
+
+        clearTimeout(showTimeoutId);
+
+        // update the reset url with the interactive state document id and access key
+        resetUrl = resetUrl.replace('RESET_ID', newState.docStore.recordid).replace('ACCESS_KEY', newState.docStore.accessKeys.readWrite);
+
+        // update the launch button to add the interactive run state api url
+        $('.launch-button').each(function () {
+          var $this = $(this),
+              launchUrl = $this.attr('href');
+          $this.attr('href', $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({url: irsApiUrl}))}));
+
+          // setup the reporting url to use the read only access keys
+          reportingUrl = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({recordid: newState.docStore.recordid, accessKeys: {readOnly: newState.docStore.accessKeys.readOnly}}))});
+        });
+
+        phone.addListener('getInteractiveState', function () {
+          phone.post('interactiveState', 'nochange');
+        });
+
+        newState.lara_options = {reporting_url:  reportingUrl};
+        phone.post('interactiveState', newState);
+
+        $('#loading-message').hide();
+        $('.launch-button,.original-reset').show();
+      };
+
+      extractError = function (jqXHR) {
+        var error = '', result;
+        try {
+          result = JSON.parse(jqXHR.responseText);
+          if (result && result.errors) {
+            error = result.errors.join('. ');
+            if (error.length > 0) {
+              error = "The error returned was: '" + error + "'.";
+            }
+          }
+        } catch (e) {}
+        return error;
+      };
+
+      phone.addListener('initInteractive', function (interactiveData) {
+        var remoteState = interactiveData.interactiveState;
+        irsApiUrl = interactiveData.interactiveStateUrl;
+
+        newState = remoteState || {};
+
+        if (remoteState && remoteState.docStore && remoteState.docStore.accessKeys) {
+          showLaunchButton();
+        }
+        else {
+          // copy-share the document
+          $.ajax({
+            url: copySharedUrl,
+            type: 'POST'
+          }).done(function(result) {
+            newState.docStore = {
+              source: #{@document.id},
+              recordid: result.id,
+              accessKeys: {
+                readOnly: result.readAccessKey,
+                readWrite: result.readWriteAccessKey
+              }
+            }
+            showLaunchButton();
+          })
+          .fail(function(jqXHR) {
+            $('.launch-error .text-center').html("There was a problem copying source document for this activity. " + extractError(jqXHR));
+            $('.launch-error').show();
+          });
+        }
+      });
+
+      phone.addListener('getExtendedSupport', function() {
+        phone.post('extendedSupport', { reset: false });
+      });
+
+      $(".original-reset").click(function () {
+        var resetMessage = $('#launch-reset-message');
+        resetMessage.html('Resetting your activity...').show();
+        $.ajax({
+          url: resetUrl,
+          type: 'PUT'
+        }).done(function() {
+          resetMessage.html('Your activity data has been reset.');
+        })
+        .fail(function(jqXHR) {
+          resetMessage.html('Sorry, there was an error resetting your activity data. ' + extractError(jqXHR));
+        });
+        return false;
+      });
+
+      // TODO: there seems to be a race condition between when the page loads and when initialize can be called
+      setTimeout(function () {
+        // Initialize connection after all message listeners are added!
+        phone.initialize();
+      }, 1000);
+    });

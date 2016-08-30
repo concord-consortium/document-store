@@ -66,6 +66,14 @@ feature 'Document', :codap do
         expect(doc.content).to match({"def" => [1,2,3,4] })
       end
 
+      scenario 'documents can be reset' do
+        doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', original_content: '{ "def": [1,2,3,4] }', read_write_access_key: 'foo')
+        expect(doc.content).to match({"foo" => "bar"})
+        page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&reset=true", ''
+        doc.reload()
+        expect(doc.content).to match({"def" => [1,2,3,4] })
+      end
+
       scenario 'documents that do not exist cannot be saved' do
         page.driver.browser.submit :put, "/v2/documents/100000", ""
         expect(page.status_code).to eq(404)
