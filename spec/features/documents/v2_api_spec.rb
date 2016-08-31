@@ -60,6 +60,7 @@ feature 'Document', :codap do
       scenario 'documents can be saved using valid read-write access key' do
         doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo')
         page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo", '{ "def": [1,2,3,4] }'
+        expect(page.status_code).to eq(200)
         doc.reload()
         expect(doc.title).to eq("newdoc")
         expect(doc.read_write_access_key).to eq("foo")
@@ -70,8 +71,34 @@ feature 'Document', :codap do
         doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', original_content: '{ "def": [1,2,3,4] }', read_write_access_key: 'foo')
         expect(doc.content).to match({"foo" => "bar"})
         page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&reset=true", ''
+        expect(page.status_code).to eq(200)
         doc.reload()
         expect(doc.content).to match({"def" => [1,2,3,4] })
+      end
+
+      scenario 'documents can be saved using a shared source document' do
+        source_doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "baz": "boom" }', read_write_access_key: 'bar', shared: true)
+        doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo')
+        expect(doc.content).to match({"foo" => "bar"})
+        page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&source=#{source_doc.id}", ''
+        expect(page.status_code).to eq(200)
+        doc.reload()
+        expect(doc.content).to match({"baz" => "boom"})
+      end
+
+      scenario 'documents cannot be saved using an unshared source document' do
+        source_doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "baz": "boom" }', read_write_access_key: 'bar', shared: false)
+        doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo')
+        page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&source=#{source_doc.id}", ''
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!{"status":"Error","errors":["Source document is not a shared document"],"valid":false,"message":"error.writeFailed"}!
+      end
+
+      scenario 'documents cannot be saved using a source document that does not exist' do
+        doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo')
+        page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&source=#{doc.id + 1}", ''
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!{"status":"Error","errors":["Source document not found"],"valid":false,"message":"error.writeFailed"}!
       end
 
       scenario 'documents that do not exist cannot be saved' do

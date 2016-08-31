@@ -57,8 +57,9 @@
 
         clearTimeout(showTimeoutId);
 
-        // update the reset url with the interactive state document id and access key
-        resetUrl = resetUrl.replace('RESET_ID', newState.docStore.recordid).replace('ACCESS_KEY', newState.docStore.accessKeys.readWrite);
+        // update the reset url with the interactive state document id, source id and access key
+        resetUrl = resetUrl.replace('RESET_ID', newState.docStore.recordid).replace('SOURCE_ID', #{@document.id}).replace('ACCESS_KEY', newState.docStore.accessKeys.readWrite);
+        $('.original-reset').attr('href', resetUrl);
 
         // update the launch button to add the interactive run state api url
         $('.launch-button').each(function () {

@@ -37,12 +37,22 @@ class DocumentsV2Controller < ApplicationController
 
     if params[:reset].present?
       @document.content = @document.original_content
+    elsif params[:source].present?
+      source_document = Document.find_by(id: params[:source])
+      if !source_document
+        render json: {status: "Error", errors: ['Source document not found'], valid: false, message: 'error.writeFailed' }, status: 400
+        return
+      elsif !source_document.shared
+        render json: {status: "Error", errors: ['Source document is not a shared document'], valid: false, message: 'error.writeFailed' }, status: 400
+        return
+      end
+      @document.content = source_document.content
     else
       @document.form_content = request.raw_post
     end
 
     if @document.save
-      render json: {status: params[:reset].present? ? "Reset" : "Saved", valid: true, id: @document.id }, status: 200
+      render json: {status: "Saved", valid: true, id: @document.id }, status: 200
     else
       render json: {status: "Error", errors: @document.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
     end
@@ -103,7 +113,7 @@ class DocumentsV2Controller < ApplicationController
     @in_a_window = launch_params[:window] == 'true'
 
     @copy_shared_url = v2_document_create_url(source: params[:id])
-    @reset_url = v2_document_save_url(id: 'RESET_ID', reset: true, accessKey: 'RW::ACCESS_KEY')  # RESET_ID and ACCESS_KEY are replaced with the document info in the interactive state in the launch view javascript
+    @reset_url = v2_document_save_url(id: 'RESET_ID', source: 'SOURCE_ID', accessKey: 'RW::ACCESS_KEY')  # RESET_ID, SOURCE_ID and ACCESS_KEY are replaced with the document info in the interactive state in the launch view javascript
 
     authorize! :open, :url_document
     response.headers.delete 'X-Frame-Options'
