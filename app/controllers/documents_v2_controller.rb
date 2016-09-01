@@ -107,7 +107,7 @@ class DocumentsV2Controller < ApplicationController
     @document = Document.find_by(id: params[:id])
     @codap_server = launch_params[:server]
 
-    @button_url = codap_v2_link(@codap_server, false, true)
+    @button_url = codap_v2_link(@codap_server, true)
     @button_text = launch_params[:buttonText] || 'Launch'
 
     @in_a_window = launch_params[:window] == 'true'
