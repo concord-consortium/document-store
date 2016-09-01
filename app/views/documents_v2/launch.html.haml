@@ -18,7 +18,7 @@
         = link_to h(@button_text), @button_url, class: :"launch-button", target: "_blank"
     .row.more-space-above
       .small-12.text-center.columns
-        = link_to 'Reset to Original', @reset_url, class: :"original-reset"
+        = link_to 'Reset to Original', '#', class: :"original-reset"
       #launch-reset-message.small-12.text-center.columns{style: "display: none;"}
   -else
     .row
@@ -46,41 +46,9 @@
         $('#loading-text').html("Still loading!  You may want to reload this page to try again.")
       }, 10000);
 
-      var copySharedUrl = '#{@copy_shared_url}',
-          resetUrl = '#{@reset_url}',
+      var resetUrlTemplate = '#{@reset_url}',
           phone = iframePhone.getIFrameEndpoint(),
-          irsApiUrl = null,
-          newState, showLaunchButton, extractError;
-
-      showLaunchButton = function () {
-        var reportingUrl;
-
-        clearTimeout(showTimeoutId);
-
-        // update the reset url with the interactive state document id, source id and access key
-        resetUrl = resetUrl.replace('RESET_ID', newState.docStore.recordid).replace('SOURCE_ID', #{@document.id}).replace('ACCESS_KEY', newState.docStore.accessKeys.readWrite);
-        $('.original-reset').attr('href', resetUrl);
-
-        // update the launch button to add the interactive run state api url
-        $('.launch-button').each(function () {
-          var $this = $(this),
-              launchUrl = $this.attr('href');
-          $this.attr('href', $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({url: irsApiUrl}))}));
-
-          // setup the reporting url to use the read only access keys
-          reportingUrl = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({recordid: newState.docStore.recordid, accessKeys: {readOnly: newState.docStore.accessKeys.readOnly}}))});
-        });
-
-        phone.addListener('getInteractiveState', function () {
-          phone.post('interactiveState', 'nochange');
-        });
-
-        newState.lara_options = {reporting_url:  reportingUrl};
-        phone.post('interactiveState', newState);
-
-        $('#loading-message').hide();
-        $('.launch-button,.original-reset').show();
-      };
+          interactiveRunState, extractError, haveResetInfo, interactiveStateUrl;
 
       extractError = function (jqXHR) {
         var error = '', result;
@@ -89,7 +57,7 @@
           if (result && result.errors) {
             error = result.errors.join('. ');
             if (error.length > 0) {
-              error = "The error returned was: '" + error + "'.";
+              error = "The error returned was: <em>" + error + "</em>";
             }
           }
         } catch (e) {}
@@ -97,44 +65,41 @@
       };
 
       phone.addListener('initInteractive', function (interactiveData) {
-        var remoteState = interactiveData.interactiveState;
-        irsApiUrl = interactiveData.interactiveStateUrl;
+        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}};
 
-        newState = remoteState || {};
+        interactiveRunState = interactiveData.interactiveState || {};
+        interactiveStateUrl = interactiveData.interactiveStateUrl;
 
-        if (remoteState && remoteState.docStore && remoteState.docStore.accessKeys) {
-          showLaunchButton();
-        }
-        else {
-          // copy-share the document
-          $.ajax({
-            url: copySharedUrl,
-            type: 'POST'
-          }).done(function(result) {
-            newState.docStore = {
-              source: #{@document.id},
-              recordid: result.id,
-              accessKeys: {
-                readOnly: result.readAccessKey,
-                readWrite: result.readWriteAccessKey
-              }
-            }
-            showLaunchButton();
-          })
-          .fail(function(jqXHR) {
-            $('.launch-error .text-center').html("There was a problem copying source document for this activity. " + extractError(jqXHR));
-            $('.launch-error').show();
-          });
-        }
+        clearTimeout(showTimeoutId);
+
+        // update the launch button to add the interactive run state api url
+        $('.launch-button').each(function () {
+          var $this = $(this),
+              launchUrl = $this.attr('href');
+          $this.attr('href', $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify(launchParams))}));
+        });
+
+        phone.addListener('getInteractiveState', function () {
+          phone.post('interactiveState', 'nochange');
+        });
+
+        $('#loading-message').hide();
+        $('.launch-button,.original-reset').show();
       });
 
       phone.addListener('getExtendedSupport', function() {
         phone.post('extendedSupport', { reset: false });
       });
 
-      $(".original-reset").click(function () {
-        var resetMessage = $('#launch-reset-message');
+      haveResetInfo = function () {
+        return interactiveRunState.docStore && interactiveRunState.docStore.recordid && interactiveRunState.docStore.accessKeys && interactiveRunState.docStore.accessKeys.readWrite;
+      };
+
+      resetDocument = function (resetMessage) {
+        var resetUrl = resetUrlTemplate.replace('RESET_ID', interactiveRunState.docStore.recordid).replace('ACCESS_KEY', interactiveRunState.docStore.accessKeys.readWrite);
+
         resetMessage.html('Resetting your activity...').show();
+
         $.ajax({
           url: resetUrl,
           type: 'PUT'
@@ -144,6 +109,44 @@
         .fail(function(jqXHR) {
           resetMessage.html('Sorry, there was an error resetting your activity data. ' + extractError(jqXHR));
         });
+      };
+
+      $(".original-reset").click(function () {
+        var resetMessage = $('#launch-reset-message');
+
+        resetMessage.show();
+
+        if (haveResetInfo()) {
+          resetDocument(resetMessage);
+        }
+        else {
+          resetMessage.html("Checking for activity data...");
+
+          $.ajax({
+            url: interactiveStateUrl,
+            type: 'GET',
+            crossDomain: true,
+            xhrFields: {
+               withCredentials: true
+            }
+          })
+          .done(function (interactiveState) {
+            interactiveRunState = interactiveState.raw_data || {};
+            if (interactiveState.success === false) {
+              resetMessage.html("Sorry, there was an error checking your activity data.  The error returned was: <em>" + interactiveState.message + "</em>")
+            }
+            else if (haveResetInfo()) {
+              resetDocument(resetMessage);
+            }
+            else {
+              resetMessage.html("Your activity data has not been created yet so it can't be reset. Try again once you have clicked the <strong>#{@button_text}</strong> button above and have saved activity data.");
+            }
+          })
+          .fail(function(jqXHR) {
+            resetMessage.html('Sorry, there was an error resetting your activity data. ' + extractError(jqXHR));
+          });
+        }
+
         return false;
       });
 

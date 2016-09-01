@@ -113,7 +113,7 @@ class DocumentsV2Controller < ApplicationController
     @in_a_window = launch_params[:window] == 'true'
 
     @copy_shared_url = v2_document_create_url(source: params[:id])
-    @reset_url = v2_document_save_url(id: 'RESET_ID', source: 'SOURCE_ID', accessKey: 'RW::ACCESS_KEY')  # RESET_ID, SOURCE_ID and ACCESS_KEY are replaced with the document info in the interactive state in the launch view javascript
+    @reset_url = v2_document_save_url(id: 'RESET_ID', source: params[:id], accessKey: 'RW::ACCESS_KEY')  # RESET_ID and ACCESS_KEY are replaced with the document info in the interactive state in the launch view javascript
 
     authorize! :open, :url_document
     response.headers.delete 'X-Frame-Options'
