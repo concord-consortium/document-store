@@ -38,7 +38,7 @@ The second version of the API is handled by the documents_v2 controller and expo
 
 - GET /v2/documents/:id - returns the contents of a document specified by id.  If the document is not shared this requires either the document's read-only or read-write access keys.
 
-- PUT /v2/documents/:id - updates the contents of a document specified by id.  This requires the document's read-write access keys.
+- PUT /v2/documents/:id?[reset=true]&[source=<id>] - updates the contents of a document specified by id.  This requires the document's read-write access keys.  If the reset parameter is present then the document content is reset to the original content.  If the source parameter is present and the source is a shared document then the document content is set to the source document content.
 
 - PATCH /v2/documents/:id - updates the contents of a document specified by id using the JSON Patch specification.  This requires the document's read-write access keys.
 
