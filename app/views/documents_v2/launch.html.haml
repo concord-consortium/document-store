@@ -16,7 +16,7 @@
           %span#loading-text
             Loading...
         = link_to h(@button_text), @button_url, class: :"launch-button", target: "_blank"
-    .row.more-space-above
+    #reset-row.row.more-space-above{style: "display: none;"}
       .small-12.text-center.columns
         = link_to 'Reset to Original', '#', class: :"original-reset"
       #launch-reset-message.small-12.text-center.columns{style: "display: none;"}
@@ -41,7 +41,7 @@
       // Hide the launch buttons until we talk with LARA
       $('.launch-button, .original-reset').hide();
 
-      // But show them after a while, just in case
+      // Update the loading message after 10 seconds
       var showTimeoutId = setTimeout(function() {
         $('#loading-text').html("Still loading!  You may want to reload this page to try again.")
       }, 10000);
@@ -65,7 +65,8 @@
       };
 
       phone.addListener('initInteractive', function (interactiveData) {
-        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}};
+        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}},
+            launchButton = $('.launch-button');
 
         interactiveRunState = interactiveData.interactiveState || {};
         interactiveStateUrl = interactiveData.interactiveStateUrl;
@@ -73,11 +74,21 @@
         clearTimeout(showTimeoutId);
 
         // update the launch button to add the interactive run state api url
-        $('.launch-button').each(function () {
+        launchButton.each(function () {
           var $this = $(this),
               launchUrl = $this.attr('href');
           $this.attr('href', $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify(launchParams))}));
         });
+
+        // only show the reset button when the learner has a document or when the launch button is clicked
+        if (interactiveRunState.docStore) {
+          $('#reset-row').show();
+        }
+        else {
+          launchButton.click(function () {
+            $('#reset-row').show();
+          });
+        }
 
         phone.addListener('getInteractiveState', function () {
           phone.post('interactiveState', 'nochange');
