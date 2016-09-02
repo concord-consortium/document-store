@@ -13,10 +13,11 @@ Rails.application.routes.draw do
   get 'user/info' => 'users#info'
   get 'user/authenticate' => 'users#authenticate'
 
-  get 'v2/documents/:id' => 'documents_v2#open'
-  put 'v2/documents/:id' => 'documents_v2#save'
-  patch 'v2/documents/:id' => 'documents_v2#patch'
-  post 'v2/documents' => 'documents_v2#create'
+  get 'v2/documents/:id' => 'documents_v2#open', :as => :v2_document_open
+  put 'v2/documents/:id' => 'documents_v2#save', :as => :v2_document_save
+  patch 'v2/documents/:id' => 'documents_v2#patch', :as => :v2_document_patch
+  post 'v2/documents' => 'documents_v2#create', :as => :v2_document_create
+  get 'v2/documents/:id/launch' => 'documents_v2#launch', :as => :v2_document_launch
 
   root :to => "home#index"
   devise_for :users, :controllers => {:registrations => "registrations", :omniauth_callbacks => "omniauth_callbacks"}

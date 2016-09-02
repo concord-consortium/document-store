@@ -1,7 +1,6 @@
 require 'ostruct'
 
 class DocumentsV2Controller < ApplicationController
-
   # don't check for csrf token
   skip_before_filter :verify_authenticity_token, :only => [:save, :patch, :create]
 
@@ -36,7 +35,22 @@ class DocumentsV2Controller < ApplicationController
 
     return unless require_valid_read_write_access_key
 
-    @document.form_content = request.raw_post
+    if params[:reset].present?
+      @document.content = @document.original_content
+    elsif params[:source].present?
+      source_document = Document.find_by(id: params[:source])
+      if !source_document
+        render json: {status: "Error", errors: ['Source document not found'], valid: false, message: 'error.writeFailed' }, status: 400
+        return
+      elsif !source_document.shared
+        render json: {status: "Error", errors: ['Source document is not a shared document'], valid: false, message: 'error.writeFailed' }, status: 400
+        return
+      end
+      @document.content = source_document.content
+    else
+      @document.form_content = request.raw_post
+    end
+
     if @document.save
       render json: {status: "Saved", valid: true, id: @document.id }, status: 200
     else
@@ -87,6 +101,23 @@ class DocumentsV2Controller < ApplicationController
         render json: {status: "Error", errors: @document.errors.full_messages + @document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
       end
     end
+  end
+
+  def launch
+    @document = Document.find_by(id: params[:id])
+    @codap_server = launch_params[:server]
+
+    @button_url = codap_v2_link(@codap_server)
+    @button_text = launch_params[:buttonText] || 'Launch'
+
+    @in_a_window = launch_params[:window] == 'true'
+
+    @copy_shared_url = v2_document_create_url(source: params[:id])
+    @reset_url = v2_document_save_url(id: 'RESET_ID', source: params[:id], accessKey: 'RW::ACCESS_KEY')  # RESET_ID and ACCESS_KEY are replaced with the document info in the interactive state in the launch view javascript
+
+    authorize! :open, :url_document
+    response.headers.delete 'X-Frame-Options'
+    render layout: 'launch'
   end
 
   private
@@ -158,11 +189,12 @@ class DocumentsV2Controller < ApplicationController
     end
   end
 
-  def valid_document_access_key(access_key)
+  def valid_document_access_key(access_key, document=nil)
+    document = document || @document
     if access_key.read_only?
-      @document.read_access_key == access_key.key
+      document.read_access_key == access_key.key
     elsif access_key.read_write?
-      @document.read_write_access_key == access_key.key
+      document.read_write_access_key == access_key.key
     else
       false
     end
@@ -181,4 +213,7 @@ class DocumentsV2Controller < ApplicationController
     DocumentAccessLog.log(@document.id, '2', action_name, {id: params[:id]}.to_json) if @document
   end
 
+  def launch_params
+    params.permit(:owner, :server, :doc, :buttonText, :window)
+  end
 end
