@@ -142,7 +142,11 @@
             }
           })
           .done(function (interactiveState) {
-            interactiveRunState = interactiveState.raw_data || {};
+            interactiveRunState = {};
+            try {
+              interactiveRunState = JSON.parse(interactiveState.raw_data);
+            }
+            catch (e) {}
             if (interactiveState.success === false) {
               resetMessage.html("Sorry, there was an error checking your activity data.  The error returned was: <em>" + interactiveState.message + "</em>")
             }
