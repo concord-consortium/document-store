@@ -253,11 +253,55 @@ feature 'Document', :codap do
         expect(copy.shared).to eq true
       end
 
+      scenario 'unshared documents can be copied using source id and read-only access key to an unshared document' do
+        doc = FactoryGirl.create(:document, title: 'testDoc', shared: true, content: '[1, 2, 3]', read_access_key: 'foo')
+        page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}&accessKey=RO::foo", ""
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Copied","valid":true,!
+        response = JSON.parse(page.body)
+        expect(response["id"]).not_to eq doc.id
+        copy = Document.find(response["id"])
+        expect(copy.shared).to eq false
+      end
+
+      scenario 'unshared documents can be copied using source id and read-write access key to an unshared document' do
+        doc = FactoryGirl.create(:document, title: 'testDoc', shared: false, content: '[1, 2, 3]', read_write_access_key: 'foo')
+        page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}&accessKey=RW::foo", ""
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Copied","valid":true,!
+        response = JSON.parse(page.body)
+        expect(response["id"]).not_to eq doc.id
+        copy = Document.find(response["id"])
+        expect(copy.shared).to eq false
+      end
+
+      scenario 'unshared documents can be copied using source id and read-only access key to a shared document' do
+        doc = FactoryGirl.create(:document, title: 'testDoc', shared: false, content: '[1, 2, 3]', read_access_key: 'foo')
+        page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}&shared=true&accessKey=RO::foo", ""
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Copied","valid":true,!
+        response = JSON.parse(page.body)
+        expect(response["id"]).not_to eq doc.id
+        copy = Document.find(response["id"])
+        expect(copy.shared).to eq true
+      end
+
+      scenario 'unshared documents can be copied using source id and read-write access key to a shared document' do
+        doc = FactoryGirl.create(:document, title: 'testDoc', shared: false, content: '[1, 2, 3]', read_write_access_key: 'foo')
+        page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}&shared=true&accessKey=RW::foo", ""
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Copied","valid":true,!
+        response = JSON.parse(page.body)
+        expect(response["id"]).not_to eq doc.id
+        copy = Document.find(response["id"])
+        expect(copy.shared).to eq true
+      end
+
       scenario 'unshared documents cannot be copied using source id' do
         doc = FactoryGirl.create(:document, title: 'testDoc', shared: false, content: '[1, 2, 3]')
         page.driver.browser.submit :post, "/v2/documents?source=#{doc.id}", ""
         expect(page.status_code).to eq(403)
-        expect(page).to have_content %!{"valid":false,"errors":["Source document is not shared"],"message":"error.notShared"}!
+        expect(page).to have_content %!{"valid":false,"errors":["Source document is not shared and no accessKey parameter is present."],"message":"error.notShared"}!
       end
     end
 

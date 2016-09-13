@@ -86,8 +86,34 @@ class DocumentsV2Controller < ApplicationController
 
   def create
     new_doc_is_shared = params[:shared].present? ? params[:shared] == 'true' : false
+
     if params[:source].present?
-      copy_shared(new_doc_is_shared)
+      @document = Document.find_by(id: params[:source])
+      render_not_found && return unless @document
+
+      if !@document.shared
+        if params[:accessKey].present?
+          access_key = parse_access_key
+          render_invalid_access_key_format && return unless access_key.valid_format?
+          # both read-only or read-write access keys are acceptable so no need to check the type
+          render_invalid_access_key && return unless valid_document_access_key(access_key)
+        else
+          render(json: {valid: false, errors: ["Source document is not shared and no accessKey parameter is present."], message: "error.notShared"}, status: 403) && return
+        end
+      end
+
+      copy = Document.new
+      copy.title = @document.title
+      copy.content = @document.content
+      copy.original_content = @document.content
+      copy.shared = new_doc_is_shared
+      copy.owner = nil
+      create_access_keys(copy)
+      if copy.save
+        render json: {status: "Copied", valid: true, id: copy.id, readAccessKey: copy.read_access_key, readWriteAccessKey: copy.read_write_access_key}, status: 201
+      else
+        render json: {status: "Error", errors: copy.errors.full_messages + copy.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
+      end
     else
       @document = Document.new
       @document.form_content = request.raw_post
@@ -121,30 +147,6 @@ class DocumentsV2Controller < ApplicationController
   end
 
   private
-
-  def copy_shared(new_doc_is_shared)
-    render_missing_param("source") && return unless params[:source].present?
-
-    @document = Document.find_by(id: params[:source])
-    render_not_found && return unless @document
-
-    if @document.shared
-      copy = Document.new
-      copy.title = @document.title
-      copy.content = @document.content
-      copy.original_content = @document.content
-      copy.shared = new_doc_is_shared
-      copy.owner = nil
-      create_access_keys(copy)
-      if copy.save
-        render json: {status: "Copied", valid: true, id: copy.id, readAccessKey: copy.read_access_key, readWriteAccessKey: copy.read_write_access_key}, status: 201
-      else
-        render json: {status: "Error", errors: copy.errors.full_messages + copy.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
-      end
-    else
-      render(json: {valid: false, errors: ["Source document is not shared"], message: "error.notShared"}, status: 403)
-    end
-  end
 
   def create_access_keys(document)
     # generate two unique new access keys - we can't use a unique index constraint because the keys will be null for older documents
