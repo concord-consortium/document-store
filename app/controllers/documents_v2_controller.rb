@@ -146,6 +146,8 @@ class DocumentsV2Controller < ApplicationController
     render layout: 'launch'
   end
 
+  # This action is only necessary to help migrate LARA documents from the V1 API to the V2 API
+  # Once this migration is complete this method should be removed
   def create_keys
     render_missing_param("api_secret") && return unless params[:api_secret].present?
     render_missing_param("docs") && return unless params[:docs].present?
