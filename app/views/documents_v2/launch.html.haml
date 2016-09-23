@@ -66,12 +66,19 @@
 
       phone.addListener('initInteractive', function (interactiveData) {
         var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}},
-            launchButton = $('.launch-button');
+            launchButton = $('.launch-button'),
+            linkedState = interactiveData.linkedState || {};
+
+        clearTimeout(showTimeoutId);
 
         interactiveRunState = interactiveData.interactiveState || {};
         interactiveStateUrl = interactiveData.interactiveStateUrl;
 
-        clearTimeout(showTimeoutId);
+        // if there is a linked state and no interactive state then change the source document to point to the linked recordid and add the access key
+        if (linkedState.docStore && linkedState.docStore.recordid && linkedState.docStore.accessKeys && linkedState.docStore.accessKeys.readOnly && !(interactiveRunState && interactiveRunState.docStore && interactiveRunState.docStore.recordid)) {
+          launchParams.source = linkedState.docStore.recordid;
+          launchParams.readOnlyKey = linkedState.docStore.accessKeys.readOnly;
+        }
 
         // update the launch button to add the interactive run state api url
         launchButton.each(function () {
