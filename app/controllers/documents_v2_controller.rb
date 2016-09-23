@@ -2,7 +2,7 @@ require 'ostruct'
 
 class DocumentsV2Controller < ApplicationController
   # don't check for csrf token
-  skip_before_filter :verify_authenticity_token, :only => [:save, :patch, :create]
+  skip_before_filter :verify_authenticity_token, :only => [:save, :patch, :create, :create_keys]
 
   # v2 of the api is all anonymous access
   skip_authorization_check
@@ -146,6 +146,64 @@ class DocumentsV2Controller < ApplicationController
     render layout: 'launch'
   end
 
+  # This action is only necessary to help migrate LARA documents from the V1 API to the V2 API
+  # Once this migration is complete this method should be removed
+  def create_keys
+    render_missing_param("api_secret") && return unless params[:api_secret].present?
+    render_missing_param("docs") && return unless params[:docs].present?
+    render(json: {status: "Error", errors: ['V2_API_SECRET environment variable is not set'], valid: false, message: 'error.createKeysFailed' }, status: 500) && return if ENV['V2_API_SECRET'].nil?
+    render(json: {status: "Error", errors: ['api_secret parameter is incorrect'], valid: false, message: 'error.createKeysFailed' }, status: 400) && return if ENV['V2_API_SECRET'] != params[:api_secret]
+
+    results = []
+    params[:docs].each do |doc|
+      # find the doc based on the params (adapted from DocumentsController#find_doc_via_params)
+      document = nil
+      queries = []
+      owner_id = -1
+      username = (doc[:owner] || doc[:reportUser])
+      if username
+        owner = User.find_by(username: username)
+        queries.push "User: username: #{username}"
+        owner_id = owner ? owner.id : -1
+      end
+
+      title = (doc[:recordname] || doc[:doc])
+      if title && (owner_id != -1)
+        document = Document.find_by(owner_id: owner_id, title: title, run_key: doc[:runKey])
+        queries.push ["Document: owner_id: #{owner_id}", "title: #{title}", "run_key: #{doc[:runKey]}"].join(', ')
+        if document.nil? && !doc[:runKey].nil?
+          document = Document.find_by(owner_id: owner_id, title: title, run_key: nil)
+          queries.push ["Document: owner_id: #{owner_id}", "title: #{title}", "run_key: nil"].join(', ')
+        end
+      end
+
+      if !document && doc[:runKey]
+        if owner_id != -1
+          document = Document.find_by(owner_id: owner_id, run_key: doc[:runKey])
+          queries.push ["Document: owner_id: #{owner_id}", "run_key: #{doc[:runKey]}"].join(', ')
+        end
+        if !document
+          document = Document.find_by(run_key: doc[:runKey])
+          queries.push ["Document: run_key: #{doc[:runKey]}"].join(', ')
+        end
+      end
+
+      if document && (document.read_access_key.nil? || document.read_write_access_key.nil?)
+        create_access_keys(document)
+        document.save
+      end
+
+      if document
+        result = {irs_id: doc[:irs_id], debug: {request_params: doc, queries: queries.join(' / ')}, document: {id: document.id, readAccessKey: document.read_access_key, readWriteAccessKey: document.read_write_access_key}}
+      else
+        result = {irs_id: doc[:irs_id], debug: {request_params: doc, queries: queries.join(' / ')}, document: nil}
+      end
+      results.push result
+    end
+
+    render json: {valid: true, docs: results}
+  end
+
   private
 
   def create_access_keys(document)
@@ -158,8 +216,8 @@ class DocumentsV2Controller < ApplicationController
       read_write_access_key = SecureRandom.hex(40)
       break if !Document.find_by(read_access_key: read_access_key) && !Document.find_by(read_write_access_key: read_write_access_key)
     end
-    document.read_access_key = read_access_key
-    document.read_write_access_key = read_write_access_key
+    document.read_access_key = read_access_key if document.read_access_key.nil?
+    document.read_write_access_key = read_write_access_key if document.read_write_access_key.nil?
   end
 
   def render_missing_param(param)
