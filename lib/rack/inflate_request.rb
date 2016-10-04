@@ -11,7 +11,7 @@ module Rack
     end
 
     def method_handled?(env)
-      !!(env['REQUEST_METHOD'] =~ /(POST|PUT)/)
+      !!(env['REQUEST_METHOD'] =~ /(POST|PUT|PATCH)/)
     end
 
     def encoding_handled?(env)
