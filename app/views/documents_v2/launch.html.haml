@@ -65,7 +65,7 @@
       };
 
       phone.addListener('initInteractive', function (interactiveData) {
-        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}},
+        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}, collaboratorUrls: interactiveData.collaboratorUrls},
             launchButton = $('.launch-button'),
             linkedState = interactiveData.linkedState || {};
 
