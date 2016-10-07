@@ -42,7 +42,11 @@ The second version of the API is handled by the documents_v2 controller and expo
 
 - PATCH /v2/documents/:id - updates the contents of a document specified by id using the JSON Patch specification.  This requires the document's read-write access keys.
 
-- POST /v2/documents?[shared=(true|false)]&[source=<id>] - either creates a new document using the raw post content or creates a copy of a document identified by the source query parameter.  By default the newly created document does not have the sharing bit set but that can be set by passing ```shared=true``` as a parameter.  If the source parameter is passed it must be a shared document or else the copy with fail.  No access key is needed.  If a document is created this returns a 201 status code with the following json response:  ```{status: "[Created|Copied]", valid: true, id: <document.id>, readAccessKey: <document.read_access_key>, readWriteAccessKey: <document.read_write_access_key>}```.
+- POST /v2/documents?[shared=(true|false)]&[source=<id>] - either creates a new document using the raw post content or creates a copy of a document identified by the source query parameter.  By default the newly created document does not have the sharing bit set but that can be set by passing ```shared=true``` as a parameter.  If the source parameter is passed with no access key it must be a shared document or else the copy with fail.  If a valid read or read-write access key is passed a unshared document can be used as the source.  If a document is created this returns a 201 status code with the following json response:  ```{status: "[Created|Copied]", valid: true, id: <document.id>, readAccessKey: <document.read_access_key>, readWriteAccessKey: <document.read_write_access_key>}```.
+
+- GET /v2/documents/:id/launch - same as v1 launch page
+
+- POST /v2/documents/create_keys - this is private endpoint only necessary to help migrate LARA documents from the V1 API to the V2 API
 
 ### Version 2 Access keys
 
