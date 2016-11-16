@@ -13,8 +13,8 @@ class Document < ActiveRecord::Base
   validate :validate_form_content
 
   after_save :sync_attributes
-  before_destroy :store_parent
-  after_destroy :destroy_parent # workaround for https://github.com/rails/rails/issues/13609
+  #before_destroy :store_parent
+  #after_destroy :destroy_parent # workaround for https://github.com/rails/rails/issues/13609
 
   def form_content=(new_content)
     if new_content.is_json?
@@ -33,6 +33,20 @@ class Document < ActiveRecord::Base
     self.contents_without_check || (self.contents = DocumentContent.new)
   end
   alias_method_chain :contents, :check
+
+  def create_access_keys
+    # generate two unique new access keys - we can't use a unique index constraint because the keys will be null for older documents
+    # giving the length of the random strings this will probably never loop
+    read_access_key = nil
+    read_write_access_key = nil
+    loop do
+      read_access_key = SecureRandom.hex(20)
+      read_write_access_key = SecureRandom.hex(40)
+      break if !Document.find_by(read_access_key: read_access_key) && !Document.find_by(read_write_access_key: read_write_access_key)
+    end
+    self.read_access_key = read_access_key if self.read_access_key.nil?
+    self.read_write_access_key = read_write_access_key if self.read_write_access_key.nil?
+  end
 
   protected
 
