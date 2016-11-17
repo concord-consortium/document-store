@@ -207,17 +207,7 @@ class DocumentsV2Controller < ApplicationController
   private
 
   def create_access_keys(document)
-    # generate two unique new access keys - we can't use a unique index constraint because the keys will be null for older documents
-    # giving the length of the random strings this will probably never loop
-    read_access_key = nil
-    read_write_access_key = nil
-    loop do
-      read_access_key = SecureRandom.hex(20)
-      read_write_access_key = SecureRandom.hex(40)
-      break if !Document.find_by(read_access_key: read_access_key) && !Document.find_by(read_write_access_key: read_write_access_key)
-    end
-    document.read_access_key = read_access_key if document.read_access_key.nil?
-    document.read_write_access_key = read_write_access_key if document.read_write_access_key.nil?
+    document.create_access_keys()
   end
 
   def render_missing_param(param)
