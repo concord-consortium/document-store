@@ -13,7 +13,7 @@ namespace :merge_forks do
 
     num_parents = Document.select(:id).where(parent_id: nil).count
     Progress.start("Merging #{num_parents} possible master documents", num_parents) do
-      Document.where(parent_id: nil).find_in_batches(batch_size: 10) do |batch|
+      Document.includes(:owner).where(parent_id: nil).find_in_batches(batch_size: 10) do |batch|
         batch.each do |parent_doc|
           parent_id = parent_doc[:id]
 
@@ -50,6 +50,7 @@ namespace :merge_forks do
               parent_doc.save!(:validate => false) # to get around title uniquness with nil run_key
 
               spreadsheet[parent_id] = {
+                owner: parent_doc.owner ? parent_doc.owner.username : 'n/a',
                 actions: ["merge real forks"],
                 run_key: parent_doc[:run_key],
                 real_fork_ids: real_fork_ids,
@@ -67,7 +68,7 @@ namespace :merge_forks do
 
     num_forks = Document.select(:parent_id).where.not(parent_id: nil).count
     Progress.start("Merging #{num_forks} dangling forked documents", num_forks) do
-      Document.where.not(parent_id: nil).find_in_batches(batch_size: 10) do |batch|
+      Document.includes(:owner).where.not(parent_id: nil).find_in_batches(batch_size: 10) do |batch|
         batch.each do |forked_doc|
           parent_id = forked_doc[:parent_id]
           parent_doc = Document.find_by_id (forked_doc[:parent_id])
@@ -84,6 +85,7 @@ namespace :merge_forks do
 
             if !spreadsheet.has_key?(parent_id)
               spreadsheet[parent_id] = {
+                owner: parent_doc.owner ? parent_doc.owner.username : 'n/a',
                 actions: [],
                 run_key: parent_doc[:run_key],
                 real_fork_ids: [],
@@ -105,9 +107,9 @@ namespace :merge_forks do
       end
     end
 
-    puts "id,actions,real_fork_ids,run_key,master_url,dangling_fork_urls"
+    puts "id,owner,actions,real_fork_ids,run_key,master_url,dangling_fork_urls"
     spreadsheet.sort_by { |id, row| [row[:show_at_top] ? 0 : 1, id] }.each do |id, row|
-      puts "#{id},#{row[:actions].join(' & ')},#{row[:real_fork_ids].join(' & ')},#{row[:run_key] || ''},#{row[:master_url] || ''},#{row[:dangling_fork_urls].join(',') || ''}"
+      puts "#{id},#{row[:owner]},#{row[:actions].join(' & ')},#{row[:real_fork_ids].join(' & ')},#{row[:run_key] || ''},#{row[:master_url] || ''},#{row[:dangling_fork_urls].join(',') || ''}"
     end
   end
 end
