@@ -51,6 +51,8 @@ class DocumentsV2Controller < ApplicationController
       @document.form_content = request.raw_post
     end
 
+    @document.shared = shared_param_value() if params[:shared].present?
+
     if @document.save
       render json: {status: "Saved", valid: true, id: @document.id }, status: 200
     else
@@ -74,7 +76,9 @@ class DocumentsV2Controller < ApplicationController
 
     begin
       patchedContent = JSON::Patch.new(@document.content, patchset).call
-      if @document.update_columns({updated_at: Time.current}) && @document.contents.update_columns({content: patchedContent, updated_at: Time.current})
+      doc_updates = {updated_at: Time.current}
+      doc_updates[:shared] = shared_param_value() if params[:shared].present?
+      if @document.update_columns(doc_updates) && @document.contents.update_columns({content: patchedContent, updated_at: Time.current})
         render json: {status: "Patched", valid: true, id: @document.id}, status: 200
       else
         render json: {status: "Error", errors: @document.errors.full_messages + @document.contents.errors.full_messages, valid: false, message: 'error.writeFailed' }, status: 400
@@ -266,4 +270,9 @@ class DocumentsV2Controller < ApplicationController
   def launch_params
     params.permit(:owner, :server, :doc, :buttonText, :window)
   end
+
+  def shared_param_value
+    ['true', true, '1', 1].include? params[:shared]
+  end
+
 end

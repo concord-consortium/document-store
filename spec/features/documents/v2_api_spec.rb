@@ -65,6 +65,7 @@ feature 'Document', :codap do
         expect(doc.title).to eq("newdoc")
         expect(doc.read_write_access_key).to eq("foo")
         expect(doc.content).to match({"def" => [1,2,3,4] })
+        expect(doc.shared).to eq(false)
       end
 
       scenario 'documents can be reset' do
@@ -127,6 +128,20 @@ feature 'Document', :codap do
         expect(page.status_code).to eq(400)
         expect(page).to have_content %!{"valid":false,"errors":["Invalid accessKey type"],"message":"error.invalidAccessKeyType"}!
       end
+
+      scenario 'documents can have their sharing status set as part of a save' do
+        doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo', shared: false)
+        page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&shared=true", '{ "def": [1,2,3,4] }'
+        expect(page.status_code).to eq(200)
+        doc.reload()
+        expect(doc.shared).to eq(true)
+
+        doc2 = FactoryGirl.create(:document, title: "newdoc2", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo2', shared: true)
+        page.driver.browser.submit :put, "/v2/documents/#{doc2.id}?accessKey=RW::foo2&shared=false", '{ "def": [1,2,3,4] }'
+        expect(page.status_code).to eq(200)
+        doc2.reload()
+        expect(doc2.shared).to eq(false)
+      end
     end
 
     describe 'patch' do
@@ -138,6 +153,7 @@ feature 'Document', :codap do
         expect(page).to have_content %!{"status":"Patched","valid":true,"id":#{doc.id}}!
         doc.reload()
         expect(doc.content.to_json).to eq '{"baz":"boo","hello":["world"]}'
+        expect(doc.shared).to eq(false)
       end
 
       scenario 'documents that do not exist cannot be patched' do
@@ -186,6 +202,20 @@ feature 'Document', :codap do
         page.driver.browser.submit :patch, "/v2/documents/#{doc.id}?accessKey=RO::foo", '{ "def": [1,2,3,4] }'
         expect(page.status_code).to eq(400)
         expect(page).to have_content %!{"valid":false,"errors":["Invalid accessKey type"],"message":"error.invalidAccessKeyType"}!
+      end
+
+      scenario 'documents can have their sharing status set as part of a patch' do
+        doc = FactoryGirl.create(:document, title: "newdoc", content: '{"foo":"bar","baz":"qux"}', read_write_access_key: 'foo', shared: false)
+        page.driver.browser.submit :patch, "/v2/documents/#{doc.id}?accessKey=RW::foo&shared=true", '[{ "op": "replace", "path": "/baz", "value": "boo" },  { "op": "add", "path": "/hello", "value": ["world"] },  { "op": "remove", "path": "/foo"}]'
+        expect(page.status_code).to eq(200)
+        doc.reload()
+        expect(doc.shared).to eq(true)
+
+        doc2 = FactoryGirl.create(:document, title: "newdoc2", content: '{"foo":"bar","baz":"qux"}', read_write_access_key: 'foo', shared: true)
+        page.driver.browser.submit :patch, "/v2/documents/#{doc2.id}?accessKey=RW::foo&shared=false", '[{ "op": "replace", "path": "/baz", "value": "boo" },  { "op": "add", "path": "/hello", "value": ["world"] },  { "op": "remove", "path": "/foo"}]'
+        expect(page.status_code).to eq(200)
+        doc2.reload()
+        expect(doc2.shared).to eq(false)
       end
     end
 
