@@ -150,6 +150,17 @@ class DocumentsV2Controller < ApplicationController
     render layout: 'launch'
   end
 
+  def autolaunch
+    @document = Document.find_by(id: params[:id])
+    @codap_server = launch_params[:server]
+
+    @launch_url = codap_v2_link(@codap_server)
+
+    authorize! :open, :url_document
+    response.headers.delete 'X-Frame-Options'
+    render layout: 'launch'
+  end
+
   # This action is only necessary to help migrate LARA documents from the V1 API to the V2 API
   # Once this migration is complete this method should be removed
   def create_keys
