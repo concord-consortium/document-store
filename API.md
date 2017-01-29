@@ -46,6 +46,8 @@ The second version of the API is handled by the documents_v2 controller and expo
 
 - GET /v2/documents/:id/launch - same as v1 launch page
 
+- GET /v2/documents/:id/autolaunch - same as launch except that instead of a launch button being shown the window is automatically redirected to the launch url
+
 - POST /v2/documents/create_keys - this is private endpoint only necessary to help migrate LARA documents from the V1 API to the V2 API
 
 ### Version 2 Access keys

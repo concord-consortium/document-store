@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   patch 'v2/documents/:id' => 'documents_v2#patch', :as => :v2_document_patch
   post 'v2/documents' => 'documents_v2#create', :as => :v2_document_create
   get 'v2/documents/:id/launch' => 'documents_v2#launch', :as => :v2_document_launch
+  get 'v2/documents/:id/autolaunch' => 'documents_v2#autolaunch', :as => :v2_document_autolaunch
   post 'v2/documents/create_keys' => 'documents_v2#create_keys', :as => :v2_document_create_keys
 
   root :to => "home#index"

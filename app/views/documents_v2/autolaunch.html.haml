@@ -1,0 +1,67 @@
+.row.launch-error{style: "display: none;"}
+  .small-12.text-center.columns{style: "color: #990000" }
+    There was a problem setting up this interactive. Please try refreshing your page.
+-if @document
+  - if @document.shared
+    .row
+      .small-12.text-center.columns.end
+        #loading-message
+          %span#loading-image
+            =image_tag "loading.gif"
+          %span#loading-text
+            Loading...
+  -else
+    .row
+      .small-12.text-center.columns{style: "color: #990000" }
+        Error: The requested document is not shared.
+-else
+  .row
+    .small-12.text-center.columns{style: "color: #990000" }
+      Error: The requested document could not be found.
+
+-if @document && @document.shared
+  :javascript
+    $(document).ready(function() {
+      // Update the loading message after 10 seconds
+      var showTimeoutId = setTimeout(function() {
+        $('#loading-text').html("Still loading!  You may want to reload this page to try again.")
+      }, 10000);
+
+      var phone = iframePhone.getIFrameEndpoint(),
+          interactiveRunState, interactiveStateUrl;
+
+      phone.addListener('initInteractive', function (interactiveData) {
+        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}, collaboratorUrls: interactiveData.collaboratorUrls},
+            launchUrl = #{@launch_url.to_json},
+            linkedState = interactiveData.linkedState || {};
+
+        clearTimeout(showTimeoutId);
+
+        interactiveRunState = interactiveData.interactiveState || {};
+        interactiveStateUrl = interactiveData.interactiveStateUrl;
+
+        // if there is a linked state and no interactive state then change the source document to point to the linked recordid and add the access key
+        if (linkedState.docStore && linkedState.docStore.recordid && linkedState.docStore.accessKeys && linkedState.docStore.accessKeys.readOnly && !(interactiveRunState && interactiveRunState.docStore && interactiveRunState.docStore.recordid)) {
+          launchParams.source = linkedState.docStore.recordid;
+          launchParams.readOnlyKey = linkedState.docStore.accessKeys.readOnly;
+        }
+
+        phone.addListener('getInteractiveState', function () {
+          phone.post('interactiveState', 'nochange');
+        });
+
+        // redirect to the final location with the launchFromLara parameter set
+        $('#loading-text').html("Redirecting...");
+        window.location = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify(launchParams))});
+      });
+
+      phone.addListener('getExtendedSupport', function() {
+        phone.post('extendedSupport', { reset: false });
+      });
+
+      // TODO: there seems to be a race condition between when the page loads and when initialize can be called
+      setTimeout(function () {
+        // Initialize connection after all message listeners are added!
+        phone.initialize();
+      }, 1000);
+    });
