@@ -10,6 +10,8 @@
             =image_tag "loading.gif"
           %span#loading-text
             Loading...
+    %iframe#autolaunch_iframe
+
   -else
     .row
       .small-12.text-center.columns{style: "color: #990000" }
@@ -46,13 +48,53 @@
           launchParams.readOnlyKey = linkedState.docStore.accessKeys.readOnly;
         }
 
-        phone.addListener('getInteractiveState', function () {
-          phone.post('interactiveState', 'nochange');
+        // Interactive state saves are supported by autolaunch currently only when the app iframed by autolaunch uses
+        // the Cloud File Manager (CFM).  The CFM in the iframed app handles all the state saving -- Lara only ever
+        // receives 'nochange' as the state.
+        //
+        // 1. Autolaunch informs Lara that interactive state is supported using the supportedFeatures message
+        // 2. Once the iframed app loads autolaunch sends a cfm::getCommands message to the iframed app and sets a
+        //    iframeCanAutosave flag when a cfm::commands is received from the iframed app and the app supports cfm::autosave
+        // 3. When autolaunch gets an getInteractiveState request from Lara it either
+        //    a. immedatiely returns 'nochange' to Lara when the iframeCanAutosave flag isn't set
+        //    b. sends a 'cfm::autosave' message to the app and then sends 'nochange' when the app returns 'cfm::autosaved'
+
+        phone.post('supportedFeatures', {
+          apiVersion: 1,
+          features: {
+            interactiveState: true
+          }
         });
 
-        // redirect to the final location with the launchFromLara parameter set
-        $('#loading-text').html("Redirecting...");
-        window.location = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify(launchParams))});
+        var iframeCanAutosave = false;
+        var iframeLoaded = function () {
+          $(window).on('message', function (e) {
+            var data = e.originalEvent.data
+            if (data) {
+              switch (data.type) {
+                case 'cfm::commands':
+                  iframeCanAutosave = data.commands && data.commands.indexOf('cfm::autosave') !== -1;
+                  break;
+                case 'cfm::autosaved':
+                  phone.post('interactiveState', 'nochange');
+                  break;
+              }
+            }
+          })
+          iframe.postMessage({type: 'cfm::getCommands'}, '*')
+        };
+
+        phone.addListener('getInteractiveState', function () {
+          if (iframeCanAutosave) {
+            iframe.postMessage({type: 'cfm::autosave'}, '*');
+          }
+          else {
+            phone.post('interactiveState', 'nochange');
+          }
+        });
+
+        var src = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify(launchParams))});
+        var iframe = $("#autolaunch_iframe").on('load', iframeLoaded).attr("src", src).show()[0].contentWindow;
       });
 
       phone.addListener('getExtendedSupport', function() {
