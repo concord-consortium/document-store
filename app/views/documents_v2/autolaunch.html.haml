@@ -69,7 +69,7 @@
         var iframeCanAutosave = false;
         var iframeLoaded = function () {
           $(window).on('message', function (e) {
-            var data = e.originalEvent.data
+            var data = e.originalEvent.data;
             if (data) {
               switch (data.type) {
                 case 'cfm::commands':
@@ -80,8 +80,19 @@
                   break;
               }
             }
+
+            // Create a message proxy between our embedded iframe and the parent if this page is also embedded in an iframe.
+            // This is used by the Sharinator to communicate with CODAP.
+            if (window.parent) {
+              if (e.originalEvent.origin === iframeOrigin) {
+                window.parent.postMessage(data, "*");
+              }
+              else {
+                iframe.postMessage(data, "*");
+              }
+            }
           })
-          iframe.postMessage({type: 'cfm::getCommands'}, '*')
+          iframe.postMessage({type: 'cfm::getCommands'}, '*');
         };
 
         phone.addListener('getInteractiveState', function () {
@@ -94,6 +105,12 @@
         });
 
         var src = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify(launchParams))});
+
+        // extract the origin of the iframe so we can proxy messages correctly above
+        var originExtractor = document.createElement("A");
+        originExtractor.href = src;
+        var iframeOrigin = originExtractor.origin;
+
         var iframe = $("#autolaunch_iframe").on('load', iframeLoaded).attr("src", src).show()[0].contentWindow;
       });
 
