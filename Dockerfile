@@ -1,0 +1,14 @@
+FROM ruby:2.1.2
+RUN apt-get update -qq && apt-get install -y build-essential libpq-dev nodejs
+ENV APP_HOME /myapp
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+
+# use a mounted volume so the gems don't need to be rebundled each time
+ENV BUNDLE_GEMFILE=$APP_HOME/Gemfile \
+  BUNDLE_JOBS=2 \
+  BUNDLE_PATH=/bundle
+
+ENV RAILS_ENV=development
+
+EXPOSE 3000

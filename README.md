@@ -44,6 +44,22 @@ Setting up a Portal authentication provider
 
 0. Restart the document server
 
+Docker
+------
+
+A first pass at Docker support for this app is available.
+This is not currently working to run the app itself.
+But it is working well enough to update gems for example.
+`docker-compose run web bundle install`
+
+In theory you should be able to run the app by:
+copying the config/database.yml.docker to config/database.yml
+Then create the database `docker-compose run web bundle exec rake db:create`
+Finally start the server with running `docker-compose up`
+
+However currently it seems to start, but it is not accessible when going to
+http://localhost:3000
+
 Acknowledgements
 ----------------
 
