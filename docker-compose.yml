@@ -8,11 +8,13 @@ services:
       - .:/myapp:delegated
       - bundle:/bundle
     ports:
-      - "3001:3001"
-    links:
-      - db
+      - "3001:3000"
     depends_on:
       - db
+    environment:
+      # V2_LINK_PROTOCOL sets protocol when you use local instance of document server and try to open it in LARA.
+      # Docker configuration uses unicorn and HTTP, so set this env variable to HTTP too.
+      V2_LINK_PROTOCOL: http
   db:
     image: postgres:9.3
     ports:

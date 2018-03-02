@@ -11,6 +11,4 @@ ENV BUNDLE_JOBS 2
 ENV BUNDLE_PATH /bundle
 ENV RAILS_ENV development
 
-EXPOSE 3001
-
-CMD rails s -b 0.0.0.0 -p 3001
+EXPOSE 3000

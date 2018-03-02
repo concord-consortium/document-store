@@ -23,9 +23,9 @@ if [ "$1" == "migrate-only" ]; then
   bundle exec rake db:create
   bundle exec rake db:migrate
 elif [ "$1" == "rails-only" ]; then
-  bundle exec unicorn -p 3001 -c ./config/unicorn.rb
+  bundle exec unicorn -p 3000 -c ./config/unicorn.rb
 else
   bundle exec rake db:create
   bundle exec rake db:migrate
-  bundle exec unicorn -p 3001 -c ./config/unicorn.rb
+  bundle exec unicorn -p 3000 -c ./config/unicorn.rb
 fi
