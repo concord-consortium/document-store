@@ -29,21 +29,44 @@
         $('#loading-text').html("Still loading!  You may want to reload this page to try again.")
       }, 10000);
 
-      var phone = iframePhone.getIFrameEndpoint(),
-          interactiveRunState, interactiveStateUrl;
+      var phone = iframePhone.getIFrameEndpoint();
+      var interactiveRunState, interactiveStateUrl;
 
       phone.addListener('initInteractive', function (interactiveData) {
-        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}, collaboratorUrls: interactiveData.collaboratorUrls},
-            launchUrl = #{@launch_url.to_json},
-            linkedState = interactiveData.linkedState || {};
+        var launchParams = {url: interactiveData.interactiveStateUrl, source: #{@document.id}, collaboratorUrls: interactiveData.collaboratorUrls};
+        var launchUrl = #{@launch_url.to_json};
 
         clearTimeout(showTimeoutId);
 
         interactiveRunState = interactiveData.interactiveState || {};
         interactiveStateUrl = interactiveData.interactiveStateUrl;
 
+        var interactiveStateAvailable = interactiveRunState && interactiveRunState.docStore && interactiveRunState.docStore.recordid
+        // Use most recent linked state.
+        var linkedStateMetadata = interactiveData.allLinkedStates.slice().sort(function (a, b) {
+          return new Date(b.updatedAt) - new Date(a.updatedAt)
+        })[0];
+        var linkedState = linkedStateMetadata && linkedStateMetadata.data ? linkedStateMetadata.data : null;
+
+        if (linkedState && new Date(linkedStateMetadata.updatedAt) > new Date(interactiveData.interactiveStateUpdatedAt)) {
+          var shouldUseMostRecent = window.confirm(
+            "A previous version contains more recent data. " +
+            "Would you like to use this version instead?\n" +
+            "Previous version: " + new Date(linkedStateMetadata.updatedAt).toLocaleString() + "\n" +
+            "Current version: " + new Date(interactiveData.interactiveStateUpdatedAt).toLocaleString()
+          )
+          if (shouldUseMostRecent) {
+            // Remove existing interactive state, so the interactive will be initialized from the linked state.
+            phone.post('interactiveState', null);
+            interactiveStateAvailable = false;
+          } else {
+            // Update current state timestamp, so it will be considered to be the most recent one.
+            phone.post('interactiveState', 'touch');
+          }
+        }
+
         // if there is a linked state and no interactive state then change the source document to point to the linked recordid and add the access key
-        if (linkedState.docStore && linkedState.docStore.recordid && linkedState.docStore.accessKeys && linkedState.docStore.accessKeys.readOnly && !(interactiveRunState && interactiveRunState.docStore && interactiveRunState.docStore.recordid)) {
+        if (linkedState && linkedState.docStore && linkedState.docStore.recordid && linkedState.docStore.accessKeys && linkedState.docStore.accessKeys.readOnly && !interactiveStateAvailable) {
           launchParams.source = linkedState.docStore.recordid;
           launchParams.readOnlyKey = linkedState.docStore.accessKeys.readOnly;
         }
@@ -76,7 +99,7 @@
                   iframeCanAutosave = data.commands && data.commands.indexOf('cfm::autosave') !== -1;
                   break;
                 case 'cfm::autosaved':
-                  phone.post('interactiveState', 'nochange');
+                  phone.post('interactiveState', data.saved ? 'touch' : 'nochange');
                   break;
               }
             }
