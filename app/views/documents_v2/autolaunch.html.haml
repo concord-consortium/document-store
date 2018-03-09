@@ -19,17 +19,12 @@
       .header
         WHAT WOULD YOU LIKE TO DO?
       .content
-        .question
-          A previous version contains more recent data. Would you like to use this version instead?
+        #question
 
         .versions
           .version-info
-            Previous version -
-            %span#prev-version-time
-
-            .center
-              #prev-version-button.dialog-button
-                Use this version
+            #prev-version-button.dialog-button
+              Use this version
 
             .preview
               .iframe-wrapper
@@ -37,10 +32,20 @@
             .center.preview-label
               Click to preview
 
-          .version-info
-            Current version -
-            %span#current-version-time
+            %table.version-desc
+              %tr
+                %th Updated at
+                %td#prev-version-time
+              %tr
+                %th Page
+                %td
+                  %span#prev-version-page-idx
+                  %span#prev-version-page-name
+              %tr
+                %th Activity
+                %td#prev-version-activity-name
 
+          .version-info
             .center
               #current-version-button.dialog-button
                 Use this version
@@ -50,6 +55,19 @@
                 %iframe#current-version-preview
             .center.preview-label
               Click to preview
+
+            %table.version-desc
+              %tr
+                %th Updated at
+                %td#current-version-time
+              %tr
+                %th Page
+                %td
+                  %span#current-version-page-idx
+                  %span#current-version-page-name
+              %tr
+                %th Activity
+                %td#current-version-activity-name
 
   -else
     .row

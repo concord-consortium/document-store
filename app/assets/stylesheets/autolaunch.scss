@@ -37,8 +37,9 @@
     overflow: auto;
   }
 
-  .question {
+  #question {
     padding: 5px 25px;
+    text-align: center;
   }
 
   .versions {
@@ -49,6 +50,24 @@
     display: inline-block;
     width: 400px;
     margin: 20px 10px;
+  }
+
+  table.version-desc {
+    width: 100%;
+    border: none;
+
+    td {
+      padding: 5px;
+      font-size: 14px;
+    }
+    th {
+      width: 100px;
+      font-weight: normal;
+    }
+  }
+
+  .prop {
+    font-weight: bold;
   }
 
   .dialog-button {
@@ -82,7 +101,7 @@
   }
 
   .preview-label {
-    font-size: 16px;
+    font-size: 14px;
     padding: 5px;
     cursor: pointer;
     &:hover {

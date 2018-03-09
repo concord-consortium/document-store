@@ -1,4 +1,6 @@
 function autolaunchInteractive (documentId, launchUrl) {
+  var CURRENT_VS_LINKED = "Another page contains more recent data. Which would you like to use?";
+  var LINKED_VS_LINKED = "There are two possibilities for continuing your work. Which version would you like to use?";
 
   // Update the loading message after 10 seconds
   var showTimeoutId = setTimeout(function() {
@@ -25,9 +27,25 @@ function autolaunchInteractive (documentId, launchUrl) {
       $('.overlay').hide();
     }
 
+    if (interactiveStateAvailable) {
+      $('#question').text(CURRENT_VS_LINKED);
+    } else {
+      $('#question').text(LINKED_VS_LINKED);
+    }
+
     $('.data-select-dialog').show()
-    $('#prev-version-time').text((new Date(mostRecentLinkedState.updatedAt)).toLocaleString())
-    $('#current-version-time').text((new Date(interactiveData.interactiveStateUpdatedAt)).toLocaleString())
+    $('#prev-version-time').text((new Date(mostRecentLinkedState.updatedAt)).toLocaleString());
+    $('#current-version-time').text((new Date(interactiveData.interactiveStateUpdatedAt)).toLocaleString());
+    $('#prev-version-page-idx').text(mostRecentLinkedState.pageIndex);
+    $('#current-version-page-idx').text(interactiveData.pageIndex);
+    if (mostRecentLinkedState.pageName) {
+      $('#prev-version-page-name').text(' - ' + mostRecentLinkedState.pageName);
+    }
+    if (interactiveData.pageName) {
+      $('#current-version-page-name').text(' - ' + interactiveData.pageName);
+    }
+    $('#prev-version-activity-name').text(mostRecentLinkedState.activityName);
+    $('#current-version-activity-name').text(interactiveData.activityName);
 
     var currentUrl = interactiveData.interactiveStateUrl;
     var srcCurrent = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({ url: currentUrl }))});
