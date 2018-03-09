@@ -10,6 +10,7 @@ function autolaunchInteractive (documentId, launchUrl) {
   var phone = iframePhone.getIFrameEndpoint();
   // Variables below are set in `initInteractive` handler.
   var interactiveData = null;
+  var directlyLinkedState = null;
   var mostRecentLinkedState = null;
   var interactiveStateAvailable = false;
 
@@ -17,7 +18,7 @@ function autolaunchInteractive (documentId, launchUrl) {
     return state && state.docStore && state.docStore.recordid && state.docStore.accessKeys && state.docStore.accessKeys.readOnly;
   }
 
-  function showDataSelectDialog () {
+  function showDataSelectDialog (twoLinkedStates) {
     function showPreview (element) {
       $(element).addClass('preview-active');
       $('.overlay').show();
@@ -26,34 +27,43 @@ function autolaunchInteractive (documentId, launchUrl) {
       $('.preview-active').removeClass('preview-active');
       $('.overlay').hide();
     }
+    function launchInt () {
+      launchInteractive();
+      $('.data-select-dialog').remove();
+    }
 
-    if (interactiveStateAvailable) {
+    // There are two supported cases. It's either the choice between most recent linked data and the current data.
+    // Or between the most recent data and data which is directly linked if given interactive doesn't have its own
+    // state yet.
+    if (!twoLinkedStates) {
       $('#question').text(CURRENT_VS_LINKED);
     } else {
       $('#question').text(LINKED_VS_LINKED);
     }
+    var state1 = mostRecentLinkedState;
+    var state2 = twoLinkedStates ? directlyLinkedState : interactiveData;
 
     $('.data-select-dialog').show()
-    $('#prev-version-time').text((new Date(mostRecentLinkedState.updatedAt)).toLocaleString());
-    $('#current-version-time').text((new Date(interactiveData.interactiveStateUpdatedAt)).toLocaleString());
-    $('#prev-version-page-idx').text(mostRecentLinkedState.pageIndex);
-    $('#current-version-page-idx').text(interactiveData.pageIndex);
-    if (mostRecentLinkedState.pageName) {
-      $('#prev-version-page-name').text(' - ' + mostRecentLinkedState.pageName);
+    $('#state1-time').text((new Date(state1.updatedAt)).toLocaleString());
+    $('#state2-time').text((new Date(state2.updatedAt)).toLocaleString());
+    $('#state1-page-idx').text(state1.pageIndex);
+    $('#state2-page-idx').text(state2.pageIndex);
+    if (state1.pageName) {
+      $('#state1-page-name').text(' - ' + state1.pageName);
     }
-    if (interactiveData.pageName) {
-      $('#current-version-page-name').text(' - ' + interactiveData.pageName);
+    if (state2.pageName) {
+      $('#state2-page-name').text(' - ' + state2.pageName);
     }
-    $('#prev-version-activity-name').text(mostRecentLinkedState.activityName);
-    $('#current-version-activity-name').text(interactiveData.activityName);
+    $('#state1-activity-name').text(state1.activityName);
+    $('#state2-activity-name').text(state2.activityName);
 
-    var currentUrl = interactiveData.interactiveStateUrl;
-    var srcCurrent = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({ url: currentUrl }))});
-    $('#current-version-preview').attr('src', srcCurrent);
-
-    var prevUrl = mostRecentLinkedState.interactiveStateUrl;
+    var prevUrl = state1.interactiveStateUrl;
     var srcPrev = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({ url: prevUrl }))});
-    $('#prev-version-preview').attr('src', srcPrev)
+    $('#state1-preview').attr('src', srcPrev)
+
+    var currentUrl = state2.interactiveStateUrl;
+    var srcCurrent = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({ url: currentUrl }))});
+    $('#state2-preview').attr('src', srcCurrent);
 
     $('.overlay').on('click', hidePreview);
     $('.preview').on('click', function () {
@@ -66,19 +76,25 @@ function autolaunchInteractive (documentId, launchUrl) {
     $('.preview-label').on('click', function () {
       showPreview($(this).closest('.version-info').find('.preview')[0]);
     });
-    $('#prev-version-button').on('click', function () {
-      // Remove existing interactive state, so the interactive will be initialized from the linked state.
-      phone.post('interactiveState', null);
-      interactiveStateAvailable = false;
-      launchInteractive();
-      $('.data-select-dialog').remove();
+    $('#state1-button').on('click', function () {
+      if (twoLinkedStates) {
+        mostRecentLinkedState = state1;
+      } else {
+        // Remove existing interactive state, so the interactive will be initialized from the linked state.
+        phone.post('interactiveState', null);
+        interactiveStateAvailable = false;
+      }
+      launchInt();
     });
-    $('#current-version-button').on('click', function () {
-      // Update current state timestamp, so it will be considered to be the most recent one.
-      phone.post('interactiveState', 'touch');
-      mostRecentLinkedState = null;
-      launchInteractive();
-      $('.data-select-dialog').remove();
+    $('#state2-button').on('click', function () {
+      if (twoLinkedStates) {
+        mostRecentLinkedState = state2;
+      } else {
+        // Update current state timestamp, so it will be considered to be the most recent one.
+        phone.post('interactiveState', 'touch');
+        mostRecentLinkedState = null;
+      }
+      launchInt();
     });
   }
 
@@ -145,19 +161,38 @@ function autolaunchInteractive (documentId, launchUrl) {
 
     interactiveData = _interactiveData;
     interactiveStateAvailable = stateValid(interactiveData.interactiveState);
-    // Use most recent linked state.
+
     var linkedStates = interactiveData.allLinkedStates;
+    // Find linked state which is directly linked to this one.
+    directlyLinkedState = linkedStates[0];
+    // Find the most recent linked state.
     mostRecentLinkedState = linkedStates && linkedStates.slice().sort(function (a, b) {
       return new Date(b.updatedAt) - new Date(a.updatedAt)
     })[0];
-    var linkedStateTimestamp = stateValid(mostRecentLinkedState && mostRecentLinkedState.data) && new Date(mostRecentLinkedState.updatedAt);
-    var currentDataTimestamp = interactiveStateAvailable && new Date(interactiveData.interactiveStateUpdatedAt);
 
-    if (linkedStateTimestamp && currentDataTimestamp && linkedStateTimestamp > currentDataTimestamp) {
-      showDataSelectDialog();
-    } else {
-      launchInteractive();
+    // There are a few possible cases now:
+    var currentDataTimestamp = interactiveStateAvailable && new Date(interactiveData.updatedAt);
+    var mostRecentLinkedStateTimestamp = stateValid(mostRecentLinkedState && mostRecentLinkedState.data) && new Date(mostRecentLinkedState.updatedAt);
+    var directlyLinkedStateTimestamp = stateValid(directlyLinkedState && directlyLinkedState.data) && new Date(directlyLinkedState.updatedAt);
+
+    // Current state is available, but there's most recent data in one of the linked states. Ask user.
+    if (interactiveStateAvailable && mostRecentLinkedStateTimestamp && mostRecentLinkedStateTimestamp > currentDataTimestamp) {
+      showDataSelectDialog(false);
+      return;
     }
+
+    // There's no current state and directly linked interactive isn't the most recent one. Aks user.
+    if (!interactiveStateAvailable &&
+        directlyLinkedState !== mostRecentLinkedState &&
+        directlyLinkedStateTimestamp && mostRecentLinkedStateTimestamp &&
+        mostRecentLinkedStateTimestamp > directlyLinkedStateTimestamp) {
+      showDataSelectDialog(true);
+      return;
+    }
+
+    // Current state is available and it's the most recent one. Or there's no current state, but the directly linked
+    // state is the most recent one.
+    launchInteractive();
   });
 
   phone.addListener('getExtendedSupport', function() {

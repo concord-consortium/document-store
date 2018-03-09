@@ -23,51 +23,51 @@
 
         .versions
           .version-info
-            #prev-version-button.dialog-button
+            #state1-button.dialog-button
               Use this version
 
             .preview
               .iframe-wrapper
-                %iframe#prev-version-preview
+                %iframe#state1-preview
             .center.preview-label
               Click to preview
 
             %table.version-desc
               %tr
                 %th Updated at
-                %td#prev-version-time
+                %td#state1-time
               %tr
                 %th Page
                 %td
-                  %span#prev-version-page-idx
-                  %span#prev-version-page-name
+                  %span#state1-page-idx
+                  %span#state1-page-name
               %tr
                 %th Activity
-                %td#prev-version-activity-name
+                %td#state1-activity-name
 
           .version-info
             .center
-              #current-version-button.dialog-button
+              #state2-button.dialog-button
                 Use this version
 
             .preview
               .iframe-wrapper
-                %iframe#current-version-preview
+                %iframe#state2-preview
             .center.preview-label
               Click to preview
 
             %table.version-desc
               %tr
                 %th Updated at
-                %td#current-version-time
+                %td#state2-time
               %tr
                 %th Page
                 %td
-                  %span#current-version-page-idx
-                  %span#current-version-page-name
+                  %span#state2-page-idx
+                  %span#state2-page-name
               %tr
                 %th Activity
-                %td#current-version-activity-name
+                %td#state2-activity-name
 
   -else
     .row
