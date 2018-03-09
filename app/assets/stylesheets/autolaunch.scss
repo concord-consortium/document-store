@@ -117,10 +117,19 @@
     height: 90%;
     z-index: 100;
     cursor: pointer;
-    iframe {
-      width: 100%;
-      height: 100%;
-      transform: scale3d(1, 1, 1);
+    @media (max-width: 1200px) {
+      iframe {
+        width: 150%;
+        height: 150%;
+        transform: scale3d(0.666666, 0.666666, 1);
+      }
+    }
+    @media (min-width: 1200px) {
+      iframe {
+        width: 100%;
+        height: 100%;
+        transform: scale3d(1, 1, 1);
+      }
     }
   }
 
