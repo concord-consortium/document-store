@@ -15,7 +15,7 @@ function autolaunchInteractive (documentId, launchUrl) {
   var interactiveStateAvailable = false;
 
   function stateValid (state) {
-    return state && state.docStore && state.docStore.recordid && state.docStore.accessKeys && state.docStore.accessKeys.readOnly;
+    return !!(state && state.docStore && state.docStore.recordid && state.docStore.accessKeys && state.docStore.accessKeys.readOnly);
   }
 
   function showDataSelectDialog (twoLinkedStates) {
@@ -163,8 +163,11 @@ function autolaunchInteractive (documentId, launchUrl) {
     interactiveStateAvailable = stateValid(interactiveData.interactiveState);
 
     var linkedStates = interactiveData.allLinkedStates;
-    // Find linked state which is directly linked to this one.
-    directlyLinkedState = linkedStates[0];
+    // Find linked state which is directly linked to this one. In fact it's a state which is the closest to given one
+    // if there are some "gaps".
+    directlyLinkedState = linkedStates && linkedStates.filter(function (el) {
+      return stateValid(el.data);
+    })[0];
     // Find the most recent linked state.
     mostRecentLinkedState = linkedStates && linkedStates.slice().sort(function (a, b) {
       return new Date(b.updatedAt) - new Date(a.updatedAt)
@@ -192,6 +195,19 @@ function autolaunchInteractive (documentId, launchUrl) {
 
     // Current state is available and it's the most recent one. Or there's no current state, but the directly linked
     // state is the most recent one.
+    if (!interactiveStateAvailable && directlyLinkedState) {
+      // Show "Copying work from..." message when it actually happens and keep it visible for 3 seconds.
+      $('#copy-page-idx').text(directlyLinkedState.pageIndex);
+      if (directlyLinkedState.pageName) {
+        $('#copy-page-name').text(' - ' + directlyLinkedState.pageName);
+      }
+      $('#copy-activity-name').text(directlyLinkedState.activityName);
+      $('#copy-overlay').show();
+      setTimeout(function () {
+        $('#copy-overlay').hide();
+      }, 3000);
+    }
+
     launchInteractive();
   });
 

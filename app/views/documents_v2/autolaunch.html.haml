@@ -3,14 +3,28 @@
     There was a problem setting up this interactive. Please try refreshing your page.
 -if @document
   - if @document.shared
-    .row
-      .small-12.text-center.columns.end
-        #loading-message
-          %span#loading-image
-            =image_tag "loading.gif"
-          %span#loading-text
-            Loading...
+    .loading-overlay
+      .center
+        =image_tag "loading.gif"
+        %span.loading-text
+          Loading interactive...
+
     %iframe#autolaunch_iframe
+
+    .loading-overlay#copy-overlay
+      .center
+        =image_tag "loading.gif"
+        %span.loading-text
+          Copying work from...
+        %table
+          %tr
+            %th Page
+            %td
+              %span#copy-page-idx
+              %span#copy-page-name
+          %tr
+            %th Activity
+            %td#copy-activity-name
 
     .data-select-dialog
       .overlay
