@@ -16,12 +16,10 @@ class DocumentContent < ActiveRecord::Base
   def sync_attributes
     content_dirty = false
     c = self.content
-    content_dirty ||= _set_attribute(c, "name", title)
     content_dirty ||= _set_attribute(c, "_permissions", (shared ? 1 : 0))
 
     original_content_dirty = false
     oc = self.original_content
-    original_content_dirty ||= _set_attribute(oc, "name", title)
     original_content_dirty ||= _set_attribute(oc, "_permissions", (shared ? 1 : 0))
 
     atts_to_update = {}
