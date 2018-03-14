@@ -46,8 +46,8 @@ function autolaunchInteractive (documentId, launchUrl) {
     $('.data-select-dialog').show()
     $('#state1-time').text((new Date(state1.updatedAt)).toLocaleString());
     $('#state2-time').text((new Date(state2.updatedAt)).toLocaleString());
-    $('#state1-page-idx').text(state1.pageIndex);
-    $('#state2-page-idx').text(state2.pageIndex);
+    $('#state1-page-idx').text(state1.pageNumber);
+    $('#state2-page-idx').text(state2.pageNumber);
     if (state1.pageName) {
       $('#state1-page-name').text(' - ' + state1.pageName);
     }
@@ -57,13 +57,18 @@ function autolaunchInteractive (documentId, launchUrl) {
     $('#state1-activity-name').text(state1.activityName);
     $('#state2-activity-name').text(state2.activityName);
 
-    var prevUrl = state1.interactiveStateUrl;
-    var srcPrev = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({ url: prevUrl }))});
-    $('#state1-preview').attr('src', srcPrev)
-
-    var currentUrl = state2.interactiveStateUrl;
-    var srcCurrent = $.param.querystring(launchUrl, {launchFromLara: Base64.encode(JSON.stringify({ url: currentUrl }))});
-    $('#state2-preview').attr('src', srcCurrent);
+    var src1 = (state1.data || state1.interactiveState).lara_options.reporting_url;
+    var src2 = (state2.data || state2.interactiveState).lara_options.reporting_url;
+    if (window.location.origin !== "https://document-store.concord.org") {
+      // document-server, CFM or CODAP aren't very good in making sure that correct URLs are being used.
+      // Even if you create a document pointing to some other instance of document-server, it gets lost
+      // somewhere and CODAP/CFM will try to use the default one. This little hack lets you test things
+      // locally or with a custom document server deployment.
+      src1 += "&documentServer=" + window.location.origin;
+      src2 += "&documentServer=" + window.location.origin;
+    }
+    $('#state1-preview').attr('src', src1);
+    $('#state2-preview').attr('src', src2);
 
     $('.overlay').on('click', hidePreview);
     $('.preview').on('click', function () {
@@ -197,7 +202,7 @@ function autolaunchInteractive (documentId, launchUrl) {
     // state is the most recent one.
     if (!interactiveStateAvailable && directlyLinkedState) {
       // Show "Copying work from..." message when it actually happens and keep it visible for 3 seconds.
-      $('#copy-page-idx').text(directlyLinkedState.pageIndex);
+      $('#copy-page-idx').text(directlyLinkedState.pageNumber);
       if (directlyLinkedState.pageName) {
         $('#copy-page-name').text(' - ' + directlyLinkedState.pageName);
       }
