@@ -57,8 +57,8 @@ function autolaunchInteractive (documentId, launchUrl) {
     $('#state1-activity-name').text(state1.activityName);
     $('#state2-activity-name').text(state2.activityName);
 
-    var src1 = (state1.data || state1.interactiveState).lara_options.reporting_url;
-    var src2 = (state2.data || state2.interactiveState).lara_options.reporting_url;
+    var src1 = state1.interactiveState.lara_options.reporting_url;
+    var src2 = state2.interactiveState.lara_options.reporting_url;
     if (window.location.origin !== "https://document-store.concord.org") {
       // document-server, CFM or CODAP aren't very good in making sure that correct URLs are being used.
       // Even if you create a document pointing to some other instance of document-server, it gets lost
@@ -104,7 +104,7 @@ function autolaunchInteractive (documentId, launchUrl) {
   }
 
   function launchInteractive () {
-    var linkedState = mostRecentLinkedState && mostRecentLinkedState.data;
+    var linkedState = mostRecentLinkedState && mostRecentLinkedState.interactiveState;
     var launchParams = {url: interactiveData.interactiveStateUrl, source: documentId, collaboratorUrls: interactiveData.collaboratorUrls};
 
     // If there is a linked state and no interactive state then change the source document to point to the linked recordid and add the access key.
@@ -171,7 +171,7 @@ function autolaunchInteractive (documentId, launchUrl) {
     // Find linked state which is directly linked to this one. In fact it's a state which is the closest to given one
     // if there are some "gaps".
     directlyLinkedState = linkedStates && linkedStates.filter(function (el) {
-      return stateValid(el.data);
+      return stateValid(el.interactiveState);
     })[0];
     // Find the most recent linked state.
     mostRecentLinkedState = linkedStates && linkedStates.slice().sort(function (a, b) {
@@ -180,8 +180,8 @@ function autolaunchInteractive (documentId, launchUrl) {
 
     // There are a few possible cases now:
     var currentDataTimestamp = interactiveStateAvailable && new Date(interactiveData.updatedAt);
-    var mostRecentLinkedStateTimestamp = stateValid(mostRecentLinkedState && mostRecentLinkedState.data) && new Date(mostRecentLinkedState.updatedAt);
-    var directlyLinkedStateTimestamp = stateValid(directlyLinkedState && directlyLinkedState.data) && new Date(directlyLinkedState.updatedAt);
+    var mostRecentLinkedStateTimestamp = stateValid(mostRecentLinkedState && mostRecentLinkedState.interactiveState) && new Date(mostRecentLinkedState.updatedAt);
+    var directlyLinkedStateTimestamp = stateValid(directlyLinkedState && directlyLinkedState.interactiveState) && new Date(directlyLinkedState.updatedAt);
 
     // Current state is available, but there's most recent data in one of the linked states. Ask user.
     if (interactiveStateAvailable && mostRecentLinkedStateTimestamp && mostRecentLinkedStateTimestamp > currentDataTimestamp) {
