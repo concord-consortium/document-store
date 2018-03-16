@@ -167,12 +167,12 @@ function autolaunchInteractive (documentId, launchUrl) {
     interactiveData = _interactiveData;
     interactiveStateAvailable = stateValid(interactiveData.interactiveState);
 
-    var linkedStates = interactiveData.allLinkedStates;
+    var linkedStates = interactiveData.allLinkedStates && interactiveData.allLinkedStates.filter(function (el) {
+      return stateValid(el.interactiveState);
+    });
     // Find linked state which is directly linked to this one. In fact it's a state which is the closest to given one
     // if there are some "gaps".
-    directlyLinkedState = linkedStates && linkedStates.filter(function (el) {
-      return stateValid(el.interactiveState);
-    })[0];
+    directlyLinkedState = linkedStates && linkedStates[0];
     // Find the most recent linked state.
     mostRecentLinkedState = linkedStates && linkedStates.slice().sort(function (a, b) {
       return new Date(b.updatedAt) - new Date(a.updatedAt)
