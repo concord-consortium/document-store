@@ -230,18 +230,21 @@ function autolaunchInteractive (documentId, launchUrl) {
     launchInteractive();
   });
 
-  phone.addListener('getExtendedSupport', function() {
-    var options = { reset: false }
-    if (fullscreenScaling) {
-      options.aspectRatio = screen.width / screen.height;
-    }
-    phone.post('extendedSupport', options);
-  });
-
   // TODO: there seems to be a race condition between when the page loads and when initialize can be called
   setTimeout(function () {
     // Initialize connection after all message listeners are added!
     phone.initialize();
+
+    var info = {
+      api: 1,
+      features: {
+        reset: false
+      }
+    };
+    if (fullscreenScaling) {
+      info.features.aspectRatio = screen.width / screen.height;
+    }
+    phone.post('supportedFeatures', info);
   }, 1000);
 
   if (fullscreenScaling) {

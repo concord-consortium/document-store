@@ -1,5 +1,5 @@
 function fullscreenSupport (iframe) {
-  var MAX_WIDTH = 1500;
+  var MAX_WIDTH = 2000;
   var $target = $(iframe);
 
   function setScaling () {
