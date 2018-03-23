@@ -196,3 +196,31 @@
 #copy-overlay {
   display: none;
 }
+
+.fullscreen-icon {
+  display: none;
+  font-size: 45px;
+  height: 50px;
+  width: 50px;
+  background-size: 50px;
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 10000;
+  cursor: pointer;
+  background-image: url("fullscreen.svg");
+  background-color: transparent;
+  background-repeat: no-repeat;
+  border-radius: 0;
+  color: transparent;
+  &:hover {
+    background-image: url("fullscreen-dark.svg");
+  }
+
+  &.fullscreen{
+    background-image: url("fullscreen-exit.svg");
+    &:hover {
+      background-image: url("fullscreen-exit-dark.svg");
+    }
+  }
+}

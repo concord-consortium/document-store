@@ -1,4 +1,16 @@
 function autolaunchInteractive (documentId, launchUrl) {
+  function getURLParam (name) {
+    const url = window.location.href;
+    name = name.replace(/[[]]/g, '\\$&');
+    const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+    const results = regex.exec(url);
+    if (!results) return null
+    if (!results[2]) return true
+    return decodeURIComponent(results[2].replace(/\+/g, ' '))
+  }
+
+  var fullscreenScaling = getURLParam('scaling');
+
   var CURRENT_VS_LINKED = "Another page contains more recent data. Which would you like to use?";
   var LINKED_VS_LINKED = "There are two possibilities for continuing your work. Which version would you like to use?";
 
@@ -6,6 +18,8 @@ function autolaunchInteractive (documentId, launchUrl) {
   var showTimeoutId = setTimeout(function() {
     $('#loading-text').html("Still loading!  You may want to reload this page to try again.")
   }, 10000);
+
+
 
   var phone = iframePhone.getIFrameEndpoint();
   // Variables below are set in `initInteractive` handler.
@@ -216,13 +230,24 @@ function autolaunchInteractive (documentId, launchUrl) {
     launchInteractive();
   });
 
-  phone.addListener('getExtendedSupport', function() {
-    phone.post('extendedSupport', { reset: false });
-  });
-
   // TODO: there seems to be a race condition between when the page loads and when initialize can be called
   setTimeout(function () {
     // Initialize connection after all message listeners are added!
     phone.initialize();
+
+    var info = {
+      api: 1,
+      features: {
+        reset: false
+      }
+    };
+    if (fullscreenScaling) {
+      info.features.aspectRatio = screen.width / screen.height;
+    }
+    phone.post('supportedFeatures', info);
   }, 1000);
+
+  if (fullscreenScaling) {
+    fullscreenSupport($('#autolaunch_iframe'));
+  }
 }
