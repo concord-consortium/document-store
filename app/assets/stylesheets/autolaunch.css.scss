@@ -208,19 +208,19 @@
   right: 10px;
   z-index: 10000;
   cursor: pointer;
-  background-image: url("fullscreen.svg");
+  background-image: image-url("fullscreen.svg");
   background-color: transparent;
   background-repeat: no-repeat;
   border-radius: 0;
   color: transparent;
   &:hover {
-    background-image: url("fullscreen-dark.svg");
+    background-image: image-url("fullscreen-dark.svg");
   }
 
   &.fullscreen{
-    background-image: url("fullscreen-exit.svg");
+    background-image: image-url("fullscreen-exit.svg");
     &:hover {
-      background-image: url("fullscreen-exit-dark.svg");
+      background-image: image-url("fullscreen-exit-dark.svg");
     }
   }
 }
