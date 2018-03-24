@@ -37,53 +37,54 @@
       .content
         #question
 
-        .versions
-          .version-info
-            #state1-button.dialog-button
-              Use this version
-
-            .preview
-              .iframe-wrapper
-                %iframe#state1-preview
-            .center.preview-label
-              Click to preview
-
-            %table.version-desc
-              %tr
-                %th Updated at
-                %td#state1-time
-              %tr
-                %th Page
-                %td
-                  %span#state1-page-idx
-                  %span#state1-page-name
-              %tr
-                %th Activity
-                %td#state1-activity-name
-
-          .version-info
-            .center
-              #state2-button.dialog-button
+        .scroll-wrapper
+          .versions
+            .version-info
+              #state1-button.dialog-button
                 Use this version
 
-            .preview
-              .iframe-wrapper
-                %iframe#state2-preview
-            .center.preview-label
-              Click to preview
+              .preview
+                .iframe-wrapper
+                  %iframe#state1-preview
+              .center.preview-label
+                Click to preview
 
-            %table.version-desc
-              %tr
-                %th Updated at
-                %td#state2-time
-              %tr
-                %th Page
-                %td
-                  %span#state2-page-idx
-                  %span#state2-page-name
-              %tr
-                %th Activity
-                %td#state2-activity-name
+              %table.version-desc
+                %tr
+                  %th Updated at
+                  %td#state1-time
+                %tr
+                  %th Page
+                  %td
+                    %span#state1-page-idx
+                    %span#state1-page-name
+                %tr
+                  %th Activity
+                  %td#state1-activity-name
+
+            .version-info
+              .center
+                #state2-button.dialog-button
+                  Use this version
+
+              .preview
+                .iframe-wrapper
+                  %iframe#state2-preview
+              .center.preview-label
+                Click to preview
+
+              %table.version-desc
+                %tr
+                  %th Updated at
+                  %td#state2-time
+                %tr
+                  %th Page
+                  %td
+                    %span#state2-page-idx
+                    %span#state2-page-name
+                %tr
+                  %th Activity
+                  %td#state2-activity-name
 
   -else
     .row
