@@ -117,6 +117,20 @@ function autolaunchInteractive (documentId, launchUrl) {
     });
   }
 
+  function sendSupportedFeaturesMsg () {
+    var info = {
+      apiVersion: 1,
+      features: {
+        interactiveState: true,
+        reset: false
+      }
+    };
+    if (fullscreenScaling) {
+      info.features.aspectRatio = screen.width / screen.height;
+    }
+    phone.post('supportedFeatures', info);
+  }
+
   function launchInteractive () {
     var linkedState = mostRecentLinkedState && mostRecentLinkedState.interactiveState;
     var launchParams = {url: interactiveData.interactiveStateUrl, source: documentId, collaboratorUrls: interactiveData.collaboratorUrls};
@@ -136,14 +150,7 @@ function autolaunchInteractive (documentId, launchUrl) {
     // 3. When autolaunch gets an getInteractiveState request from Lara it either
     //    a. immedatiely returns 'nochange' to Lara when the iframeCanAutosave flag isn't set
     //    b. sends a 'cfm::autosave' message to the app and then sends 'nochange' when the app returns 'cfm::autosaved'
-
-    phone.post('supportedFeatures', {
-      apiVersion: 1,
-      features: {
-        interactiveState: true
-      }
-    });
-
+    sendSupportedFeaturesMsg();
     var iframeCanAutosave = false;
     var iframeLoaded = function () {
       $(window).on('message', function (e) {
@@ -159,7 +166,13 @@ function autolaunchInteractive (documentId, launchUrl) {
           }
         }
       })
-      iframe.postMessage({type: 'cfm::getCommands'}, '*')
+      iframe.postMessage({type: 'cfm::getCommands'}, '*');
+
+      // Hide help message that points fullscreen button when CODAP is loaded and user starts using it (mouse enter).
+      // Note that there's some CSS delay, so message will actually fade out after a few seconds.
+      $(window).on('mouseenter', function () {
+        $('#fullscreen-help').addClass('hidden');
+      });
     };
 
     phone.addListener('getInteractiveState', function () {
@@ -234,17 +247,7 @@ function autolaunchInteractive (documentId, launchUrl) {
   setTimeout(function () {
     // Initialize connection after all message listeners are added!
     phone.initialize();
-
-    var info = {
-      api: 1,
-      features: {
-        reset: false
-      }
-    };
-    if (fullscreenScaling) {
-      info.features.aspectRatio = screen.width / screen.height;
-    }
-    phone.post('supportedFeatures', info);
+    sendSupportedFeaturesMsg();
   }, 1000);
 
   if (fullscreenScaling) {

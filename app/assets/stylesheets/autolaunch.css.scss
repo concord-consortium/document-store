@@ -197,6 +197,25 @@
   display: none;
 }
 
+#fullscreen-help {
+  position: fixed;
+  left: 0;
+  bottom: 12px;
+  height: 40px;
+  width: calc(100% - 50px);
+  text-align: center;
+  line-height: 36px;
+  font-size: 0;
+  color: #8e8e8e;
+  text-shadow: 1px 1px 5px #fff;
+
+  &.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.5s ease-out 2s, visibility .01s linear 3.5s;
+  }
+}
+
 .fullscreen-icon {
   display: none;
   font-size: 45px;
