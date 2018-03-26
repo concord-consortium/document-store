@@ -122,7 +122,7 @@ function autolaunchInteractive (documentId, launchUrl) {
       apiVersion: 1,
       features: {
         interactiveState: true,
-        reset: false
+        reset: true
       }
     };
     if (fullscreenScaling) {
