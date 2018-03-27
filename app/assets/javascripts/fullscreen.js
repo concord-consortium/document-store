@@ -21,6 +21,8 @@ function fullscreenSupport (iframe) {
       $target.css('height', '100%');
       $target.css('transform', 'scale3d(1,1,1)');
     }
+    // Help text.
+    $('#fullscreen-help').css('fontSize', Math.round(Math.pow(window.innerWidth / 5, 0.65)) + 'px');
   }
 
   function setupFullsceenButton () {
