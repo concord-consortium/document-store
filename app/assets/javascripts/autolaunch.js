@@ -245,6 +245,14 @@ function autolaunchInteractive (documentId, launchUrl) {
 
   // TODO: there seems to be a race condition between when the page loads and when initialize can be called
   setTimeout(function () {
+    phone.addListener('getInteractiveState', function () {
+      // Temporary listener used only before CODAP document is loaded.
+      // It always return "nochange" response. If LARA establishes connection with iframe that saves state,
+      // it will block page navigation until it gets response for `getInteractiveState`. This handler ensures that
+      // a response will be always delivered, even if user is stuck at data selector dialog.
+      // When CODAP document is loaded, this listener will be overwritten.
+      phone.post('interactiveState', 'nochange');
+    });
     // Initialize connection after all message listeners are added!
     phone.initialize();
     sendSupportedFeaturesMsg();
