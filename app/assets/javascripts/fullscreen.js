@@ -31,9 +31,14 @@ function fullscreenSupport (iframe) {
     $button.on('click', function () {
       if (!screenfull.isFullscreen) {
         screenfull.request();
-        $button.addClass('fullscreen');
       } else {
         screenfull.exit();
+      }
+    });
+    document.addEventListener(screenfull.raw.fullscreenchange, function () {
+      if (screenfull.isFullscreen) {
+        $button.addClass('fullscreen');
+      } else {
         $button.removeClass('fullscreen');
       }
     });
