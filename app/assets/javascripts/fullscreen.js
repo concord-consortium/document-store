@@ -26,6 +26,7 @@ function fullscreenSupport (iframe) {
   }
 
   function setupFullsceenButton () {
+    $('#fullscreen-help').show();
     var $button = $('.fullscreen-icon');
     $button.show();
     $button.on('click', function () {
