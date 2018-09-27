@@ -1,0 +1,38 @@
+!!!
+%html
+  %head
+    %meta{:charset => "utf-8"}
+    %meta{:name => "viewport", :content => "width=device-width, initial-scale=1.0"}
+    %title= content_for?(:title) ? yield(:title) : 'iFrame-tall'
+    = stylesheet_link_tag 'application', media: 'all'
+    = javascript_include_tag 'vendor/modernizr'
+    = javascript_include_tag 'application'
+    = csrf_meta_tags
+  :css
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+    }
+    .container {
+    }
+    .example {
+      margin: 2em;
+      background: #eee;
+      padding: 0.5em;
+      border-radius: 0.5em;
+    }
+  %body{style: 'margin:0px; padding:0px'}
+    .container
+      .example
+        %a{href:"fullscreen", target:"_blank"}
+          Full Screen Example
+      .example
+        %a{href:"iframe-wide", target:"_blank"}
+          Wide iFrame Example
+      .example
+        %a{href:"iframe-tall", target:"_blank"}
+          Tall iFrame Example
