@@ -14,7 +14,7 @@ function fullscreenSupport (iframe) {
       $target.css('width', width);
       $target.css('height', height);
       $target.css('transform-origin', 'top left');
-      $target.css('transform', 'scale3d(' + window.innerWidth / width + ',' + window.innerHeight / height + ',1)');
+      $target.css('transform', 'scale3d(' + window.innerWidth / width + ',' + window.innerWidth / width  + ',1)');
     } else {
       // Disable scaling in fullscreen mode.
       $target.css('width', '100%');
