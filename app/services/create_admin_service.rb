@@ -5,7 +5,7 @@ class CreateAdminService
         user.password_confirmation = Settings.admin_password
         user.username = Settings.admin_username
         user.name = Settings.admin_name
-        user.confirm!
+        user.confirm
       end
   end
 end

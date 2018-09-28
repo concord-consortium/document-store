@@ -1,5 +1,12 @@
 require 'concord/auth_portal'
 
+  # Devise < 4.0.0 causes rails 4.x to emit the following depirication warning:
+  # DEPRECATION WARNING: `#column_for_attribute` will return a null object
+  # in _app_views_devise_registrations_new_html_haml___783406730152292399
+  # This is fine, but it makes our tests loud. Silince this message for tests:
+  if Rails.env == 'test'
+    ActiveSupport::Deprecation.behavior = :silence
+  end
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
 Devise.setup do |config|
