@@ -1,20 +1,21 @@
+
 function fullscreenSupport (iframe) {
   var MAX_WIDTH = 2000;
   var $target = $(iframe);
 
   function setScaling () {
     if (!screenfull.isFullscreen) {
-      var screenAspectRatio = screen.width / screen.height;
       // Scale iframe, but make sure that:
       // 1. Iframe is smaller than MAX_WIDTH which should be enough for all the documents. It prevents creating
       //    some huge CODAP canvases on really big screens (e.g. 4k monitors).
       // 2. Iframe is not smaller than size of the current window.
-      var width = Math.max(window.innerWidth, Math.min(MAX_WIDTH, screen.width));
-      var height = width / screenAspectRatio;
+      var width  = Math.max(window.innerWidth, Math.min(MAX_WIDTH, screen.width));
+      var scale  = window.innerWidth  / width
+      var height = window.innerHeight / scale
       $target.css('width', width);
       $target.css('height', height);
       $target.css('transform-origin', 'top left');
-      $target.css('transform', 'scale3d(' + window.innerWidth / width + ',' + window.innerWidth / width  + ',1)');
+      $target.css('transform', 'scale3d(' + scale + ',' + scale + ',1)');
     } else {
       // Disable scaling in fullscreen mode.
       $target.css('width', '100%');
