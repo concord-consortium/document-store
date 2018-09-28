@@ -1,14 +1,14 @@
 source 'https://rubygems.org'
 ruby '2.1.2'
-gem 'rails', '4.1.5'
-gem 'sass-rails', '~> 4.0.3'
-gem 'uglifier', '>= 1.3.0'
+gem 'rails', '~> 4.2.7.1'
+gem 'sass-rails', '~> 4.0.5'
+gem 'uglifier', '~> 2.7.2'
 gem 'coffee-rails', '~> 4.0.0'
-gem 'jquery-rails'
+gem 'jquery-rails', '~> 3.1.3'
 gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0',          group: :doc
 gem 'spring',        group: :development
-gem 'devise'
+gem 'devise', '~> 3.5.10'
 gem 'haml-rails'
 gem 'pg'
 gem 'unicorn'
@@ -18,9 +18,9 @@ gem 'gctools', require: false
 gem 'rails_12factor', group: :production
 gem 'rails-settings-cached'
 gem 'cancancan', '~> 1.9'
-gem 'omniauth'
+gem 'omniauth', '~> 1.3.2'
 gem 'omniauth-oauth2'
-gem 'rack-cors', :require => 'rack/cors'
+gem 'rack-cors', '~> 0.4.1', :require => 'rack/cors'
 gem 'foundation-rails'
 gem 'simple_form'
 gem 'newrelic_rpm'
@@ -32,6 +32,13 @@ gem 'will_paginate-foundation'
 gem 'progress'
 gem 'oj' # a faster json library
 gem 'oj_mimic_json'  # use the oj lib *everywhere* when dealing with json
+
+# Explicitly set some dependent gems versions because of vulns.
+gem 'nokogiri', '~> 1.8.3'
+gem 'ffi', '~> 1.9.24'
+gem 'rubyzip', '~> 1.2.1'
+gem 'sprockets', '~> 2.12.5'
+
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]
@@ -47,7 +54,8 @@ group :development do
 end
 group :development, :test do
   gem 'factory_girl_rails'
-  gem 'rspec-rails'
+  gem 'rspec', '~> 3.6.0'
+  gem 'rspec-rails', '~> 3.6.0'
 end
 group :test do
   gem 'capybara'
