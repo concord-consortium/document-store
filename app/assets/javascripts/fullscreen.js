@@ -9,8 +9,8 @@ window.GetIframeTransforms = function(_window, _screen) {
   var height = _window.innerHeight / scale;
   return {
     scale: scale,
-    width: width,
-    height: height
+    unscaledWidth: width,
+    unscaledHeight: height
   };
 }
 function fullscreenSupport (iframe) {
@@ -18,8 +18,8 @@ function fullscreenSupport (iframe) {
   function setScaling () {
     if (!screenfull.isFullscreen) {
       var trans = GetIframeTransforms(window, screen);
-      $target.css('width', trans.width);
-      $target.css('height', trans.height);
+      $target.css('width', trans.unscaledWidth);
+      $target.css('height', trans.unscaledHeight);
       $target.css('transform-origin', 'top left');
       $target.css('transform', 'scale3d(' + trans.scale + ',' + trans.scale + ',1)');
     } else {
