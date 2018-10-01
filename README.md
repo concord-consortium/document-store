@@ -44,8 +44,31 @@ Setting up a Portal authentication provider
 
 0. Restart the document server
 
+Deployment
+----------
+
+This repo auto-deploys `master` and pull requests to a staging server on Heroku.
+A deployment pipeline on Heroku allows deploying to production servers.
+
+
+Tests:
+-----
+
+* Rspec test can be run using `bundle exec rake`.
+* Spec test are run automatically on Travis.
+* If you have jest installed globally you can run focused JS tests using:
+
+```
+        jest --watch --config jest/jest.config.js
+```
+
+
+
+
 Docker
 ------
+
+Copy the sample database: `cp config/database.yml.docker config/database.yml`
 
 Run the command: `docker-compose up`
 
@@ -53,7 +76,7 @@ Document server should be available at:
 
 http://localhost:3001
 
-Other useful tips can be found at:
+Other useful tips, incouding how to get SSO working can be found at:
 
 https://github.com/concord-consortium/rigse/blob/master/docs/docker.md
 
