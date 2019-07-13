@@ -29,6 +29,8 @@ module Documentstore
     require 'rack/inflate_request'
     config.middleware.insert_before Rack::Runtime, Rack::InflateRequest
 
+    config.middleware.insert 0, Rack::UTF8Sanitizer
+
     config.middleware.insert_before Warden::Manager, Rack::Cors do
       allow do
         origins '*'

@@ -39,6 +39,9 @@ gem 'ffi', '~> 1.9.24'
 gem 'rubyzip', '~> 1.2.1'
 gem 'sprockets', '~> 2.12.5'
 
+# fix invalid uft-8 character sequences (https://www.pivotaltracker.com/n/projects/1055240/stories/160940567)
+gem 'rack-utf8_sanitizer'
+
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]
