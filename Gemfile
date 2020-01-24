@@ -39,6 +39,10 @@ gem 'ffi', '~> 1.9.24'
 gem 'rubyzip', '~> 1.2.1'
 gem 'sprockets', '~> 2.12.5'
 
+gem 'rack-secure_samesite_cookies',
+  :git => 'git://github.com/concord-consortium/secure-samesite-cookies',
+  :tag => 'v1.0'
+
 group :development do
   gem 'better_errors'
   gem 'binding_of_caller', :platforms=>[:mri_21]

@@ -1,3 +1,11 @@
+GIT
+  remote: git://github.com/concord-consortium/secure-samesite-cookies
+  revision: 31fb96a6891789e99ea559953119b6b35deb1256
+  tag: v1.0
+  specs:
+    rack-secure_samesite_cookies (0.1.0)
+      rack (>= 1.4.7)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -358,6 +366,7 @@ DEPENDENCIES
   progress
   quiet_assets
   rack-cors (~> 0.4.1)
+  rack-secure_samesite_cookies!
   rails (~> 4.2.7.1)
   rails-settings-cached
   rails_12factor
