@@ -8,7 +8,7 @@ gem 'jquery-rails', '~> 3.1.3'
 gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0',          group: :doc
 gem 'spring',        group: :development
-gem 'devise', '~> 3.5.10'
+gem 'devise', '~> 4.7.1'
 gem 'haml-rails'
 gem 'pg'
 gem 'unicorn'
