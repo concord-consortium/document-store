@@ -34,7 +34,7 @@ gem 'oj' # a faster json library
 gem 'oj_mimic_json'  # use the oj lib *everywhere* when dealing with json
 
 # Explicitly set some dependent gems versions because of vulns.
-gem 'nokogiri', '~> 1.8.3'
+gem 'nokogiri', '~> 1.9.1'
 gem 'ffi', '~> 1.9.24'
 gem 'rubyzip', '~> 1.2.1'
 gem 'sprockets', '~> 2.12.5'
