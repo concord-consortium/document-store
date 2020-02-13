@@ -41,7 +41,7 @@ gem 'sprockets', '~> 2.12.5'
 
 gem 'rack-secure_samesite_cookies',
   :git => 'git://github.com/concord-consortium/secure-samesite-cookies',
-  :tag => 'v1.0'
+  :tag => 'v1.0.2'
 
 group :development do
   gem 'better_errors'
