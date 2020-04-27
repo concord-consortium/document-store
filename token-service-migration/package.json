@@ -1,0 +1,17 @@
+{
+  "name": "token-service-migration",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "GOOGLE_APPLICATION_CREDENTIALS=key.json node index.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.662.0",
+    "firebase-admin": "^8.11.0",
+    "pg": "^8.0.3",
+    "pg-cursor": "^2.1.10"
+  }
+}

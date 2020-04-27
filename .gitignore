@@ -80,3 +80,8 @@ pickle-email-*.html
 # Environment files that may contain sensitive data
 .env
 .powenv
+
+node_modules
+key.json
+migration-errors.log
+migration.log
