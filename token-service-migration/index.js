@@ -6,6 +6,9 @@ const AWS = require("aws-sdk");
 const fs = require("fs");
 
 // === CONFIGURATION
+// This script will first check if file already exists in S3 and Firestore. Default behavior is not to overwrite
+// anything if it's already present. Change this variable to true to force updates.
+const forceUpdate = false;
 // S3 config
 // credentials should be provided using default env variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 const region = "us-east-1";
@@ -26,7 +29,9 @@ const tokenServiceTool = "cfm-shared";
 
 // Doc-Store DB connection configuration.
 const connectionString = process.env.DATABASE_URL;
-const batchSize = 10; // how many rows will be read at once by Postgres Cursor.
+// How many rows will be read at once by Postgres Cursor. Note that all the rows will be processed concurrently
+// so probably it's better to keep this value small.
+const batchSize = 10;
 
 const errorFile = "./migration-errors.log";
 const logFile = "./migration.log";
@@ -71,6 +76,16 @@ const run = async () => {
   // Cleanup log files.
   fs.writeFileSync(errorFile, "");
   fs.writeFileSync(logFile, "");
+  const stats = {
+    processed: 0,
+    firestoreWrites: 0,
+    firestoreSkipped: 0,
+    noWriteKey: 0,
+    s3Uploads: 0,
+    s3Skipped: 0,
+    s3RedirectObjs: 0,
+    updatedReadAccessKeyDocIds: []
+  };
 
   const client = await pool.connect();
   const countRes = await client.query("SELECT Count(*) FROM documents WHERE shared = true ");
@@ -84,14 +99,18 @@ const run = async () => {
   `));
 
   const read = () => {
-    cursor.read(batchSize, (err, rows) => {
+    cursor.read(batchSize, async (err, rows) => {
       if (err) {
         logError("DB read error", err);
       }
 
       log(".");
+      if (stats.processed % 1000 === 0 && stats.processed > 0) {
+        log(`${stats.processed} documents have been processed.\n`)
+      }
+      stats.processed += batchSize;
 
-      rows.forEach(async row => {
+      await Promise.all(rows.map(async row => {
         const rowWithoutContent = Object.assign({}, row, {content: undefined});
         // FOR CFM dev: these lines should be reviewed while implementing CFM-side.
         const readWriteKey = row.read_write_access_key || row.run_key;
@@ -106,41 +125,91 @@ const run = async () => {
             newDocumentId = crypto.createHash("sha256").update(readWriteKey).digest("hex");
           } else {
             newDocumentId = crypto.randomBytes(32).toString("hex");
+            try {
+              // Save generated documentId so if the script is run next time, we won't generate a new one and we
+              // won't have to update a file again to S3.
+              console.log('trying to update...');
+              const updateClient = await pool.connect();
+              await updateClient.query("UPDATE documents SET read_access_key = $1 WHERE id = $2", [newDocumentId, row.id]);
+              console.log('trying to update... DONE');
+              stats.updatedReadAccessKeyDocIds.push(row.id);
+            } catch (e) {
+              logError(`DocStore DB read_access_key update failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
+            }
           }
         }
 
         // Create Firestore doc only if there's any kind of read write key. Otherwise, it doesn't make sense.
         if (readWriteKey) {
           try {
-            await db.collection(`${tokenServiceEnv}:${tokenServiceCollection}`).doc(newDocumentId).set({
-              type: "s3Folder",
-              tool: tokenServiceTool,
-              name: row.title || `imported-doc-${row.id}`,
-              description: "legacy document-store shared document",
-              accessRules: [{
-                type: "readWriteToken",
-                readWriteToken
-              }]
-            });
+            const docRef = db.collection(`${tokenServiceEnv}:${tokenServiceCollection}`).doc(newDocumentId);
+            const doc = await docRef.get();
+            if (!doc.exists || forceUpdate) {
+              try {
+                await docRef.set({
+                  type: "s3Folder",
+                  tool: tokenServiceTool,
+                  name: row.title || `imported-doc-${row.id}`,
+                  description: "legacy document-store shared document",
+                  accessRules: [{
+                    type: "readWriteToken",
+                    readWriteToken
+                  }]
+                });
+                stats.firestoreWrites += 1;
+              } catch (e) {
+                logError(`Firestore upload failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
+              }
+            } else {
+              stats.firestoreSkipped += 1;
+            }
           } catch (e) {
-            logError(`Firestore upload failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
+            logError(`Firestore read failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
           }
+        } else {
+          stats.noWriteKey += 1;
         }
 
         // Document content should be ALWAYS uploaded to S3, even if there's no read-write key. In such case,
         // the document will be read-only.
         let uploadResult;
-        try {
-          uploadResult = await s3.upload({
-            Bucket: bucket,
-            Key: `${documentsFolder}/${newDocumentId}/file.json`,
-            Body: JSON.stringify(row.content, null, 2),
-            ContentType: 'application/json',
-            ContentEncoding: 'UTF-8',
-            CacheControl: 'no-cache'
-          }).promise()
-        } catch (e) {
-          logError(`S3 upload failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
+        const key = `${documentsFolder}/${newDocumentId}/file.json`;
+
+        const uploadToS3 = async () => {
+          try {
+            uploadResult = await s3.upload({
+              Bucket: bucket,
+              Key: key,
+              Body: JSON.stringify(row.content, null, 2),
+              ContentType: 'application/json',
+              ContentEncoding: 'UTF-8',
+              CacheControl: 'no-cache'
+            }).promise();
+            stats.s3Uploads += 1
+          } catch (e) {
+            logError(`S3 upload failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e)
+          }
+        }
+
+        if (forceUpdate) {
+          await uploadToS3();
+        } else {
+          try {
+            // This is a fast way to check if the object exists in the specified bucket/folder. It'll only download metadata.
+            await s3.headObject({
+              Bucket: bucket,
+              Key: key,
+            }).promise();
+            // Object exists, do nothing.
+            stats.s3Skipped += 1;
+          } catch (e) {
+            if (e.code === "NotFound") {
+              // Object doesn't exist, upload file.
+              await uploadToS3();
+            } else {
+              logError(`S3 headObject failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
+            }
+          }
         }
 
         if (uploadResult) {
@@ -160,17 +229,19 @@ const run = async () => {
               // used to access the redirect object (s3 website endpoint or Cloudfront URL). Actually, I'm not even sure
               // whether Cloudfront hostname would be maintained after the redirect.
               WebsiteRedirectLocation: `${cloudfront}/${uploadResult.Key}`
-            }).promise()
+            }).promise();
+            stats.s3RedirectObjs += 1;
           } catch (e) {
             logError(`S3 create redirect object failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
           }
         }
-      });
+      }));
 
       if (rows.length > 0) {
         read();
       } else {
-        log(`There have been ${errorsCount} errors while migrating legacy documents. Check migration-errors.log file.`);
+        log(`\nStats: ${JSON.stringify(stats, null, 2)}\n`);
+        log(`There have been ${errorsCount} errors while migrating legacy documents. Check migration-errors.log file.\n`);
         process.exit(0);
       }
     });
