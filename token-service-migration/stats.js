@@ -43,12 +43,16 @@ const run = async () => {
   const countRes = await client.query("SELECT Count(*) FROM documents");
   log(`${countRes.rows[0].count} shared documents to process\n`);
 
-  const docsCount = 50;
-  let biggestDocs = [0];
+  const docsCount = 100;
+  let stats = {
+    shared: [{sizeInMB: 0}],
+    private: [{sizeInMB: 0}]
+  }
 
   const cursor = client.query(new Cursor(`
-    SELECT LENGTH(CAST(content AS VARCHAR)) as contentlength
+    SELECT LENGTH(CAST(content AS VARCHAR)) as contentlength, documents.id, documents.shared, document_contents.created_at, document_contents.updated_at
     FROM document_contents 
+    INNER JOIN documents ON document_contents.id = documents.id
   `));
 
   const read = () => {
@@ -60,10 +64,11 @@ const run = async () => {
       log(".");
 
       rows.forEach(row => {
-        const len = Number(row.contentlength);
-        if (len > biggestDocs[biggestDocs.length - 1]) {
-          biggestDocs.push(len);
-          biggestDocs = biggestDocs.sort((a, b) => a - b).reverse();
+        const biggestDocs = row.shared ? stats.shared : stats.private;
+        const sizeInMB = row.contentlength / 2**20;
+        if (sizeInMB > biggestDocs[biggestDocs.length - 1].sizeInMB) {
+          biggestDocs.push({ id: row.id, sizeInMB, updatedAt: row.updated_at, createdAt: row.created_at });
+          biggestDocs.sort((a, b) => b.sizeInMB - a.sizeInMB);
           if (biggestDocs.length > docsCount) {
             biggestDocs.length = docsCount;
           }
@@ -73,7 +78,7 @@ const run = async () => {
       if (rows.length > 0) {
         read();
       } else {
-        log(`\nThe biggest documents: ${biggestDocs.map(v => (v/1e6).toFixed(3) + "MB").toString()}\n`);
+        log(`\nStats: ${JSON.stringify(stats, null, 2)}\n`);
         process.exit(0);
       }
     });
