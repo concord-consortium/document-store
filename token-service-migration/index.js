@@ -12,10 +12,9 @@ const forceUpdate = false;
 // S3 config
 // credentials should be provided using default env variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 const region = "us-east-1";
-const bucket = "models-resources";
+const bucket = "token-service-files";
 const documentsFolder = "cfm-shared-documents" ; // it should match value specified in token-service tool configuration
 const redirectsFolder = "legacy-document-store";
-const cloudfront = "https://models-resources.concord.org";
 
 // Token-Service / Firestore config
 const tokenServiceEnv = "staging";
@@ -108,7 +107,6 @@ const run = async () => {
       if (stats.processed % 1000 === 0 && stats.processed > 0) {
         log(`${stats.processed} documents have been processed.\n`)
       }
-      stats.processed += batchSize;
 
       await Promise.all(rows.map(async row => {
         const rowWithoutContent = Object.assign({}, row, {content: undefined});
@@ -128,10 +126,7 @@ const run = async () => {
             try {
               // Save generated documentId so if the script is run next time, we won't generate a new one and we
               // won't have to update a file again to S3.
-              console.log('trying to update...');
-              const updateClient = await pool.connect();
-              await updateClient.query("UPDATE documents SET read_access_key = $1 WHERE id = $2", [newDocumentId, row.id]);
-              console.log('trying to update... DONE');
+              await pool.query("UPDATE documents SET read_access_key = $1 WHERE id = $2", [newDocumentId, row.id]);
               stats.updatedReadAccessKeyDocIds.push(row.id);
             } catch (e) {
               logError(`DocStore DB read_access_key update failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
@@ -224,11 +219,7 @@ const run = async () => {
             await s3.putObject({
               Bucket: bucket,
               Key: `${redirectsFolder}/${oldDocumentId}`,
-              // We could also use relative path here, as both redirect object and the target object are in the same bucket.
-              // But absolute URL guarantees that user will be redirected to Cloudfront URL, no matter what base URL has been
-              // used to access the redirect object (s3 website endpoint or Cloudfront URL). Actually, I'm not even sure
-              // whether Cloudfront hostname would be maintained after the redirect.
-              WebsiteRedirectLocation: `${cloudfront}/${uploadResult.Key}`
+              WebsiteRedirectLocation: `/${uploadResult.Key}`
             }).promise();
             stats.s3RedirectObjs += 1;
           } catch (e) {
@@ -238,6 +229,7 @@ const run = async () => {
       }));
 
       if (rows.length > 0) {
+        stats.processed += batchSize;
         read();
       } else {
         log(`\nStats: ${JSON.stringify(stats, null, 2)}\n`);
