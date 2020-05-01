@@ -80,27 +80,29 @@ const run = async () => {
     firestoreWrites: 0,
     firestoreSkipped: 0,
     noWriteKey: 0,
-    s3Uploads: 0,
+    s3UploadsNewFile: 0,
+    s3UploadsUpdatedFile: 0,
     s3Skipped: 0,
     s3RedirectObjs: 0,
     updatedReadAccessKeyDocIds: []
   };
 
   const client = await pool.connect();
-  const countRes = await client.query("SELECT Count(*) FROM documents WHERE shared = true ");
+  const countRes = await client.query("SELECT Count(*) FROM documents WHERE shared = true");
   log(`${countRes.rows[0].count} shared documents to process\n`);
 
   const cursor = client.query(new Cursor(`
-    SELECT documents.*, document_contents.content
+    SELECT documents.*, document_contents.content, document_contents.updated_at as content_updated_at
     FROM documents
-    INNER JOIN document_contents ON document_contents.id = documents.id
-    WHERE documents.shared = true 
+    INNER JOIN document_contents ON document_contents.document_id = documents.id
+    WHERE documents.shared = true
   `));
 
   const read = () => {
     cursor.read(batchSize, async (err, rows) => {
       if (err) {
-        logError("DB read error", err);
+        console.error("DB read error", err);
+        process.exit(1);
       }
 
       log(".");
@@ -180,7 +182,6 @@ const run = async () => {
               ContentEncoding: 'UTF-8',
               CacheControl: 'no-cache'
             }).promise();
-            stats.s3Uploads += 1
           } catch (e) {
             logError(`S3 upload failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e)
           }
@@ -188,19 +189,28 @@ const run = async () => {
 
         if (forceUpdate) {
           await uploadToS3();
+          stats.s3UploadsNewFile += 1;
         } else {
           try {
             // This is a fast way to check if the object exists in the specified bucket/folder. It'll only download metadata.
-            await s3.headObject({
+            const metadata = await s3.headObject({
               Bucket: bucket,
               Key: key,
             }).promise();
-            // Object exists, do nothing.
-            stats.s3Skipped += 1;
+            // Object exists, check timestamps. Upload file to S3 only if it has been modified in DocStore recently.
+            // Note that system timezone MUST be set to UTC (that's why there's TZ=UTC in package.json script).
+            // Otherwise, pg-node will parse date assuming system timezone and results will be incorrect.
+            if (row.content_updated_at > metadata.LastModified) {
+              await uploadToS3();
+              stats.s3UploadsUpdatedFile += 1;
+            } else {
+              stats.s3Skipped += 1;
+            }
           } catch (e) {
             if (e.code === "NotFound") {
               // Object doesn't exist, upload file.
               await uploadToS3();
+              stats.s3UploadsNewFile += 1;
             } else {
               logError(`S3 headObject failed for document ${JSON.stringify(rowWithoutContent, null, 2)}`, e);
             }

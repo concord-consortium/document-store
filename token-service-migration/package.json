@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "GOOGLE_APPLICATION_CREDENTIALS=key.json node index.js",
+    "start": "TZ=UTC GOOGLE_APPLICATION_CREDENTIALS=key.json node index.js",
     "stats": "node stats.js"
   },
   "author": "",
