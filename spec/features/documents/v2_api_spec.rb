@@ -142,6 +142,23 @@ feature 'Document', :codap do
         doc2.reload()
         expect(doc2.shared).to eq(false)
       end
+
+      scenario 'saving of shared documents can be disabled using SHARED_DOCS_DISABLED ENV variable' do
+        allow(ENV).to receive(:[]).with("SHARED_DOCS_DISABLED").and_return(true)
+
+        doc = FactoryGirl.create(:document, title: "newdoc", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo', shared: false)
+        page.driver.browser.submit :put, "/v2/documents/#{doc.id}?accessKey=RW::foo&shared=true", '{ "def": [1,2,3,4] }'
+        expect(page.status_code).to eq(200)
+        doc.reload()
+        expect(doc.shared).to eq(true)
+
+        doc2 = FactoryGirl.create(:document, title: "newdoc2", form_content: '{ "foo": "bar" }', read_write_access_key: 'foo2', shared: true)
+        page.driver.browser.submit :put, "/v2/documents/#{doc2.id}?accessKey=RW::foo2&shared=false", '{ "def": [1,2,3,4] }'
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!Application is trying to access legacy Document Store server. You might be using an old version of the application. Save your document locally and reload the web page.!
+        doc2.reload()
+        expect(doc2.shared).to eq(true)
+      end
     end
 
     describe 'patch' do
@@ -217,6 +234,22 @@ feature 'Document', :codap do
         doc2.reload()
         expect(doc2.shared).to eq(false)
       end
+
+      scenario 'patching of shared documents can be disabled using SHARED_DOCS_DISABLED ENV variable' do
+        allow(ENV).to receive(:[]).with("SHARED_DOCS_DISABLED").and_return(true)
+        doc = FactoryGirl.create(:document, title: "newdoc", content: '{"foo":"bar","baz":"qux"}', read_write_access_key: 'foo', shared: false)
+        page.driver.browser.submit :patch, "/v2/documents/#{doc.id}?accessKey=RW::foo&shared=true", '[{ "op": "replace", "path": "/baz", "value": "boo" },  { "op": "add", "path": "/hello", "value": ["world"] },  { "op": "remove", "path": "/foo"}]'
+        expect(page.status_code).to eq(200)
+        doc.reload()
+        expect(doc.shared).to eq(true)
+
+        doc2 = FactoryGirl.create(:document, title: "newdoc2", content: '{"foo":"bar","baz":"qux"}', read_write_access_key: 'foo', shared: true)
+        page.driver.browser.submit :patch, "/v2/documents/#{doc2.id}?accessKey=RW::foo&shared=false", '[{ "op": "replace", "path": "/baz", "value": "boo" },  { "op": "add", "path": "/hello", "value": ["world"] },  { "op": "remove", "path": "/foo"}]'
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!Application is trying to access legacy Document Store server. You might be using an old version of the application. Save your document locally and reload the web page.!
+        doc2.reload()
+        expect(doc2.shared).to eq(true)
+      end
     end
 
     describe 'create' do
@@ -251,6 +284,18 @@ feature 'Document', :codap do
         page.driver.browser.submit :post, "/v2/documents", '{"foo'
         expect(page.status_code).to eq(400)
         expect(page).to have_content %!{"status":"Error","errors":["Form content must be valid json"],"valid":false,"message":"error.writeFailed"}!
+      end
+
+      scenario 'creating of shared documents can be disabled using SHARED_DOCS_DISABLED ENV variable' do
+        allow(ENV).to receive(:[]).with("SHARED_DOCS_DISABLED").and_return(true)
+
+        page.driver.browser.submit :post, "/v2/documents", '{ "foo": "bar" }'
+        expect(page.status_code).to eq(201)
+        expect(page).to have_content %!{"status":"Created","valid":true,!
+
+        page.driver.browser.submit :post, "/v2/documents?shared=true", '{ "foo": "bar" }'
+        expect(page.status_code).to eq(400)
+        expect(page).to have_content %!Application is trying to access legacy Document Store server. You might be using an old version of the application. Save your document locally and reload the web page.!
       end
     end
 
