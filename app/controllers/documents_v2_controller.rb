@@ -33,6 +33,10 @@ class DocumentsV2Controller < ApplicationController
     @document = Document.find_by(id: params[:id])
     render_not_found && return unless @document
 
+    if ENV['SHARED_DOCS_DISABLED'] && @document.shared
+      render_shared_docs_error && return
+    end
+
     return unless require_valid_read_write_access_key
 
     if params[:reset].present?
@@ -64,6 +68,10 @@ class DocumentsV2Controller < ApplicationController
     @document = Document.find_by(id: params[:id])
     render_not_found && return unless @document
 
+    if ENV['SHARED_DOCS_DISABLED'] && @document.shared
+      render_shared_docs_error && return
+    end
+
     return unless require_valid_read_write_access_key
 
     begin
@@ -90,6 +98,10 @@ class DocumentsV2Controller < ApplicationController
 
   def create
     new_doc_is_shared = params[:shared].present? ? params[:shared] == 'true' : false
+
+    if ENV['SHARED_DOCS_DISABLED'] && new_doc_is_shared
+      render_shared_docs_error && return
+    end
 
     if params[:source].present?
       @document = Document.find_by(id: params[:source])
@@ -243,6 +255,11 @@ class DocumentsV2Controller < ApplicationController
 
   def render_invalid_access_key
     render json: {valid: false, errors: ["Invalid accessKey"], message: "error.invalidAccessKey"}, status: 400
+  end
+
+  def render_shared_docs_error
+    msg = 'Application is trying to access legacy Document Store server. You might be using an old version of the application. Save your document locally and reload the web page.'
+    render json: {status: "Error", errors: [msg], valid: false, message: msg }, status: 400
   end
 
   def parse_access_key
