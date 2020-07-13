@@ -8,7 +8,7 @@ const fs = require("fs");
 // === CONFIGURATION
 // This script will first check if file already exists in S3 and Firestore. Default behavior is not to overwrite
 // anything if it's already present. Change this variable to true to force updates.
-const forceUpdate = false;
+const forceUpdate = !!process.env.FORCE_UPDATE;
 // S3 config
 // credentials should be provided using default env variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 const region = "us-east-1";
