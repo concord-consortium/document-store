@@ -12,12 +12,12 @@ const forceUpdate = false;
 // S3 config
 // credentials should be provided using default env variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 const region = "us-east-1";
-const bucket = "token-service-files";
-const documentsFolder = "cfm-shared-documents" ; // it should match value specified in token-service tool configuration
+const bucket = "models-resources";
+const documentsFolder = "cfm-shared" ; // it should match value specified in token-service tool configuration
 const redirectsFolder = "legacy-document-store";
 
 // Token-Service / Firestore config
-const tokenServiceEnv = "staging";
+const tokenServiceEnv = "production";
 const tokenServiceCollection = "resources";
 const tokenServiceTool = "cfm-shared";
 
