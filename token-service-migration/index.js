@@ -239,7 +239,7 @@ const run = async () => {
       }));
 
       if (rows.length > 0) {
-        stats.processed += batchSize;
+        stats.processed += rows.length;
         read();
       } else {
         log(`\nStats: ${JSON.stringify(stats, null, 2)}\n`);
