@@ -2,6 +2,7 @@
   "name": "document-store",
   "scripts": {
   },
+  "stack": "heroku-16",
   "env": {
     "CODAP_DEFAULT_URL": {
       "required": true
