@@ -201,7 +201,8 @@ GEM
     quiet_assets (1.0.2)
       railties (>= 3.1, < 5.0)
     rack (1.6.10)
-    rack-cors (0.4.1)
+    rack-cors (1.0.6)
+      rack (>= 1.6.0)
     rack-test (0.6.3)
       rack (>= 1.0)
     rails (4.2.7.1)
@@ -365,7 +366,7 @@ DEPENDENCIES
   pg
   progress
   quiet_assets
-  rack-cors (~> 0.4.1)
+  rack-cors (~> 1.0.6)
   rack-secure_samesite_cookies!
   rails (~> 4.2.7.1)
   rails-settings-cached
