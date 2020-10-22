@@ -62,9 +62,6 @@ Tests:
         jest --watch --config jest/jest.config.js
 ```
 
-
-
-
 Docker
 ------
 
