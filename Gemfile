@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby '2.2.10'
+ruby '2.4.10'
 gem 'rails', '~> 4.2.7.1'
 gem 'sass-rails', '~> 4.0.5'
 gem 'uglifier', '~> 2.7.2'
@@ -30,8 +30,8 @@ gem 'json-patch'
 gem 'will_paginate'
 gem 'will_paginate-foundation'
 gem 'progress'
-gem 'oj' # a faster json library
-gem 'oj_mimic_json'  # use the oj lib *everywhere* when dealing with json
+# gem 'oj' # a faster json library
+# gem 'oj_mimic_json'  # use the oj lib *everywhere* when dealing with json
 
 # Explicitly set some dependent gems versions because of vulns.
 gem 'nokogiri', '~> 1.8.3'
@@ -40,7 +40,7 @@ gem 'rubyzip', '~> 1.2.1'
 gem 'sprockets', '~> 2.12.5'
 
 gem 'rack-secure_samesite_cookies',
-  :git => 'git://github.com/concord-consortium/secure-samesite-cookies',
+  :git => 'https://github.com/concord-consortium/secure-samesite-cookies',
   :tag => 'v1.0.2'
 
 group :development do
