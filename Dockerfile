@@ -1,4 +1,4 @@
-FROM ruby:2.2.10
+FROM ruby:2.4.10
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9D6D8F6BC857C906
 RUN apt-get update -qq && apt-get install -y --force-yes build-essential postgresql-client libpq-dev nodejs
 

@@ -1,5 +1,5 @@
 GIT
-  remote: git://github.com/concord-consortium/secure-samesite-cookies
+  remote: https://github.com/concord-consortium/secure-samesite-cookies
   revision: da3078b1f2d1ac9c4c62b5cd7cd4c1fce1eb6dd1
   tag: v1.0.2
   specs:
@@ -181,8 +181,6 @@ GEM
       multi_json (~> 1.3)
       multi_xml (~> 0.5)
       rack (~> 1.2)
-    oj (2.11.4)
-    oj_mimic_json (1.0.1)
     omniauth (1.3.2)
       hashie (>= 1.2, < 4)
       rack (>= 1.0, < 3)
@@ -358,8 +356,6 @@ DEPENDENCIES
   launchy
   newrelic_rpm
   nokogiri (~> 1.8.3)
-  oj
-  oj_mimic_json
   omniauth (~> 1.3.2)
   omniauth-oauth2
   pg
@@ -391,7 +387,7 @@ DEPENDENCIES
   will_paginate-foundation
 
 RUBY VERSION
-   ruby 2.2.10p489
+   ruby 2.4.10
 
 BUNDLED WITH
-   1.16.1
+   1.17.3
