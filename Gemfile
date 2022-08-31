@@ -18,7 +18,7 @@ gem 'gctools', require: false
 gem 'rails_12factor', group: :production
 gem 'rails-settings-cached'
 gem 'cancancan', '~> 1.9'
-gem 'omniauth', '~> 1.3.2'
+gem 'omniauth', '~> 1.9.2'
 gem 'omniauth-oauth2'
 gem 'rack-cors', '~> 0.4.1', :require => 'rack/cors'
 gem 'foundation-rails'
